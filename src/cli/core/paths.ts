@@ -9,7 +9,7 @@ const APP_NAME = "HamsterBaseTasks"
 const MAS_APP_ID = "com.hamsterbase.tasks-desktop-mas"
 const MAS_PRODUCT_NAME = "Hamsterbase Tasks Desktop"
 
-const DB_DIR_PREFIX = "hamster-base-tasks-"
+const DB_DIR_PREFIX = "db-"
 
 function homeDir(): string {
   const home = os.homedir()

@@ -5,7 +5,7 @@ import { TauriFileStorage } from "./tauriFileStorage"
 
 export class TauriFsDatabaseService implements IDatabaseService {
   readonly _serviceBrand: undefined
-  private readonly basePath = "hamster-base-tasks"
+  private readonly basePath = "unthink-v2"
 
   async listDatabases(): Promise<IDatabaseMeta[]> {
     await this.ensureRoot()
@@ -56,7 +56,7 @@ export class TauriFsDatabaseService implements IDatabaseService {
   }
 
   private databasePath(databaseId: string): string {
-    return `${this.basePath}/hamster-base-tasks-${databaseId}`
+    return `${this.basePath}/db-${databaseId}`
   }
 
   private async ensureRoot(): Promise<void> {

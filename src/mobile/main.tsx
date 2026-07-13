@@ -3,7 +3,7 @@ import { initializeTheme, watchThemeChange } from "@/ui/browser/initializeTheme.
 import { initKeyboardListeners } from "@/ui/browser/initKeyboardListeners.ts"
 import { LocalStorageConfigStore } from "@/services/config/localStorageConfigStore.ts"
 import { IConfigService, WorkbenchConfig } from "@/services/config/configService.ts"
-import { BrowserDatabaseService } from "@/services/database/opfsDatabaseService.ts"
+import { OpfsDatabaseService } from "@/services/database/opfsDatabaseService.ts"
 import { IDatabaseService, LocalDatabaseMeta } from "@/services/database/database.ts"
 import { TauriFsDatabaseService } from "@/services/database/tauriFsDatabaseService.ts"
 import { INavigationService, NavigationService } from "@/services/navigationService/navigationService.ts"
@@ -63,7 +63,7 @@ export const startMobile = async () => {
   if (checkPlatform().isTauri) {
     serviceCollection.set(IDatabaseService, new SyncDescriptor(TauriFsDatabaseService))
   } else {
-    serviceCollection.set(IDatabaseService, new SyncDescriptor(BrowserDatabaseService))
+    serviceCollection.set(IDatabaseService, new SyncDescriptor(OpfsDatabaseService))
   }
   serviceCollection.set(ISwitchService, new SyncDescriptor(SwitchService))
   const instantiationService = new InstantiationService(serviceCollection, true)

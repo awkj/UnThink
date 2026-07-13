@@ -3,8 +3,8 @@ import * as path from "path"
 import { IDatabaseMeta } from "@/services/database/database"
 import { getDataDirs, resolveDatabaseDir } from "./paths"
 
-const DIR_PREFIX = "hamster-base-tasks-"
-const FILE_EXT = ".hamsterbase_tasks"
+const DIR_PREFIX = "db-"
+const FILE_EXT = ".loro"
 
 export async function listDatabases(): Promise<IDatabaseMeta[]> {
   const byId = new Map<string, IDatabaseMeta>()
@@ -24,7 +24,7 @@ export async function listDatabases(): Promise<IDatabaseMeta[]> {
   }
 
   // No synthesized `local` fallback: `db ls` reflects what is actually on
-  // disk. The desktop app writes `hamster-base-tasks-local/_meta.json` on
+  // disk. The desktop app writes `db-local/_meta.json` on
   // first use, so real users still see `local`; a CLI-only/fresh setup
   // correctly shows nothing rather than a phantom database.
   return Array.from(byId.values())
@@ -68,16 +68,11 @@ export async function readSnapshotBlobs(databaseId: string): Promise<Uint8Array[
   const blobs: Uint8Array[] = []
   for (const name of taskFiles) {
     try {
-      const b64 = await fs.readFile(path.join(dir, name), "utf8")
-      blobs.push(base64ToUint8Array(b64.trim()))
+      blobs.push(new Uint8Array(await fs.readFile(path.join(dir, name))))
     } catch (err) {
       if ((err as NodeJS.ErrnoException).code === "ENOENT") continue
       throw err
     }
   }
   return blobs
-}
-
-function base64ToUint8Array(b64: string): Uint8Array {
-  return new Uint8Array(Buffer.from(b64, "base64"))
 }

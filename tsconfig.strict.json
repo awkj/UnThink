@@ -1,7 +1,0 @@
-{
-  "extends": "./tsconfig.app.json",
-  "compilerOptions": {
-    "exactOptionalPropertyTypes": true,
-    "noUncheckedIndexedAccess": true
-  }
-}

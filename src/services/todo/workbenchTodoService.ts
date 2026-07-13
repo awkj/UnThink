@@ -27,7 +27,6 @@ import { IDatabaseStorage } from "@/services/database/database"
 import { EditingContent, ITodoService, TaskCommand, VIEW_SCHEMA_VERSION } from "@/services/todo/todoService.ts"
 import type { TreeID } from "loro-crdt"
 import { debounceTime, Subject } from "rxjs"
-import { ByteBuffer, decodeBase64, encodeBase64 } from "@hamsterbase/foundation/buffer"
 import { Emitter } from "@hamsterbase/foundation/event"
 import { DisposableStore } from "@hamsterbase/foundation/lifecycle"
 
@@ -96,27 +95,27 @@ export class WorkbenchTodoService implements ITodoService {
     const queue = new PersistenceQueue()
     const previousKeys = await storage.list()
     if (previousKeys.length > 0) {
-      const data = (await Promise.all(previousKeys.map((key) => storage.read(key)))).filter(Boolean)
-      taskModel.import(data.map((item) => decodeBase64(item).buffer))
+      const data = await Promise.all(previousKeys.map((key) => storage.read(key)))
+      taskModel.import(data)
     }
 
     let persistedUpdates = previousKeys.length
     const compact = () =>
       queue.run(async () => {
         const keys = await storage.list()
-        const snapshotKey = await storage.save(encodeBase64(ByteBuffer.wrap(taskModel.export())))
+        const snapshotKey = await storage.save(taskModel.export())
         await Promise.all(keys.filter((key) => key !== snapshotKey).map((key) => storage.delete(key)))
         persistedUpdates = 1
       })
     const persist = (updates: Uint8Array[]) =>
       queue.run(async () => {
         for (const update of updates) {
-          await storage.save(encodeBase64(ByteBuffer.wrap(update)))
+          await storage.save(update)
           persistedUpdates += 1
         }
         if (persistedUpdates >= COMPACT_AFTER_UPDATES) {
           const keys = await storage.list()
-          const snapshotKey = await storage.save(encodeBase64(ByteBuffer.wrap(taskModel.export())))
+          const snapshotKey = await storage.save(taskModel.export())
           await Promise.all(keys.filter((key) => key !== snapshotKey).map((key) => storage.delete(key)))
           persistedUpdates = 1
         }

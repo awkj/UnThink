@@ -1,9 +1,9 @@
 import { BaseDirectory } from "@tauri-apps/api/path"
-import { exists, mkdir, readDir, readTextFile, remove, writeTextFile } from "@tauri-apps/plugin-fs"
+import { exists, mkdir, readDir, readFile, remove, writeFile, writeTextFile } from "@tauri-apps/plugin-fs"
 import { generateUuid } from "@hamsterbase/foundation/uuid"
 import { IDatabaseMeta, IDatabaseStorage } from "./database"
 
-const fileExtension = ".hamsterbase_tasks"
+const fileExtension = ".loro"
 
 export class TauriFileStorage implements IDatabaseStorage {
   constructor(
@@ -15,10 +15,10 @@ export class TauriFileStorage implements IDatabaseStorage {
     return this.meta.id
   }
 
-  async save(content: string): Promise<string> {
+  async save(content: Uint8Array): Promise<string> {
     await this.ensureBaseDir()
     const key = generateUuid()
-    await writeTextFile(`${this.baseDir}/${key}${fileExtension}`, content, {
+    await writeFile(`${this.baseDir}/${key}${fileExtension}`, content, {
       baseDir: BaseDirectory.AppData,
     })
     return key
@@ -38,8 +38,8 @@ export class TauriFileStorage implements IDatabaseStorage {
       .map((entry) => entry.name.slice(0, -fileExtension.length))
   }
 
-  async read(key: string): Promise<string> {
-    return readTextFile(`${this.baseDir}/${key}${fileExtension}`, {
+  async read(key: string): Promise<Uint8Array> {
+    return readFile(`${this.baseDir}/${key}${fileExtension}`, {
       baseDir: BaseDirectory.AppData,
     })
   }

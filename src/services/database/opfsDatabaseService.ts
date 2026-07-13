@@ -1,11 +1,9 @@
 import { IDatabaseMeta, IDatabaseService, IDatabaseStorage, LocalDatabaseMeta } from "./database"
-import { IndexedDBStorage } from "@/services/todo/IndexedDBStorage"
-import { IndexdbDatabaseService } from "./indexdbDatabaseService"
 
-const ROOT_DIRECTORY = "hamster-base-tasks"
-const FILE_EXTENSION = ".hamsterbase_tasks"
+const ROOT_DIRECTORY = "unthink-v2"
+const FILE_EXTENSION = ".loro"
 
-async function readFile(directory: FileSystemDirectoryHandle, name: string): Promise<string> {
+async function readTextFile(directory: FileSystemDirectoryHandle, name: string): Promise<string> {
   return (await (await directory.getFileHandle(name)).getFile()).text()
 }
 
@@ -19,11 +17,11 @@ class OpfsStorage implements IDatabaseStorage {
     return this.meta.id
   }
 
-  async save(content: string): Promise<string> {
+  async save(content: Uint8Array): Promise<string> {
     const key = crypto.randomUUID()
     const file = await this.directory.getFileHandle(`${key}${FILE_EXTENSION}`, { create: true })
     const writer = await file.createWritable()
-    await writer.write(content)
+    await writer.write(Uint8Array.from(content).buffer)
     await writer.close()
     return key
   }
@@ -42,8 +40,9 @@ class OpfsStorage implements IDatabaseStorage {
     return keys
   }
 
-  read(key: string): Promise<string> {
-    return readFile(this.directory, `${key}${FILE_EXTENSION}`)
+  async read(key: string): Promise<Uint8Array> {
+    const file = await (await this.directory.getFileHandle(`${key}${FILE_EXTENSION}`)).getFile()
+    return new Uint8Array(await file.arrayBuffer())
   }
 }
 
@@ -56,7 +55,7 @@ export class OpfsDatabaseService implements IDatabaseService {
   }
 
   private async directory(databaseId: string, create = false): Promise<FileSystemDirectoryHandle> {
-    return (await this.root()).getDirectoryHandle(`hamster-base-tasks-${databaseId}`, { create })
+    return (await this.root()).getDirectoryHandle(`db-${databaseId}`, { create })
   }
 
   async ensureDatabase(meta: IDatabaseMeta): Promise<void> {
@@ -67,7 +66,6 @@ export class OpfsDatabaseService implements IDatabaseService {
       await writer.write(JSON.stringify(meta))
       await writer.close()
     }
-    await this.migrateIndexedDb(meta, new OpfsStorage(directory, meta))
   }
 
   async listDatabases(): Promise<IDatabaseMeta[]> {
@@ -76,7 +74,7 @@ export class OpfsDatabaseService implements IDatabaseService {
     for await (const [, handle] of (await this.root()).entries()) {
       if (handle.kind !== "directory") continue
       try {
-        databases.push(JSON.parse(await readFile(handle, "_meta.json")) as IDatabaseMeta)
+        databases.push(JSON.parse(await readTextFile(handle, "_meta.json")) as IDatabaseMeta)
       } catch (error) {
         console.warn("Ignoring invalid OPFS database metadata:", error)
       }
@@ -97,27 +95,6 @@ export class OpfsDatabaseService implements IDatabaseService {
   }
 
   async deleteDatabase(databaseId: string): Promise<void> {
-    await (await this.root()).removeEntry(`hamster-base-tasks-${databaseId}`, { recursive: true })
+    await (await this.root()).removeEntry(`db-${databaseId}`, { recursive: true })
   }
-
-  private async migrateIndexedDb(meta: IDatabaseMeta, destination: IDatabaseStorage): Promise<void> {
-    if ((await destination.list()).length > 0) return
-    const legacy = new IndexedDBStorage("hamster-base-tasks", `hamster-base-tasks-${meta.id}`, meta)
-    const keys = await legacy.list()
-    for (const key of keys) {
-      await destination.save(await legacy.read(key))
-    }
-  }
-}
-
-export class BrowserDatabaseService implements IDatabaseService {
-  readonly _serviceBrand: undefined
-  private readonly delegate: IDatabaseService =
-    typeof navigator.storage?.getDirectory === "function" ? new OpfsDatabaseService() : new IndexdbDatabaseService()
-
-  listDatabases = () => this.delegate.listDatabases()
-  getDatabaseMeta = (databaseId: string) => this.delegate.getDatabaseMeta(databaseId)
-  deleteDatabase = (databaseId: string) => this.delegate.deleteDatabase(databaseId)
-  ensureDatabase = (meta: IDatabaseMeta) => this.delegate.ensureDatabase(meta)
-  getDatabaseStorage = (databaseId: string) => this.delegate.getDatabaseStorage(databaseId)
 }
