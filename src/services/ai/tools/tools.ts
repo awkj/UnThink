@@ -4,7 +4,6 @@ import { requestReplyToolConfig } from "./requestReply/requestReply"
 import { createProjectToolConfig } from "./createProject/createProject"
 import { getDataToolConfig } from "./getData/getData"
 import { getProjectDataToolConfig } from "./getProjectData/getProjectData"
-import { runJavaScriptToolConfig } from "./runJavaScript/runJavaScript"
 import { batchEditToolConfig } from "./batchEdit/batchEdit"
 
 export { type ToolConfig, type ToolExecutionResult, type ToolType } from "./type"
@@ -12,7 +11,6 @@ export { type ToolConfig, type ToolExecutionResult, type ToolType } from "./type
 // Tool configurations
 export const TOOL_CONFIGS = [
   createProjectToolConfig,
-  runJavaScriptToolConfig,
   requestReplyToolConfig,
   getDataToolConfig,
   getProjectDataToolConfig,

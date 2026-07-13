@@ -54,12 +54,18 @@ export class NavigationService implements INavigationService {
   private backButtonListener: Array<() => void> = []
 
   constructor() {
-    window.addEventListener("popstate", () => {
-      const lastListener = this.backButtonListener[this.backButtonListener.length - 1]
-      if (lastListener) {
-        lastListener()
-      }
-    })
+    if ("__TAURI_INTERNALS__" in window) {
+      void import("@tauri-apps/api/app")
+        .then(({ onBackButtonPress }) => onBackButtonPress(() => this.dispatchBackButton()))
+        .catch((error: unknown) => console.error("Failed to register native back handler:", error))
+      void import("@tauri-apps/api/event")
+        .then(({ listen }) =>
+          listen<string>("native-navigate", ({ payload }) => {
+            this.navigate({ path: payload })
+          }),
+        )
+        .catch((error: unknown) => console.error("Failed to register native navigation handler:", error))
+    }
   }
 
   get onNavigate(): Event<NavigateOptions> {
@@ -93,6 +99,10 @@ export class NavigationService implements INavigationService {
         this.backButtonListener = this.backButtonListener.filter((item) => item !== callback)
       },
     }
+  }
+
+  private dispatchBackButton(): void {
+    this.backButtonListener.at(-1)?.()
   }
 }
 

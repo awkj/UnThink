@@ -294,7 +294,16 @@ func (s *Server) events(w http.ResponseWriter, r *http.Request) {
 
 	heartbeat := time.NewTicker(25 * time.Second)
 	defer heartbeat.Stop()
+	revisionPoll := time.NewTicker(5 * time.Second)
+	defer revisionPoll.Stop()
 	clientID := r.URL.Query().Get("clientId")
+	lastRevision := int64(0)
+	if s.store != nil {
+		status, err := s.store.Status(r.Context(), r.PathValue("space"))
+		if err == nil {
+			lastRevision = status.Revision
+		}
+	}
 
 	for {
 		select {
@@ -308,6 +317,20 @@ func (s *Server) events(w http.ResponseWriter, r *http.Request) {
 				continue
 			}
 			if _, err := fmt.Fprintf(w, "id: %d\nevent: revision\ndata: %d\n\n", event.revision, event.revision); err != nil {
+				return
+			}
+			flusher.Flush()
+			lastRevision = max(lastRevision, event.revision)
+		case <-revisionPoll.C:
+			if s.store == nil {
+				continue
+			}
+			status, err := s.store.Status(r.Context(), r.PathValue("space"))
+			if err != nil || status.Revision <= lastRevision {
+				continue
+			}
+			lastRevision = status.Revision
+			if _, err := fmt.Fprintf(w, "id: %d\nevent: revision\ndata: %d\n\n", lastRevision, lastRevision); err != nil {
 				return
 			}
 			flusher.Flush()
@@ -381,7 +404,7 @@ func (s *Server) putSnapshot(w http.ResponseWriter, r *http.Request) {
 		r.Context(), r.PathValue("space"), request.CoversRevision, payload,
 	)
 	if err != nil {
-		if strings.Contains(err.Error(), "ahead of server revision") {
+		if strings.Contains(err.Error(), "does not match server revision") {
 			writeError(w, http.StatusConflict, err.Error())
 			return
 		}

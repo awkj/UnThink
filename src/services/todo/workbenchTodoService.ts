@@ -35,7 +35,20 @@ interface DateModel {
   taskModel: TaskModel
   modelData: ITaskModelData
   dispose: () => void
-  save: () => Promise<void>
+  persist: (updates: Uint8Array[]) => Promise<void>
+  compact: () => Promise<void>
+}
+
+const COMPACT_AFTER_UPDATES = 128
+
+class PersistenceQueue {
+  private pending: Promise<void> = Promise.resolve()
+
+  run(task: () => Promise<void>): Promise<void> {
+    const result = this.pending.then(task)
+    this.pending = result.catch(() => undefined)
+    return result
+  }
 }
 
 export class WorkbenchTodoService implements ITodoService {
@@ -80,33 +93,51 @@ export class WorkbenchTodoService implements ITodoService {
     }
     const peerId = await getPeerId()
     taskModel.setPeerId(peerId)
-    async function saveToStorage() {
-      const previousKeys = await storage.list()
-      if (previousKeys.length > 0) {
-        const data = (await Promise.all(previousKeys.map((p) => storage.read(p)))).filter((item) => item)
-        await taskModel.import(data.map((item) => decodeBase64(item).buffer))
-        await storage.save(encodeBase64(ByteBuffer.wrap(taskModel.export())))
-        for (const p of previousKeys) {
-          await storage.delete(p)
-        }
-      } else {
-        await storage.save(encodeBase64(ByteBuffer.wrap(taskModel.export())))
-      }
+    const queue = new PersistenceQueue()
+    const previousKeys = await storage.list()
+    if (previousKeys.length > 0) {
+      const data = (await Promise.all(previousKeys.map((key) => storage.read(key)))).filter(Boolean)
+      taskModel.import(data.map((item) => decodeBase64(item).buffer))
     }
+
+    let persistedUpdates = previousKeys.length
+    const compact = () =>
+      queue.run(async () => {
+        const keys = await storage.list()
+        const snapshotKey = await storage.save(encodeBase64(ByteBuffer.wrap(taskModel.export())))
+        await Promise.all(keys.filter((key) => key !== snapshotKey).map((key) => storage.delete(key)))
+        persistedUpdates = 1
+      })
+    const persist = (updates: Uint8Array[]) =>
+      queue.run(async () => {
+        for (const update of updates) {
+          await storage.save(encodeBase64(ByteBuffer.wrap(update)))
+          persistedUpdates += 1
+        }
+        if (persistedUpdates >= COMPACT_AFTER_UPDATES) {
+          const keys = await storage.list()
+          const snapshotKey = await storage.save(encodeBase64(ByteBuffer.wrap(taskModel.export())))
+          await Promise.all(keys.filter((key) => key !== snapshotKey).map((key) => storage.delete(key)))
+          persistedUpdates = 1
+        }
+      })
     const disposeStore = new DisposableStore()
-    await saveToStorage()
+    await compact()
     taskModel.clearUndoHistory()
     const dataModel: DateModel = {
       taskModel,
-      save: saveToStorage,
+      persist,
+      compact,
       modelData: taskModel.toJSON(),
       dispose: () => {
         disposeStore.dispose()
       },
     }
     disposeStore.add(
-      taskModel.onModelChange(() => {
-        saveToStorage()
+      taskModel.onLocalUpdate((update) => {
+        void persist([update]).catch((error: unknown) => {
+          console.error("Failed to persist local task update:", error)
+        })
         dataModel.modelData = taskModel.toJSON()
         this._onStateChange.fire()
       }),
@@ -149,7 +180,7 @@ export class WorkbenchTodoService implements ITodoService {
     const previousVersion = this.dataModel.taskModel.version
     this.dataModel.taskModel.import(data)
     this.dataModel.modelData = this.dataModel.taskModel.toJSON()
-    await this.dataModel.save()
+    await this.dataModel.persist(data)
     if (previousVersion.compare(this.dataModel.taskModel.version) !== 0) {
       this._onStateChange.fire()
     }

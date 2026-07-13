@@ -1,0 +1,17 @@
+{
+  "name": "Unthink",
+  "short_name": "Unthink",
+  "description": "Local-first task manager",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f8f9fa",
+  "theme_color": "#30cccc",
+  "icons": [
+    {
+      "src": "/favicon.ico",
+      "sizes": "any",
+      "type": "image/x-icon",
+      "purpose": "any"
+    }
+  ]
+}

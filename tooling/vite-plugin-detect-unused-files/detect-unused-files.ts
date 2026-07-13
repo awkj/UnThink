@@ -12,6 +12,7 @@ export function unusedFilesPlugin(options: UnusedFilesPluginOptions = {}): Plugi
   let config: ResolvedConfig
   const resolvedFiles = new Set<string>()
   let allSourceFiles: string[] = []
+  let buildFailed = false
 
   function trackFile(id: string) {
     if (!id || id.includes("node_modules") || id.startsWith("\0")) return
@@ -54,6 +55,7 @@ export function unusedFilesPlugin(options: UnusedFilesPluginOptions = {}): Plugi
       })
 
       resolvedFiles.clear()
+      buildFailed = false
     },
 
     load(id) {
@@ -61,8 +63,18 @@ export function unusedFilesPlugin(options: UnusedFilesPluginOptions = {}): Plugi
       return null
     },
 
+    // Rolldown can satisfy transforms from its persistent cache without
+    // calling `load` again. The final module graph remains authoritative.
+    buildEnd(error) {
+      buildFailed = error != null
+      for (const id of this.getModuleIds()) {
+        trackFile(id)
+      }
+    },
+
     // Step 3: After build, compare and report unused files
     closeBundle() {
+      if (buildFailed) return
       const unusedFiles = allSourceFiles.filter((f) => !resolvedFiles.has(f)).sort()
 
       if (unusedFiles.length > 0) {

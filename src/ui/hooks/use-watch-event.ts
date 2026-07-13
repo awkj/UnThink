@@ -1,20 +1,21 @@
-import { useLayoutEffect } from "react"
+import { useCallback, useRef, useSyncExternalStore } from "react"
 import { Event } from "@hamsterbase/foundation/event"
-import { useRender } from "./use-render"
 
 export function useWatchEvent<T = unknown>(event: Event<T> | undefined, shouldRender?: (e: T) => boolean) {
-  const render = useRender()
-  useLayoutEffect(() => {
-    if (event) {
-      return event((eventValue) => {
-        if (shouldRender) {
-          if (shouldRender(eventValue)) {
-            render()
-          }
-        } else {
-          render()
+  const revision = useRef(0)
+  const subscribe = useCallback(
+    (onStoreChange: () => void) => {
+      if (!event) return () => undefined
+      const disposable = event((eventValue) => {
+        if (!shouldRender || shouldRender(eventValue)) {
+          revision.current += 1
+          onStoreChange()
         }
-      }).dispose
-    }
-  }, [event, render, shouldRender])
+      })
+      return () => disposable.dispose()
+    },
+    [event, shouldRender],
+  )
+  const getSnapshot = useCallback(() => revision.current, [])
+  useSyncExternalStore(subscribe, getSnapshot, getSnapshot)
 }

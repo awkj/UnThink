@@ -4,8 +4,12 @@ import (
 	"context"
 	"crypto/sha256"
 	"database/sql"
+	"embed"
 	"errors"
 	"fmt"
+	"io/fs"
+	"path/filepath"
+	"strconv"
 	"strings"
 	"time"
 
@@ -13,6 +17,9 @@ import (
 )
 
 const defaultUserID = "default"
+
+//go:embed migrations/*.sql
+var migrationFiles embed.FS
 
 type Store struct {
 	db *sql.DB
@@ -70,58 +77,58 @@ func (s *Store) migrate(ctx context.Context, authToken string) error {
 	if err := s.db.PingContext(ctx); err != nil {
 		return fmt.Errorf("connect to postgres: %w", err)
 	}
-	schema := `
-CREATE TABLE IF NOT EXISTS schema_migrations (
-  version INTEGER PRIMARY KEY,
-  applied_at BIGINT NOT NULL
-);
-CREATE TABLE IF NOT EXISTS users (
-  id TEXT PRIMARY KEY,
-  token_hash BYTEA NOT NULL,
-  created_at BIGINT NOT NULL
-);
-CREATE TABLE IF NOT EXISTS spaces (
-  id BIGSERIAL PRIMARY KEY,
-  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-  name TEXT NOT NULL,
-  revision BIGINT NOT NULL DEFAULT 0,
-  created_at BIGINT NOT NULL,
-  updated_at BIGINT NOT NULL,
-  UNIQUE(user_id, name)
-);
-CREATE TABLE IF NOT EXISTS changes (
-  id BIGSERIAL PRIMARY KEY,
-  space_id BIGINT NOT NULL REFERENCES spaces(id) ON DELETE CASCADE,
-  revision BIGINT NOT NULL,
-  client_id TEXT NOT NULL,
-  change_id TEXT NOT NULL,
-  payload BYTEA NOT NULL,
-  created_at BIGINT NOT NULL,
-  UNIQUE(space_id, revision),
-  UNIQUE(space_id, client_id, change_id)
-);
-CREATE INDEX IF NOT EXISTS changes_space_revision_idx ON changes(space_id, revision);
-CREATE TABLE IF NOT EXISTS snapshots (
-  space_id BIGINT PRIMARY KEY REFERENCES spaces(id) ON DELETE CASCADE,
-  revision BIGINT NOT NULL,
-  payload BYTEA NOT NULL,
-  created_at BIGINT NOT NULL
-);
-CREATE TABLE IF NOT EXISTS clients (
-  space_id BIGINT NOT NULL REFERENCES spaces(id) ON DELETE CASCADE,
-  client_id TEXT NOT NULL,
-  last_seen_revision BIGINT NOT NULL DEFAULT 0,
-  updated_at BIGINT NOT NULL,
-  PRIMARY KEY(space_id, client_id)
-);
-INSERT INTO schema_migrations(version, applied_at)
-VALUES(1, (EXTRACT(EPOCH FROM clock_timestamp()) * 1000)::BIGINT)
-ON CONFLICT(version) DO NOTHING;`
-	if _, err := s.db.ExecContext(ctx, schema); err != nil {
-		return fmt.Errorf("migrate postgres: %w", err)
+	if _, err := s.db.ExecContext(ctx, `CREATE TABLE IF NOT EXISTS schema_migrations (
+		version INTEGER PRIMARY KEY,
+		applied_at BIGINT NOT NULL
+	)`); err != nil {
+		return fmt.Errorf("initialize migrations table: %w", err)
+	}
+	entries, err := fs.ReadDir(migrationFiles, "migrations")
+	if err != nil {
+		return fmt.Errorf("read migrations: %w", err)
+	}
+	for _, entry := range entries {
+		if entry.IsDir() || filepath.Ext(entry.Name()) != ".sql" {
+			continue
+		}
+		prefix := strings.SplitN(entry.Name(), "_", 2)[0]
+		version, err := strconv.Atoi(prefix)
+		if err != nil {
+			return fmt.Errorf("invalid migration filename %q: %w", entry.Name(), err)
+		}
+		var applied bool
+		if err := s.db.QueryRowContext(ctx,
+			"SELECT EXISTS(SELECT 1 FROM schema_migrations WHERE version = $1)", version,
+		).Scan(&applied); err != nil {
+			return fmt.Errorf("check migration %d: %w", version, err)
+		}
+		if applied {
+			continue
+		}
+		contents, err := migrationFiles.ReadFile("migrations/" + entry.Name())
+		if err != nil {
+			return fmt.Errorf("read migration %d: %w", version, err)
+		}
+		tx, err := s.db.BeginTx(ctx, nil)
+		if err != nil {
+			return fmt.Errorf("begin migration %d: %w", version, err)
+		}
+		if _, err = tx.ExecContext(ctx, string(contents)); err == nil {
+			_, err = tx.ExecContext(ctx,
+				"INSERT INTO schema_migrations(version, applied_at) VALUES($1, $2)",
+				version, time.Now().UnixMilli(),
+			)
+		}
+		if err != nil {
+			_ = tx.Rollback()
+			return fmt.Errorf("apply migration %d: %w", version, err)
+		}
+		if err := tx.Commit(); err != nil {
+			return fmt.Errorf("commit migration %d: %w", version, err)
+		}
 	}
 	hash := sha256.Sum256([]byte(authToken))
-	_, err := s.db.ExecContext(ctx, `
+	_, err = s.db.ExecContext(ctx, `
 INSERT INTO users(id, token_hash, created_at) VALUES($1, $2, $3)
 ON CONFLICT(id) DO UPDATE SET token_hash = excluded.token_hash`,
 		defaultUserID, hash[:], time.Now().UnixMilli())
@@ -273,8 +280,8 @@ func (s *Store) PutSnapshot(ctx context.Context, space string, coversRevision in
 		Scan(&current); err != nil {
 		return Status{}, err
 	}
-	if coversRevision > current {
-		return Status{}, fmt.Errorf("snapshot revision %d is ahead of server revision %d", coversRevision, current)
+	if coversRevision != current {
+		return Status{}, fmt.Errorf("snapshot revision %d does not match server revision %d", coversRevision, current)
 	}
 	_ = tx.QueryRowContext(ctx, "SELECT revision FROM snapshots WHERE space_id = $1", spaceID).Scan(&previous)
 	if coversRevision > previous {

@@ -10,7 +10,8 @@ import { RecurringTaskSettings } from "@/mobile/overlay/recurringTaskSettings/Re
 import { pages } from "@/mobile/pages.tsx"
 import { INavigationService } from "@/services/navigationService/navigationService"
 import { useEffect, useRef } from "react"
-import { BrowserRouter, Navigate, Outlet, Route, Routes, useNavigate } from "react-router"
+import { BrowserRouter, HashRouter, Navigate, Outlet, Route, Routes, useNavigate } from "react-router"
+import { checkPlatform } from "@/ui/browser/checkPlatform"
 import { Toast } from "./overlay/toast/Toast"
 import { ProjectAreaSelector } from "./overlay/projectAreaSelector/ProjectAreaSelector"
 
@@ -57,6 +58,7 @@ const ContentNavigation = () => {
 
 export const App = () => {
   useSafeArea()
+  const Router = checkPlatform().isTauri ? HashRouter : BrowserRouter
 
   return (
     <div>
@@ -69,7 +71,7 @@ export const App = () => {
       <TaskDisplaySettings></TaskDisplaySettings>
       <ProjectAreaSelector></ProjectAreaSelector>
       <RecurringTaskSettings></RecurringTaskSettings>
-      <BrowserRouter>
+      <Router>
         <Routes>
           <Route element={<ContentNavigation></ContentNavigation>}>
             {pages.map((page) => (
@@ -78,7 +80,7 @@ export const App = () => {
             <Route path="*" element={<Navigate to="/home" replace />} />
           </Route>
         </Routes>
-      </BrowserRouter>
+      </Router>
     </div>
   )
 }

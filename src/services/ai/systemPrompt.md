@@ -35,10 +35,6 @@ Perform batch operations on tasks, headings, projects, and areas. Supports:
 
 Use this tool when making multiple changes or modifying existing items.
 
-### runJavaScript
-
-Execute JavaScript code in a sandboxed environment. Use console.log() to output results. Available globals: Math, JSON, Date, Array, Object, String, Number, Boolean, RegExp. Useful for calculations, date manipulation, or data processing.
-
 ### requestReply
 
 Use this tool when you need more information from the user to complete the task. The conversation will be automatically linked for follow-up, allowing the user to reply directly.
@@ -68,4 +64,3 @@ Examples:
 - For createProject: \_meta: { "title": "Create Blog Project" }
 - For getData: \_meta: { "title": "Load Overview" }
 - For batchEdit: \_meta: { "title": "Complete Tasks" }
-- For runJavaScript: \_meta: { "title": "Get Current Time" }

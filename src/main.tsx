@@ -2,27 +2,22 @@ import "@/locales/browser/config.ts"
 import "large-small-dynamic-viewport-units-polyfill"
 
 import { checkPlatform } from "@/ui/browser/checkPlatform"
+import { registerServiceWorker } from "@/ui/browser/registerServiceWorker"
 
 function shouldLoadDesktop() {
-  if (checkPlatform().isTauri && !checkPlatform().isNative) {
+  const platform = checkPlatform()
+  if (platform.isTauri && !platform.isNative) {
     return true
   }
   const pathname = location.pathname
   if (pathname !== "/") {
     return pathname.startsWith("/desktop")
   }
-  // Check if user agent matches mobile device
-  const userAgent = navigator.userAgent.toLowerCase()
-  const isMobileDevice = /android/i.test(userAgent)
-
-  if (isMobileDevice) {
-    return false
-  }
-
-  return true
+  return !platform.prefersMobileLayout
 }
 
 async function startApplication(): Promise<void> {
+  if (checkPlatform().isWeb) registerServiceWorker()
   if (shouldLoadDesktop()) {
     const { startDesktop } = await import("./desktop/main")
     await startDesktop()

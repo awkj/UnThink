@@ -1,4 +1,5 @@
 import java.util.Properties
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     id("com.android.application")
@@ -13,8 +14,16 @@ val tauriProperties = Properties().apply {
     }
 }
 
+val releaseSigningProperties = Properties().apply {
+    val propFile = rootProject.file("key.properties")
+    if (propFile.exists()) {
+        propFile.inputStream().use { load(it) }
+    }
+}
+
 android {
     compileSdk = 36
+    ndkVersion = "28.2.13676358"
     namespace = "io.github.awkj.unthink"
     defaultConfig {
         manifestPlaceholders["usesCleartextTraffic"] = "false"
@@ -23,6 +32,16 @@ android {
         targetSdk = 36
         versionCode = tauriProperties.getProperty("tauri.android.versionCode", "1").toInt()
         versionName = tauriProperties.getProperty("tauri.android.versionName", "1.0")
+    }
+    signingConfigs {
+        if (releaseSigningProperties.isNotEmpty()) {
+            create("release") {
+                keyAlias = releaseSigningProperties.getProperty("keyAlias")
+                keyPassword = releaseSigningProperties.getProperty("keyPassword")
+                storeFile = rootProject.file(releaseSigningProperties.getProperty("storeFile"))
+                storePassword = releaseSigningProperties.getProperty("storePassword")
+            }
+        }
     }
     buildTypes {
         getByName("debug") {
@@ -37,6 +56,9 @@ android {
             }
         }
         getByName("release") {
+            // key.properties supplies the publishing key. For local builds,
+            // Android's debug key still produces an installable release APK.
+            signingConfig = signingConfigs.findByName("release") ?: signingConfigs.getByName("debug")
             isMinifyEnabled = true
             proguardFiles(
                 *fileTree(".") { include("**/*.pro") }
@@ -45,11 +67,18 @@ android {
             )
         }
     }
-    kotlinOptions {
-        jvmTarget = "1.8"
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     buildFeatures {
         buildConfig = true
+    }
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(JvmTarget.JVM_17)
     }
 }
 

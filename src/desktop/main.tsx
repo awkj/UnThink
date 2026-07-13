@@ -7,7 +7,7 @@ import { GlobalContext } from "@/ui/components/GlobalContext/GlobalContext"
 import { StandaloneCommandService } from "@/services/command/standaloneCommandService"
 import { LocalStorageConfigStore } from "@/services/config/localStorageConfigStore"
 import { IConfigService, WorkbenchConfig } from "@/services/config/configService"
-import { IndexdbDatabaseService } from "@/services/database/indexdbDatabaseService"
+import { BrowserDatabaseService } from "@/services/database/opfsDatabaseService"
 import { IDatabaseService, LocalDatabaseMeta } from "@/services/database/database"
 import { TauriFsDatabaseService } from "@/services/database/tauriFsDatabaseService"
 import { EditService, IEditService } from "@/services/edit/editService"
@@ -57,7 +57,11 @@ export async function startDesktop() {
   serviceCollection.set(ITodoService, new SyncDescriptor(WorkbenchTodoService))
   serviceCollection.set(IConfigService, new SyncDescriptor(WorkbenchConfig, [new LocalStorageConfigStore()]))
   serviceCollection.set(INavigationService, new SyncDescriptor(NavigationService))
-  serviceCollection.set(IDatabaseService, new SyncDescriptor(isTauri ? TauriFsDatabaseService : IndexdbDatabaseService))
+  if (isTauri) {
+    serviceCollection.set(IDatabaseService, new SyncDescriptor(TauriFsDatabaseService))
+  } else {
+    serviceCollection.set(IDatabaseService, new SyncDescriptor(BrowserDatabaseService))
+  }
   serviceCollection.set(ISwitchService, new SyncDescriptor(SwitchService))
   serviceCollection.set(IContextKeyService, new SyncDescriptor(ContextKeyService))
   serviceCollection.set(ICommandService, new SyncDescriptor(StandaloneCommandService))
