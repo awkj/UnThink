@@ -1,3 +1,5 @@
-version https://git-lfs.github.com/spec/v1
-oid sha256:48ab08caa3f471f928daa9f7cc365712434c7ba8acf628f58bd1448357bf6d27
-size 262
+<?xml version="1.0" encoding="utf-8"?>
+<adaptive-icon xmlns:android="http://schemas.android.com/apk/res/android">
+  <foreground android:drawable="@mipmap/ic_launcher_foreground"/>
+  <background android:drawable="@color/ic_launcher_background"/>
+</adaptive-icon>
