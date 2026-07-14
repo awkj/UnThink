@@ -10,10 +10,11 @@ import { TaskListItem } from "@/desktop/components/todo/TaskListItem"
 import { desktopStyles } from "@/desktop/theme/main"
 import { useService } from "@/ui/hooks/use-service"
 import { useWatchEvent } from "@/ui/hooks/use-watch-event"
+import { useSynchronizeState } from "@/ui/hooks/useSyncedState"
 import { localize } from "@/nls"
 import { ITodoService } from "@/services/todo/todoService"
 import { TestIds } from "@/testIds"
-import { useEffect, useMemo, useState } from "react"
+import { useMemo, useState } from "react"
 
 function isSameTags(a: string[], b: string[]) {
   if (a.length !== b.length) return false
@@ -36,9 +37,7 @@ export const Schedule = () => {
     tags: tagFilter.currentTag,
   })
 
-  useEffect(() => {
-    setAllTags((previousTags) => (isSameTags(previousTags, latestAllTags) ? previousTags : latestAllTags))
-  }, [latestAllTags])
+  useSynchronizeState(setAllTags, latestAllTags, isSameTags)
 
   const willDisappearObjectIdSet = new Set(willDisappearObjectIds)
 

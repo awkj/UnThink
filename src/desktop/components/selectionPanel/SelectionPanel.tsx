@@ -2,6 +2,7 @@ import { getProjectHeadingInfo } from "@/core/state/getProjectHeadingInfo.ts"
 import { getTaskInfo } from "@/core/state/getTaskInfo.ts"
 import { useService } from "@/ui/hooks/use-service.ts"
 import { useWatchEvent } from "@/ui/hooks/use-watch-event.ts"
+import { useTodoEntitySubscription } from "@/ui/hooks/useTodoSelector"
 import { IListService } from "@/services/list/listService.ts"
 import { ITodoService } from "@/services/todo/todoService.ts"
 import React from "react"
@@ -15,8 +16,6 @@ import { ViewEditPanel } from "./view/ViewEditPanel.tsx"
 
 export const SelectionPanel: React.FC = () => {
   const todoService = useService(ITodoService)
-  useWatchEvent(todoService.onStateChange)
-
   const listService = useService(IListService)
   useWatchEvent(listService.onMainListChange)
   useWatchEvent(listService.mainList?.onListStateChange)
@@ -28,6 +27,8 @@ export const SelectionPanel: React.FC = () => {
   }
 
   const selectedItems = listService.mainList?.selectedIds || []
+  const selectedItemId = selectedItems[0]
+  useTodoEntitySubscription(selectedItemId)
 
   if (selectedItems.length === 0) {
     // Check if we're on area or project routes using proper route matching
@@ -56,7 +57,6 @@ export const SelectionPanel: React.FC = () => {
     return <MultipleSelectionView selectedCount={selectedItems.length} onClearSelection={handleClearSelection} />
   }
 
-  const selectedItemId = selectedItems[0]
   if (!selectedItemId) return null
   const taskObject = todoService.modelState.taskObjectMap.get(selectedItemId)
 

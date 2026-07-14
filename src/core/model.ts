@@ -84,14 +84,6 @@ export class TaskModel {
       this.doc.import(d)
     })
     this.removeDuplicateItems(this.doc.getMovableList(dateAssigned.listName) as LoroMovableList<TreeID>)
-    this.doc
-      .getTree("todo")
-      .getNodes()
-      .forEach((node) => {
-        if (!node.data.get("uid")) {
-          node.data.set("uid", nanoid(12))
-        }
-      })
   }
 
   exportPatch(from: Record<string, number>): Uint8Array {

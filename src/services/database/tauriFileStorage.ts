@@ -1,47 +1,57 @@
 import { BaseDirectory } from "@tauri-apps/api/path"
-import { exists, mkdir, readDir, readFile, remove, writeFile, writeTextFile } from "@tauri-apps/plugin-fs"
-import { generateUuid } from "@hamsterbase/foundation/uuid"
+import { exists, mkdir, readFile, readTextFile, remove, rename, writeFile, writeTextFile } from "@tauri-apps/plugin-fs"
 import { IDatabaseMeta, IDatabaseStorage } from "./database"
-
-const fileExtension = ".loro"
+import { ManifestStorage, StorageFileAdapter } from "./manifestStorage"
 
 export class TauriFileStorage implements IDatabaseStorage {
+  private readonly storage: ManifestStorage
+
   constructor(
     private readonly baseDir: string,
     private readonly meta: IDatabaseMeta,
-  ) {}
+  ) {
+    const path = (name: string) => `${baseDir}/${name}`
+    const options = { baseDir: BaseDirectory.AppData } as const
+    const adapter: StorageFileAdapter = {
+      readText: async (name) => ((await exists(path(name), options)) ? readTextFile(path(name), options) : null),
+      readBinary: (name) => readFile(path(name), options),
+      writeBinary: async (name, content) => {
+        await this.ensureBaseDir()
+        await writeFile(path(name), content, options)
+      },
+      atomicWriteText: async (name, content) => {
+        await this.ensureBaseDir()
+        const temporary = path(`${name}.tmp`)
+        await writeTextFile(temporary, content, options)
+        await rename(temporary, path(name), {
+          oldPathBaseDir: BaseDirectory.AppData,
+          newPathBaseDir: BaseDirectory.AppData,
+        })
+      },
+      remove: (name) => remove(path(name), options),
+    }
+    this.storage = new ManifestStorage(adapter)
+  }
 
   get id(): string {
     return this.meta.id
   }
 
-  async save(content: Uint8Array): Promise<string> {
+  async load(): Promise<Uint8Array[]> {
     await this.ensureBaseDir()
-    const key = generateUuid()
-    await writeFile(`${this.baseDir}/${key}${fileExtension}`, content, {
-      baseDir: BaseDirectory.AppData,
-    })
-    return key
+    return this.storage.load()
   }
 
-  async delete(key: string): Promise<void> {
-    await remove(`${this.baseDir}/${key}${fileExtension}`, {
-      baseDir: BaseDirectory.AppData,
-    })
+  append(content: Uint8Array): Promise<void> {
+    return this.storage.append(content)
   }
 
-  async list(): Promise<string[]> {
-    await this.ensureBaseDir()
-    const entries = await readDir(this.baseDir, { baseDir: BaseDirectory.AppData })
-    return entries
-      .filter((entry) => entry.isFile && entry.name.endsWith(fileExtension))
-      .map((entry) => entry.name.slice(0, -fileExtension.length))
+  compact(snapshot: Uint8Array): Promise<void> {
+    return this.storage.compact(snapshot)
   }
 
-  async read(key: string): Promise<Uint8Array> {
-    return readFile(`${this.baseDir}/${key}${fileExtension}`, {
-      baseDir: BaseDirectory.AppData,
-    })
+  entryCount(): Promise<number> {
+    return this.storage.entryCount()
   }
 
   private async ensureBaseDir(): Promise<void> {

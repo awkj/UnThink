@@ -97,4 +97,19 @@ dependencies {
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.0")
 }
 
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+    doFirst {
+        val activity = file("src/main/java/io/github/awkj/unthink/generated/WryActivity.kt")
+        if (activity.exists()) {
+            val deprecated = "this@WryActivity.onBackPressed()"
+            val source = activity.readText()
+            if (deprecated in source) {
+                activity.writeText(
+                    source.replace(deprecated, "this@WryActivity.onBackPressedDispatcher.onBackPressed()")
+                )
+            }
+        }
+    }
+}
+
 apply(from = "tauri.build.gradle.kts")

@@ -7,6 +7,7 @@ import { useScrollToTask } from "@/desktop/hooks/useScrollToTask"
 import { desktopStyles } from "@/desktop/theme/main"
 import { useService } from "@/ui/hooks/use-service"
 import { useWatchEvent } from "@/ui/hooks/use-watch-event"
+import { useSynchronizeState } from "@/ui/hooks/useSyncedState"
 import { useTaskDisplaySettings } from "@/ui/hooks/useTaskDisplaySettings"
 import { useTagFilter } from "@/desktop/components/filter/useTagFilter"
 import { localize } from "@/nls"
@@ -70,9 +71,7 @@ const ProjectContent: React.FC<ProjectContentProps> = ({ project, projectId }) =
     disableCreateTask: true,
   })
 
-  useEffect(() => {
-    setAllTags((previousTags) => (isSameTags(previousTags, latestAllTags) ? previousTags : latestAllTags))
-  }, [latestAllTags])
+  useSynchronizeState(setAllTags, latestAllTags, isSameTags)
 
   const { flattenedItems } = flattenedItemsResult
 

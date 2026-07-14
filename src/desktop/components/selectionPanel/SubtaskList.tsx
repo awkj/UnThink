@@ -6,6 +6,7 @@ import { TaskInfo } from "@/core/state/type.ts"
 import { desktopStyles } from "@/desktop/theme/main"
 import { useService } from "@/ui/hooks/use-service"
 import { useWatchEvent } from "@/ui/hooks/use-watch-event"
+import { useTodoEntitySubscription } from "@/ui/hooks/useTodoSelector"
 import { useRegisterEvent } from "@/ui/hooks/useRegisterEvent"
 import { localize } from "@/nls"
 import { IListService } from "@/services/list/listService"
@@ -26,7 +27,7 @@ export const SubtaskList: React.FC<SubtaskListProps> = ({ task }) => {
   const todoService = useService(ITodoService)
   const listService = useService(IListService)
 
-  useWatchEvent(todoService.onStateChange)
+  useTodoEntitySubscription(task.id)
   useWatchEvent(listService.onSubListChange)
 
   const sensors = useDesktopDndSensors()

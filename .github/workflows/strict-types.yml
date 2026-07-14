@@ -21,6 +21,76 @@ jobs:
           node-version: 24
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
       - run: pnpm check
-      - run: pnpm test
-      - run: pnpm web:build
+      - run: pnpm check:native
+      - run: pnpm test:coverage
+      - run: pnpm test:e2e --project=chromium
+      - run: pnpm check:bundle
+
+  server:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: unthink_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    env:
+      TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/unthink_test?sslmode=disable
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.26.x"
+          cache-dependency-path: server/go.sum
+      - run: go test ./...
+        working-directory: server
+
+  macos-cargo:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.85"
+      - run: cargo check --locked
+        working-directory: src-tauri
+      - run: brew install xcodegen
+      - run: xcodegen generate --spec project.yml
+        working-directory: src-tauri/apple
+      - run: xcodebuild -project UnthinkExtensions.xcodeproj -scheme UnthinkIntents -configuration Debug CODE_SIGNING_ALLOWED=NO build
+        working-directory: src-tauri/apple
+      - run: xcodebuild -project UnthinkExtensions.xcodeproj -scheme UnthinkWidget -configuration Debug CODE_SIGNING_ALLOWED=NO build
+        working-directory: src-tauri/apple
+
+  android-arm64-debug:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.11.0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: android-actions/setup-android@v3
+      - run: sdkmanager "platform-tools" "platforms;android-36" "build-tools;36.0.0" "ndk;28.2.13676358"
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: "1.85"
+          targets: aarch64-linux-android
+      - run: pnpm install --frozen-lockfile
+      - run: NDK_HOME="$ANDROID_HOME/ndk/28.2.13676358" ANDROID_NDK_HOME="$ANDROID_HOME/ndk/28.2.13676358" pnpm tauri android build --debug --target aarch64

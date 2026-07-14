@@ -29,10 +29,10 @@ import { localize } from "@/nls"
 import { ITodoService } from "@/services/todo/todoService"
 import { DragEndEvent } from "@dnd-kit/core"
 import { TreeID } from "loro-crdt"
-import React, { useRef } from "react"
+import React from "react"
 import { IInstantiationService } from "@hamsterbase/foundation/instantiation"
 import { useService } from "./use-service"
-import { useWatchEvent } from "./use-watch-event"
+import { useTodoEntitySubscription } from "./useTodoSelector"
 import { flushSync } from "react-dom"
 
 function formatRecurringRule(rule?: RecurringRule): string[] {
@@ -54,9 +54,8 @@ function formatRecurringRule(rule?: RecurringRule): string[] {
 }
 
 export const useEditTaskHooks = (taskInfo: TaskInfo) => {
-  const subtaskInputRefs = useRef<Record<string, HTMLInputElement>>({})
   const todoService = useService(ITodoService)
-  useWatchEvent(todoService.onStateChange)
+  useTodoEntitySubscription(taskInfo.id)
   const popupAction = usePopupAction()
   const dialog = useDialog()
   const projectAreaSelector = useProjectAreaSelector()
@@ -147,6 +146,27 @@ export const useEditTaskHooks = (taskInfo: TaskInfo) => {
     })
   }
 
+  const createSubtask = (previousTaskId?: TreeID) => {
+    let newTaskId
+    if (previousTaskId) {
+      newTaskId = todoService.addTask({
+        title: "",
+        position: { type: "afterElement", previousElementId: previousTaskId },
+      })
+    } else {
+      newTaskId = todoService.addTask({
+        title: "",
+        position: { type: "firstElement", parentId: taskInfo.id },
+      })
+    }
+
+    setTimeout(() => {
+      document.querySelector<HTMLInputElement>(`[data-edit-subtask-id="${CSS.escape(newTaskId)}"]`)?.focus()
+    }, 0)
+
+    todoService.editItem(taskInfo.id)
+  }
+
   const bottomActions = [
     {
       key: "startDate",
@@ -217,28 +237,6 @@ export const useEditTaskHooks = (taskInfo: TaskInfo) => {
     },
   ].filter((action) => action.show)
 
-  const createSubtask = (previousTaskId?: TreeID) => {
-    let newTaskId
-    if (previousTaskId) {
-      newTaskId = todoService.addTask({
-        title: "",
-        position: { type: "afterElement", previousElementId: previousTaskId },
-      })
-    } else {
-      newTaskId = todoService.addTask({
-        title: "",
-        position: { type: "firstElement", parentId: taskInfo.id },
-      })
-    }
-
-    // Focus the new subtask input after creation
-    setTimeout(() => {
-      subtaskInputRefs.current[newTaskId]?.focus()
-    }, 0)
-
-    todoService.editItem(taskInfo.id)
-  }
-
   const deleteSubtask = (id: string) => {
     let toFocusId = ""
     const currentIndex = taskInfo.children.findIndex((item) => item.id === id)
@@ -253,7 +251,7 @@ export const useEditTaskHooks = (taskInfo: TaskInfo) => {
     flushSync(() => {
       todoService.deleteItem(id)
     })
-    subtaskInputRefs.current[toFocusId]?.focus()
+    document.querySelector<HTMLInputElement>(`[data-edit-subtask-id="${CSS.escape(toFocusId)}"]`)?.focus()
   }
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -424,7 +422,6 @@ export const useEditTaskHooks = (taskInfo: TaskInfo) => {
     createSubtask,
     handleDragEnd,
     deleteSubtask,
-    subtaskInputRefs,
     handleMoreOptions,
     bottomActions,
     updateSubtaskStatus,

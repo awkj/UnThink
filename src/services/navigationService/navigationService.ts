@@ -7,6 +7,13 @@ export interface NavigateOptions {
   replace?: boolean
 }
 
+export function getNavigationPathFromDeepLink(value: string): string | null {
+  const url = new URL(value)
+  if (url.protocol !== "unthink:") return null
+  const destination = url.pathname.split("/").filter(Boolean).at(-1)
+  return destination === "today" || destination === "inbox" ? `/${destination}` : null
+}
+
 export interface INavigationService {
   readonly _serviceBrand: undefined
 
@@ -55,6 +62,16 @@ export class NavigationService implements INavigationService {
 
   constructor() {
     if ("__TAURI_INTERNALS__" in window) {
+      const navigateFromDeepLink = (urls: string[]) => {
+        const path = urls.map(getNavigationPathFromDeepLink).find((value) => value !== null)
+        if (path) this.navigate({ path })
+      }
+      void import("@tauri-apps/plugin-deep-link")
+        .then(async ({ getCurrent, onOpenUrl }) => {
+          navigateFromDeepLink((await getCurrent()) ?? [])
+          await onOpenUrl(navigateFromDeepLink)
+        })
+        .catch((error: unknown) => console.error("Failed to register deep-link navigation:", error))
       void import("@tauri-apps/api/app")
         .then(({ onBackButtonPress }) => onBackButtonPress(() => this.dispatchBackButton()))
         .catch((error: unknown) => console.error("Failed to register native back handler:", error))

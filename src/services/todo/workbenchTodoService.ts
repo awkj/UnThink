@@ -24,6 +24,7 @@ import {
   UpdateTaskViewSchema,
 } from "@/core/type.ts"
 import { IDatabaseStorage } from "@/services/database/database"
+import { LoroPersistenceWorkerClient } from "@/services/database/loroPersistenceWorkerClient"
 import { EditingContent, ITodoService, TaskCommand, VIEW_SCHEMA_VERSION } from "@/services/todo/todoService.ts"
 import type { TreeID } from "loro-crdt"
 import { debounceTime, Subject } from "rxjs"
@@ -36,6 +37,7 @@ interface DateModel {
   dispose: () => void
   persist: (updates: Uint8Array[]) => Promise<void>
   compact: () => Promise<void>
+  worker: LoroPersistenceWorkerClient
 }
 
 const COMPACT_AFTER_UPDATES = 128
@@ -93,47 +95,52 @@ export class WorkbenchTodoService implements ITodoService {
     const peerId = await getPeerId()
     taskModel.setPeerId(peerId)
     const queue = new PersistenceQueue()
-    const previousKeys = await storage.list()
-    if (previousKeys.length > 0) {
-      const data = await Promise.all(previousKeys.map((key) => storage.read(key)))
+    const data = await storage.load()
+    if (data.length > 0) {
       taskModel.import(data)
     }
+    const worker = new LoroPersistenceWorkerClient(data, () => taskModel.export())
 
-    let persistedUpdates = previousKeys.length
+    let persistedUpdates = await storage.entryCount()
     const compact = () =>
       queue.run(async () => {
-        const keys = await storage.list()
-        const snapshotKey = await storage.save(taskModel.export())
-        await Promise.all(keys.filter((key) => key !== snapshotKey).map((key) => storage.delete(key)))
+        await storage.compact(await worker.snapshot())
         persistedUpdates = 1
       })
     const persist = (updates: Uint8Array[]) =>
       queue.run(async () => {
         for (const update of updates) {
-          await storage.save(update)
+          await storage.append(update)
           persistedUpdates += 1
         }
         if (persistedUpdates >= COMPACT_AFTER_UPDATES) {
-          const keys = await storage.list()
-          const snapshotKey = await storage.save(taskModel.export())
-          await Promise.all(keys.filter((key) => key !== snapshotKey).map((key) => storage.delete(key)))
+          await storage.compact(taskModel.export())
           persistedUpdates = 1
         }
       })
     const disposeStore = new DisposableStore()
-    await compact()
+    // Bootstrap from the already materialized main-thread model. Waiting for a
+    // newly spawned worker here can deadlock first paint if its module/WASM
+    // initialization is delayed; subsequent compactions use the worker mirror.
+    await queue.run(async () => {
+      await storage.compact(taskModel.export())
+      persistedUpdates = 1
+    })
     taskModel.clearUndoHistory()
     const dataModel: DateModel = {
       taskModel,
+      worker,
       persist,
       compact,
       modelData: taskModel.toJSON(),
       dispose: () => {
+        worker.dispose()
         disposeStore.dispose()
       },
     }
     disposeStore.add(
       taskModel.onLocalUpdate((update) => {
+        worker.import([update])
         void persist([update]).catch((error: unknown) => {
           console.error("Failed to persist local task update:", error)
         })
@@ -178,6 +185,7 @@ export class WorkbenchTodoService implements ITodoService {
     }
     const previousVersion = this.dataModel.taskModel.version
     this.dataModel.taskModel.import(data)
+    this.dataModel.worker.import(data)
     this.dataModel.modelData = this.dataModel.taskModel.toJSON()
     await this.dataModel.persist(data)
     if (previousVersion.compare(this.dataModel.taskModel.version) !== 0) {

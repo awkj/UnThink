@@ -5,14 +5,17 @@ import (
 	"crypto/sha256"
 	"database/sql"
 	"embed"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/fs"
 	"path/filepath"
 	"strconv"
 	"strings"
+	"sync/atomic"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	_ "github.com/jackc/pgx/v5/stdlib"
 )
 
@@ -22,7 +25,18 @@ const defaultUserID = "default"
 var migrationFiles embed.FS
 
 type Store struct {
-	db *sql.DB
+	db             *sql.DB
+	databaseURL    string
+	authToken      string
+	notifications  chan RevisionNotification
+	listenerCancel context.CancelFunc
+	listenerPID    atomic.Uint32
+}
+
+type RevisionNotification struct {
+	Space    string `json:"space"`
+	ClientID string `json:"clientId"`
+	Revision int64  `json:"revision"`
 }
 
 type Status struct {
@@ -65,10 +79,24 @@ func Open(ctx context.Context, databaseURL, authToken string) (*Store, error) {
 	db.SetMaxIdleConns(5)
 	db.SetConnMaxIdleTime(5 * time.Minute)
 	db.SetConnMaxLifetime(30 * time.Minute)
-	store := &Store{db: db}
+	listenerCtx, listenerCancel := context.WithCancel(context.Background())
+	store := &Store{
+		db: db, databaseURL: databaseURL, authToken: authToken,
+		notifications: make(chan RevisionNotification, 64), listenerCancel: listenerCancel,
+	}
 	if err := store.migrate(ctx, authToken); err != nil {
+		listenerCancel()
 		db.Close()
 		return nil, err
+	}
+	listenerReady := make(chan struct{})
+	go store.listenForRevisions(listenerCtx, listenerReady)
+	select {
+	case <-listenerReady:
+	case <-time.After(5 * time.Second):
+		listenerCancel()
+		db.Close()
+		return nil, errors.New("postgres revision listener did not become ready")
 	}
 	return store, nil
 }
@@ -79,9 +107,13 @@ func (s *Store) migrate(ctx context.Context, authToken string) error {
 	}
 	if _, err := s.db.ExecContext(ctx, `CREATE TABLE IF NOT EXISTS schema_migrations (
 		version INTEGER PRIMARY KEY,
-		applied_at BIGINT NOT NULL
+		applied_at BIGINT NOT NULL,
+		checksum TEXT
 	)`); err != nil {
 		return fmt.Errorf("initialize migrations table: %w", err)
+	}
+	if _, err := s.db.ExecContext(ctx, "ALTER TABLE schema_migrations ADD COLUMN IF NOT EXISTS checksum TEXT"); err != nil {
+		return fmt.Errorf("upgrade migrations table: %w", err)
 	}
 	entries, err := fs.ReadDir(migrationFiles, "migrations")
 	if err != nil {
@@ -96,18 +128,29 @@ func (s *Store) migrate(ctx context.Context, authToken string) error {
 		if err != nil {
 			return fmt.Errorf("invalid migration filename %q: %w", entry.Name(), err)
 		}
-		var applied bool
-		if err := s.db.QueryRowContext(ctx,
-			"SELECT EXISTS(SELECT 1 FROM schema_migrations WHERE version = $1)", version,
-		).Scan(&applied); err != nil {
-			return fmt.Errorf("check migration %d: %w", version, err)
-		}
-		if applied {
-			continue
-		}
 		contents, err := migrationFiles.ReadFile("migrations/" + entry.Name())
 		if err != nil {
 			return fmt.Errorf("read migration %d: %w", version, err)
+		}
+		digest := sha256.Sum256(contents)
+		checksum := fmt.Sprintf("%x", digest)
+		var storedChecksum sql.NullString
+		err = s.db.QueryRowContext(ctx,
+			"SELECT checksum FROM schema_migrations WHERE version = $1", version,
+		).Scan(&storedChecksum)
+		if err == nil {
+			if storedChecksum.Valid && storedChecksum.String != checksum {
+				return fmt.Errorf("migration %d checksum mismatch: applied %s, embedded %s", version, storedChecksum.String, checksum)
+			}
+			if !storedChecksum.Valid {
+				if _, err := s.db.ExecContext(ctx, "UPDATE schema_migrations SET checksum = $1 WHERE version = $2", checksum, version); err != nil {
+					return fmt.Errorf("backfill migration %d checksum: %w", version, err)
+				}
+			}
+			continue
+		}
+		if !errors.Is(err, sql.ErrNoRows) {
+			return fmt.Errorf("check migration %d: %w", version, err)
 		}
 		tx, err := s.db.BeginTx(ctx, nil)
 		if err != nil {
@@ -115,8 +158,8 @@ func (s *Store) migrate(ctx context.Context, authToken string) error {
 		}
 		if _, err = tx.ExecContext(ctx, string(contents)); err == nil {
 			_, err = tx.ExecContext(ctx,
-				"INSERT INTO schema_migrations(version, applied_at) VALUES($1, $2)",
-				version, time.Now().UnixMilli(),
+				"INSERT INTO schema_migrations(version, applied_at, checksum) VALUES($1, $2, $3)",
+				version, time.Now().UnixMilli(), checksum,
 			)
 		}
 		if err != nil {
@@ -138,7 +181,65 @@ ON CONFLICT(id) DO UPDATE SET token_hash = excluded.token_hash`,
 	return nil
 }
 
-func (s *Store) Close() error { return s.db.Close() }
+func (s *Store) Close() error {
+	s.listenerCancel()
+	return s.db.Close()
+}
+
+func (s *Store) RevisionNotifications() <-chan RevisionNotification { return s.notifications }
+
+func (s *Store) listenForRevisions(ctx context.Context, ready chan<- struct{}) {
+	defer close(s.notifications)
+	backoff := 100 * time.Millisecond
+	readySent := false
+	for ctx.Err() == nil {
+		conn, err := pgx.Connect(ctx, s.databaseURL)
+		if err == nil {
+			_, err = conn.Exec(ctx, "LISTEN unthink_revisions")
+		}
+		if err != nil {
+			if conn != nil {
+				_ = conn.Close(context.Background())
+			}
+			timer := time.NewTimer(backoff)
+			select {
+			case <-ctx.Done():
+				timer.Stop()
+				return
+			case <-timer.C:
+			}
+			backoff = min(backoff*2, 5*time.Second)
+			continue
+		}
+		backoff = 100 * time.Millisecond
+		s.listenerPID.Store(conn.PgConn().PID())
+		if !readySent {
+			close(ready)
+			readySent = true
+		}
+		for ctx.Err() == nil {
+			notification, waitErr := conn.WaitForNotification(ctx)
+			if waitErr != nil {
+				break
+			}
+			var event RevisionNotification
+			if json.Unmarshal([]byte(notification.Payload), &event) != nil || event.Space == "" || event.Revision < 1 {
+				continue
+			}
+			select {
+			case s.notifications <- event:
+			default:
+				select {
+				case <-s.notifications:
+				default:
+				}
+				s.notifications <- event
+			}
+		}
+		_ = conn.Close(context.Background())
+		s.listenerPID.Store(0)
+	}
+}
 
 func (s *Store) Ping(ctx context.Context) error { return s.db.PingContext(ctx) }
 
@@ -203,6 +304,13 @@ VALUES($1, $2, $3, $4, $5, $6)`,
 	if err != nil {
 		return 0, false, err
 	}
+	notification, err := json.Marshal(RevisionNotification{Space: strings.ToLower(strings.TrimSpace(space)), ClientID: clientID, Revision: revision})
+	if err != nil {
+		return 0, false, err
+	}
+	if _, err = tx.ExecContext(ctx, "SELECT pg_notify('unthink_revisions', $1)", string(notification)); err != nil {
+		return 0, false, err
+	}
 	if err := tx.Commit(); err != nil {
 		return 0, false, err
 	}
@@ -261,8 +369,29 @@ ON CONFLICT(space_id, client_id) DO UPDATE SET
   last_seen_revision = GREATEST(clients.last_seen_revision, excluded.last_seen_revision),
   updated_at = excluded.updated_at`,
 			spaceID, clientID, seenRevision, time.Now().UnixMilli())
+		if err == nil {
+			err = s.cleanupAcknowledgedChanges(ctx, spaceID)
+		}
 	}
 	return page, err
+}
+
+func (s *Store) cleanupAcknowledgedChanges(ctx context.Context, spaceID int64) error {
+	var waterline sql.NullInt64
+	if err := s.db.QueryRowContext(ctx, `
+SELECT LEAST(sn.revision, COALESCE(MIN(c.last_seen_revision), sn.revision))
+FROM snapshots sn LEFT JOIN clients c ON c.space_id = sn.space_id
+WHERE sn.space_id = $1 GROUP BY sn.revision`, spaceID).Scan(&waterline); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil
+		}
+		return err
+	}
+	if !waterline.Valid || waterline.Int64 < 1 {
+		return nil
+	}
+	_, err := s.db.ExecContext(ctx, "DELETE FROM changes WHERE space_id = $1 AND revision <= $2", spaceID, waterline.Int64)
+	return err
 }
 
 func (s *Store) PutSnapshot(ctx context.Context, space string, coversRevision int64, payload []byte) (Status, error) {
@@ -291,10 +420,6 @@ ON CONFLICT(space_id) DO UPDATE SET
   revision = excluded.revision, payload = excluded.payload, created_at = excluded.created_at`,
 			spaceID, coversRevision, payload, time.Now().UnixMilli())
 		if err != nil {
-			return Status{}, err
-		}
-		if _, err := tx.ExecContext(ctx,
-			"DELETE FROM changes WHERE space_id = $1 AND revision <= $2", spaceID, coversRevision); err != nil {
 			return Status{}, err
 		}
 		previous = coversRevision

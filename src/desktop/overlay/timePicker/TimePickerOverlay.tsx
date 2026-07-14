@@ -5,6 +5,7 @@ import { desktopStyles } from "@/desktop/theme/main"
 import { useConfig } from "@/ui/hooks/useConfig"
 import { useService } from "@/ui/hooks/use-service"
 import { useWatchEvent } from "@/ui/hooks/use-watch-event"
+import { useResettableState } from "@/ui/hooks/useSyncedState"
 import { localize } from "@/nls"
 import { calendarWeekStartDayConfigKey } from "@/services/config/config"
 import { IWorkbenchOverlayService } from "@/services/overlay/WorkbenchOverlayService"
@@ -55,12 +56,10 @@ export const TimePickerOverlay: React.FC = () => {
   useWatchEvent(controller?.onStatusChange)
   const hourColRef = React.useRef<HTMLDivElement>(null)
   const minuteColRef = React.useRef<HTMLDivElement>(null)
-  const [visibleMonth, setVisibleMonth] = React.useState(() => startOfMonth(new Date()))
-
-  React.useEffect(() => {
-    if (!controller) return
-    setVisibleMonth(startOfMonth(controller.selectedDate))
-  }, [controller, controller?.selectedDate])
+  const selectedTime = controller?.selectedDate.getTime() ?? null
+  const [visibleMonth, setVisibleMonth] = useResettableState(selectedTime, () =>
+    startOfMonth(controller?.selectedDate ?? new Date()),
+  )
 
   React.useEffect(() => {
     if (!controller) return

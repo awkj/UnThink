@@ -6,8 +6,10 @@ import {
 } from "@/services/config/config"
 import { useConfig } from "./useConfig"
 import { useGlobalTaskDisplaySettings } from "./useGlobalTaskDisplaySettings"
+import { useState } from "react"
 
 export const useTaskDisplaySettings = (page: string) => {
+  const [now] = useState(Date.now)
   const globalSettings = useGlobalTaskDisplaySettings()
   const { value: showFutureTasks } = useConfig(showFutureTasksConfigKey(page, globalSettings.showFutureTasks))
   const { value: showCompletedTasks } = useConfig(showCompletedTasksConfigKey(page, globalSettings.showCompletedTasks))
@@ -18,6 +20,6 @@ export const useTaskDisplaySettings = (page: string) => {
   return {
     showFutureTasks,
     showCompletedTasks,
-    completedAfter: getTimeAfter(Date.now(), completedTasksRange),
+    completedAfter: getTimeAfter(now, completedTasksRange),
   }
 }

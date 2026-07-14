@@ -20,12 +20,10 @@ export default tseslint.config(
     },
     rules: {
       ...reactHooks.configs.recommended.rules,
-      // These React Compiler rules require broader state-model refactors and are
-      // intentionally adopted separately from the TypeScript 7 migration.
-      "react-hooks/immutability": "off",
-      "react-hooks/purity": "off",
-      "react-hooks/refs": "off",
-      "react-hooks/set-state-in-effect": "off",
+      "react-hooks/immutability": "error",
+      "react-hooks/purity": "error",
+      "react-hooks/refs": "error",
+      "react-hooks/set-state-in-effect": "error",
       "react-refresh/only-export-components": ["warn", { allowConstantExport: true }],
     },
   },

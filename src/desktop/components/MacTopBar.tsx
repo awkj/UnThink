@@ -2,31 +2,22 @@ import { checkPlatform } from "@/ui/browser/checkPlatform"
 import { LeftIcon, RightIcon } from "@/ui/components/icons"
 import { desktopStyles } from "@/desktop/theme/main"
 import classNames from "classnames"
-import React, { useEffect, useState } from "react"
+import React, { useCallback, useSyncExternalStore } from "react"
 import { useLocation, useNavigate } from "react-router"
 
 const getHistoryIdx = () => (window.history.state?.idx as number | undefined) ?? 0
 
-const readNavState = () => {
-  const idx = getHistoryIdx()
-  return {
-    canGoBack: idx > 0,
-    canGoForward: idx < window.history.length - 1,
-  }
-}
-
 export const MacTopBar: React.FC = () => {
   const { isTauri, isMac } = checkPlatform()
   const navigate = useNavigate()
-  const location = useLocation()
-  const [{ canGoBack, canGoForward }, setNavState] = useState(readNavState)
-
-  useEffect(() => {
-    setNavState(readNavState())
-    const update = () => setNavState(readNavState())
+  useLocation()
+  const subscribe = useCallback((update: () => void) => {
     window.addEventListener("popstate", update)
     return () => window.removeEventListener("popstate", update)
-  }, [location])
+  }, [])
+  const historyIndex = useSyncExternalStore(subscribe, getHistoryIdx, () => 0)
+  const canGoBack = historyIndex > 0
+  const canGoForward = historyIndex < window.history.length - 1
 
   if (!(isTauri && isMac)) {
     return null

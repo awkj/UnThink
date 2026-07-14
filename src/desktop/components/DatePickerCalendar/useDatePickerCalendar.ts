@@ -1,7 +1,8 @@
 import { getCalendarLeadingDaysCount, type CalendarWeekStartDay } from "@/core/time/calendarWeekStart"
 import { formatCalendarMonth } from "@/core/time/formatCalendarMonth"
 import { startOfMonth, endOfMonth, addMonths, differenceInMonths } from "date-fns"
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
+import { useResettableState } from "@/ui/hooks/useSyncedState"
 
 interface CalendarListRef {
   scrollToItem(index: number, align: "start"): void
@@ -93,20 +94,15 @@ export function useDatePickerCalendar(
   listRef: React.RefObject<CalendarListRef | null>,
   weekStartDay: CalendarWeekStartDay = 1,
 ) {
-  const [visibleMonthIndex, setVisibleMonthIndex] = useState(500)
+  const selectedTime = selectedDate?.getTime() ?? null
+  const targetIndex = selectedDate
+    ? 500 - differenceInMonths(startOfMonth(new Date()), startOfMonth(selectedDate))
+    : 500
+  const [visibleMonthIndex, setVisibleMonthIndex] = useResettableState(selectedTime, () => targetIndex)
 
   useEffect(() => {
-    if (selectedDate) {
-      const diffMonth = differenceInMonths(startOfMonth(new Date()), startOfMonth(selectedDate))
-      const targetIndex = 500 - diffMonth
-      setVisibleMonthIndex(targetIndex)
-      listRef.current?.scrollToItem(targetIndex, "start")
-    } else {
-      const todayIndex = 500
-      setVisibleMonthIndex(todayIndex)
-      listRef.current?.scrollToItem(todayIndex, "start")
-    }
-  }, [selectedDate, listRef])
+    listRef.current?.scrollToItem(targetIndex, "start")
+  }, [selectedTime, listRef, targetIndex])
 
   const visibleMonthTitle = formatCalendarMonth(getMonthData(visibleMonthIndex, selectedDate, weekStartDay).date)
 

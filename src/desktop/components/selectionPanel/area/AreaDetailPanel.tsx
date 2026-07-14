@@ -4,7 +4,7 @@ import { getAreaDetail } from "@/core/state/getArea"
 import { EntityHeader } from "@/desktop/components/common/EntityHeader"
 import { desktopStyles } from "@/desktop/theme/main.ts"
 import { useService } from "@/ui/hooks/use-service"
-import { useWatchEvent } from "@/ui/hooks/use-watch-event"
+import { useTodoEntitySubscription } from "@/ui/hooks/useTodoSelector"
 import { localize } from "@/nls"
 import { ITodoService } from "@/services/todo/todoService"
 import type { TreeID } from "loro-crdt"
@@ -80,7 +80,7 @@ export const AreaDetailPanel: React.FC = () => {
   const todoService = useService(ITodoService)
   const areaId = useAreaId()
 
-  useWatchEvent(todoService.onStateChange)
+  useTodoEntitySubscription(areaId ?? undefined)
 
   if (!areaId) {
     return null

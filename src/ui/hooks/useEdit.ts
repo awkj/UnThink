@@ -1,5 +1,5 @@
 import { handleFocusAndScroll } from "@/ui/browser/commonFocusHandler"
-import { useLayoutEffect, useRef, useState } from "react"
+import { useCallback, useLayoutEffect, useRef, useState } from "react"
 
 interface UseEditProps {
   isEditing: boolean
@@ -22,6 +22,9 @@ export const useEdit = ({
 }: UseEditProps) => {
   const textareaRef = useRef<HTMLInputElement | null>(null)
   const [textContent, setTextContent] = useState(title)
+  const setNativeElement = useCallback((element: HTMLInputElement | null) => {
+    textareaRef.current = element
+  }, [])
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) {
     setTextContent(e.target.value)
@@ -63,6 +66,7 @@ export const useEdit = ({
   }, [isEditing, disableAutoFocus])
 
   return {
+    setNativeElement,
     textAreaProps: {
       ref: textareaRef,
       value: textContent,

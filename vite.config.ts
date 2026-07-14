@@ -2,7 +2,6 @@ import tailwindcss from "@tailwindcss/vite"
 import react, { reactCompilerPreset } from "@vitejs/plugin-react"
 import babel from "@rolldown/plugin-babel"
 import path from "node:path"
-import topLevelAwait from "vite-plugin-top-level-await"
 import wasm from "vite-plugin-wasm"
 import { defineConfig } from "vite"
 import { execSync } from "node:child_process"
@@ -26,6 +25,9 @@ const sourceMapEnabled = coverageEnabled || process.env.VITE_SOURCEMAP === "true
 
 export default defineConfig({
   base,
+  worker: {
+    format: "es",
+  },
   server: tauriDevHost
     ? {
         hmr: {
@@ -40,12 +42,13 @@ export default defineConfig({
   },
   build: {
     target: "esnext",
+    manifest: true,
     // Source maps are useful for coverage, but shipping them in frontendDist
     // needlessly increases the desktop/mobile bundles and exposes source code.
     sourcemap: sourceMapEnabled,
-    // The remaining entry chunks are about 108 KiB gzipped; 700 KiB avoids
-    // warning on those while still catching meaningful bundle regressions.
-    chunkSizeWarningLimit: 700,
+    // Route-level lazy loading keeps every JavaScript chunk below this limit.
+    // CI separately enforces the same 350 KiB budget on the uncompressed files.
+    chunkSizeWarningLimit: 350,
     rolldownOptions: {
       output: {
         codeSplitting: {
@@ -101,17 +104,17 @@ export default defineConfig({
     },
   },
   resolve: {
-    alias: {
-      "@": path.join(import.meta.dirname, "./src"),
-    },
+    alias: [
+      { find: "@", replacement: path.join(import.meta.dirname, "./src") },
+      // The package's browser condition uses synchronous XMLHttpRequest for
+      // WASM, which cannot be fulfilled by a Service Worker while offline.
+      // The bundler entry uses native module/TLA loading and is cacheable.
+      { find: /^loro-crdt$/, replacement: "loro-crdt/bundler" },
+    ],
   },
 
   plugins: [
     tailwindcss(),
-    topLevelAwait({
-      promiseExportName: "__tla",
-      promiseImportName: (i) => `__tla_${i}`,
-    }),
     react(),
     process.env.REACT_COMPILER !== "false" &&
       babel({
@@ -133,6 +136,7 @@ export default defineConfig({
           "src/core/time/isStartOfDay.ts",
           "**/*.d.ts",
           "**/*.test.ts",
+          "**/*.worker.ts",
         ],
       }),
     commonFilesPlugin({

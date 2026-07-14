@@ -22,7 +22,8 @@ import { localize } from "@/nls"
 import { ITodoService } from "@/services/todo/todoService"
 import classNames from "classnames"
 import Textarea from "rc-textarea"
-import React, { useEffect, useMemo, useState } from "react"
+import React, { useMemo, useState } from "react"
+import { useSyncedState } from "@/ui/hooks/useSyncedState"
 
 // Shared with the desktop RuleDocs panel — copying the prompt and pasting it
 // into ChatGPT/Claude returns a rule the user can drop into the Rule box.
@@ -81,20 +82,9 @@ const ViewMeta: React.FC<{ view: TaskViewSchema }> = ({ view }) => {
 
   // Local editing state — commits to the model on blur (not every keystroke),
   // mirroring ProjectMeta. Reset each field when the underlying view changes.
-  const [name, setName] = useState(view.name ?? "")
-  useEffect(() => {
-    setName(view.name ?? "")
-  }, [view.name])
-
-  const [desc, setDesc] = useState(view.desc ?? "")
-  useEffect(() => {
-    setDesc(view.desc ?? "")
-  }, [view.desc])
-
-  const [rule, setRule] = useState(view.rule ?? "")
-  useEffect(() => {
-    setRule(view.rule ?? "")
-  }, [view.rule])
+  const [name, setName] = useSyncedState(view.name ?? "")
+  const [desc, setDesc] = useSyncedState(view.desc ?? "")
+  const [rule, setRule] = useSyncedState(view.rule ?? "")
 
   const [copied, setCopied] = useState(false)
 

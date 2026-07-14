@@ -16,6 +16,7 @@ import { desktopStyles } from "@/desktop/theme/main"
 import { useConfig } from "@/ui/hooks/useConfig"
 import { useService } from "@/ui/hooks/use-service"
 import { useWatchEvent } from "@/ui/hooks/use-watch-event"
+import { useResettableState } from "@/ui/hooks/useSyncedState"
 import { localize } from "@/nls"
 import { calendarWeekStartDayConfigKey } from "@/services/config/config"
 import { IWorkbenchOverlayService } from "@/services/overlay/WorkbenchOverlayService"
@@ -23,7 +24,7 @@ import { OverlayEnum } from "@/services/overlay/overlayEnum"
 import { TestIds } from "@/testIds"
 import classNames from "classnames"
 import { addMonths, format, startOfMonth } from "date-fns"
-import React, { useEffect, useState } from "react"
+import React, { useEffect } from "react"
 import { DatePickerOverlayController } from "./DatePickerOverlayController"
 import { calculateElementWidth } from "./constant"
 
@@ -70,7 +71,10 @@ export const DatePickerOverlay: React.FC = () => {
   useWatchEvent(controller?.onStatusChange)
   const { value: weekStartDay } = useConfig(calendarWeekStartDayConfigKey())
 
-  const [visibleMonth, setVisibleMonth] = useState(() => startOfMonth(new Date()))
+  const selectedTime = controller?.selectedDate?.getTime() ?? null
+  const [visibleMonth, setVisibleMonth] = useResettableState(selectedTime, () =>
+    startOfMonth(controller?.selectedDate ?? new Date()),
+  )
 
   useEffect(() => {
     if (!controller) return
@@ -78,11 +82,8 @@ export const DatePickerOverlay: React.FC = () => {
     if (controller.selectedDate) {
       const dateStr = format(controller.selectedDate, "yyyy-MM-dd")
       controller.updateInputValue(dateStr)
-      setVisibleMonth(startOfMonth(controller.selectedDate))
       return
     }
-
-    setVisibleMonth(startOfMonth(new Date()))
   }, [controller])
 
   if (!controller) return null

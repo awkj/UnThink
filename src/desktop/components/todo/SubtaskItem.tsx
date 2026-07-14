@@ -7,6 +7,7 @@ import { ItemStatus } from "@/core/type.ts"
 import { desktopStyles } from "@/desktop/theme/main"
 import { useService } from "@/ui/hooks/use-service"
 import { useWatchEvent } from "@/ui/hooks/use-watch-event"
+import { useTodoEntitySubscription } from "@/ui/hooks/useTodoSelector"
 import { useLongPress } from "@/ui/hooks/useLongPress.ts"
 import { useRegisterEvent } from "@/ui/hooks/useRegisterEvent.ts"
 import { localize } from "@/nls"
@@ -27,7 +28,7 @@ export const SubtaskItem: React.FC<SubtaskItemProps> = ({ subtask, subList, clas
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: subtask.id })
   const inputElementRef = useRef<HTMLInputElement>(null)
   const todoService = useService(ITodoService)
-  useWatchEvent(todoService.onStateChange)
+  useTodoEntitySubscription(subtask.id)
   useWatchEvent(subList.onListStateChange)
 
   const isSelected = subList.selectedIds.includes(subtask.id)

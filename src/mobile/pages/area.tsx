@@ -3,6 +3,7 @@ import { CheckIcon, FilterIcon, MenuIcon, TagIcon, TaskDisplaySettingsIcon } fro
 import { TestIds } from "@/testIds"
 import { isTaskVisible } from "@/core/time/filterProjectAndTask"
 import { useService } from "@/ui/hooks/use-service"
+import { useSynchronizeState } from "@/ui/hooks/useSyncedState"
 import { useArea } from "@/mobile/hooks/useArea"
 import { PopupActionItem } from "@/mobile/overlay/popupAction/PopupActionController"
 import { usePopupAction } from "@/mobile/overlay/popupAction/usePopupAction"
@@ -15,7 +16,7 @@ import { DragDropElements } from "@/core/dnd/dragDropCollision"
 import { DragEndEvent, useDndContext } from "@dnd-kit/core"
 import classNames from "classnames"
 import type { TreeID } from "loro-crdt"
-import React, { useEffect, useState } from "react"
+import React, { useState } from "react"
 import { useParams } from "react-router"
 import { TagFilterBar } from "../components/filter/TagFilterBar"
 import { TAG_FILTER_ALL, TAG_FILTER_UNTAGGED, TagFilter, isSameTagFilter } from "../components/filter/tagFilter"
@@ -151,9 +152,7 @@ export const AreaPage = () => {
   areaDetail?.projectList.forEach((project) => project.tags?.forEach((tag) => allTagsSet.add(tag)))
   const latestAllTags = Array.from(allTagsSet).sort()
 
-  useEffect(() => {
-    setAllTags((previousTags) => (isSameTags(previousTags, latestAllTags) ? previousTags : latestAllTags))
-  }, [latestAllTags])
+  useSynchronizeState(setAllTags, latestAllTags, isSameTags)
 
   if (!areaDetail) {
     return <div>Area not found</div>

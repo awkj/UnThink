@@ -8,7 +8,7 @@ import { useDesktopDialog } from "@/desktop/overlay/desktopDialog/useDesktopDial
 import { DesktopMenuController } from "@/desktop/overlay/desktopMenu/DesktopMenuController"
 import { desktopStyles } from "@/desktop/theme/main"
 import { useService } from "@/ui/hooks/use-service"
-import { useWatchEvent } from "@/ui/hooks/use-watch-event"
+import { useTodoViewSubscription } from "@/ui/hooks/useTodoSelector"
 import { localize } from "@/nls"
 import { ITodoService, VIEW_SCHEMA_VERSION } from "@/services/todo/todoService"
 import React, { useMemo } from "react"
@@ -24,7 +24,7 @@ export const ViewEditPanel: React.FC<ViewEditPanelProps> = ({ viewUid }) => {
   const instantiationService = useService(IInstantiationService)
   const dialog = useDesktopDialog()
   const navigate = useNavigate()
-  useWatchEvent(todoService.onStateChange)
+  useTodoViewSubscription(viewUid)
 
   const view = getView(todoService.modelState, viewUid)
 

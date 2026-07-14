@@ -1,7 +1,7 @@
 import { AreaExpandedIcon, AreaIcon } from "@/ui/components/icons"
 import { AreaInfoState } from "@/core/state/type"
 import { useService } from "@/ui/hooks/use-service"
-import { useWatchEvent } from "@/ui/hooks/use-watch-event"
+import { useTodoEntitySubscription } from "@/ui/hooks/useTodoSelector"
 import { useCancelEdit } from "@/ui/hooks/useCancelEdit"
 import { useConfig } from "@/ui/hooks/useConfig"
 import { useEdit } from "@/ui/hooks/useEdit"
@@ -28,7 +28,7 @@ export const AreaHeader: React.FC<AreaHeaderProps> = ({ areaInfo, className }) =
   })
   const { itemClassName, shouldIgnoreClick, isEditing, endEditing } = useCancelEdit(node, areaInfo.id)
   const todoService = useService(ITodoService)
-  useWatchEvent(todoService.onStateChange)
+  useTodoEntitySubscription(areaInfo.id)
   const { textAreaProps } = useEdit({
     isEditing,
     title: areaInfo.title,

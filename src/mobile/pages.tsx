@@ -1,109 +1,117 @@
-import React from "react"
-import { MobileHome } from "./pages/home.tsx"
-import { TodayPage } from "./pages/today.tsx"
-import { InboxPage } from "./pages/inbox.tsx"
-import { ProjectPage } from "./pages/project.tsx"
-import { AreaPage } from "./pages/area.tsx"
-import { MobileSettings } from "./pages/settings"
-import { ScheduledPage } from "@/mobile/pages/scheduled.tsx"
-import { FutureProjectsPage } from "./pages/futureProjectsPage.tsx"
-import { CreateTaskActionSheet } from "./pages/createTask.tsx"
-import { LanguageSettings } from "./pages/settings/languageSettings"
-import { ThemeSettings } from "@/mobile/pages/settings/themeSettings.tsx"
-import { CalendarSettings } from "@/mobile/pages/settings/calendarSettings.tsx"
-import { TaskDisplaySettings } from "@/mobile/pages/settings/taskDisplaySettings.tsx"
-import { ExportSettings } from "@/mobile/pages/settings/exportSettings.tsx"
-import { MobileCompleted } from "@/mobile/pages/completed.tsx"
-import { ImportPage } from "@/mobile/pages/settings/import.tsx"
-import { AboutPage } from "@/mobile/pages/settings/about.tsx"
-import { FeedbackPage } from "@/mobile/pages/settings/feedback.tsx"
-import { SelfhostedSync } from "./pages/settings/selfhosted-sync/selfhostedSync.tsx"
-import { ViewPage } from "./pages/view.tsx"
+import { lazy, type ComponentType } from "react"
+
+function lazyNamed<T extends Record<K, ComponentType>, K extends keyof T>(loader: () => Promise<T>, name: K) {
+  return lazy(async () => ({ default: (await loader())[name] }))
+}
+
+const MobileHome = lazyNamed(() => import("./pages/home.tsx"), "MobileHome")
+const TodayPage = lazyNamed(() => import("./pages/today.tsx"), "TodayPage")
+const InboxPage = lazyNamed(() => import("./pages/inbox.tsx"), "InboxPage")
+const ProjectPage = lazyNamed(() => import("./pages/project.tsx"), "ProjectPage")
+const AreaPage = lazyNamed(() => import("./pages/area.tsx"), "AreaPage")
+const MobileSettings = lazyNamed(() => import("./pages/settings"), "MobileSettings")
+const ScheduledPage = lazyNamed(() => import("@/mobile/pages/scheduled.tsx"), "ScheduledPage")
+const FutureProjectsPage = lazyNamed(() => import("./pages/futureProjectsPage.tsx"), "FutureProjectsPage")
+const CreateTaskActionSheet = lazyNamed(() => import("./pages/createTask.tsx"), "CreateTaskActionSheet")
+const LanguageSettings = lazyNamed(() => import("./pages/settings/languageSettings"), "LanguageSettings")
+const ThemeSettings = lazyNamed(() => import("@/mobile/pages/settings/themeSettings.tsx"), "ThemeSettings")
+const CalendarSettings = lazyNamed(() => import("@/mobile/pages/settings/calendarSettings.tsx"), "CalendarSettings")
+const TaskDisplaySettings = lazyNamed(
+  () => import("@/mobile/pages/settings/taskDisplaySettings.tsx"),
+  "TaskDisplaySettings",
+)
+const ExportSettings = lazyNamed(() => import("@/mobile/pages/settings/exportSettings.tsx"), "ExportSettings")
+const MobileCompleted = lazyNamed(() => import("@/mobile/pages/completed.tsx"), "MobileCompleted")
+const ImportPage = lazyNamed(() => import("@/mobile/pages/settings/import.tsx"), "ImportPage")
+const AboutPage = lazyNamed(() => import("@/mobile/pages/settings/about.tsx"), "AboutPage")
+const FeedbackPage = lazyNamed(() => import("@/mobile/pages/settings/feedback.tsx"), "FeedbackPage")
+const SelfhostedSync = lazyNamed(() => import("./pages/settings/selfhosted-sync/selfhostedSync.tsx"), "SelfhostedSync")
+const ViewPage = lazyNamed(() => import("./pages/view.tsx"), "ViewPage")
 
 interface IPage {
   url: string
-  content: React.ReactNode
+  component: ComponentType
 }
 
 export const pages: IPage[] = [
   {
     url: "/home",
-    content: <MobileHome></MobileHome>,
+    component: MobileHome,
   },
   {
     url: "/today",
-    content: <TodayPage></TodayPage>,
+    component: TodayPage,
   },
   {
     url: "/inbox",
-    content: <InboxPage></InboxPage>,
+    component: InboxPage,
   },
   {
     url: "/project/:projectUid",
-    content: <ProjectPage></ProjectPage>,
+    component: ProjectPage,
   },
   {
     url: "/area/:areaUID",
-    content: <AreaPage></AreaPage>,
+    component: AreaPage,
   },
   {
     url: "/settings",
-    content: <MobileSettings />,
+    component: MobileSettings,
   },
   {
     url: "/settings/language",
-    content: <LanguageSettings />,
+    component: LanguageSettings,
   },
   {
     url: "/settings/theme",
-    content: <ThemeSettings />,
+    component: ThemeSettings,
   },
   {
     url: "/settings/calendar",
-    content: <CalendarSettings />,
+    component: CalendarSettings,
   },
   {
     url: "/settings/task-display",
-    content: <TaskDisplaySettings />,
+    component: TaskDisplaySettings,
   },
   {
     url: "/settings/export",
-    content: <ExportSettings />,
+    component: ExportSettings,
   },
   {
     url: "/settings/import",
-    content: <ImportPage />,
+    component: ImportPage,
   },
   {
     url: "/settings/feedback",
-    content: <FeedbackPage />,
+    component: FeedbackPage,
   },
   {
     url: "/completed",
-    content: <MobileCompleted></MobileCompleted>,
+    component: MobileCompleted,
   },
   {
     url: "/scheduled",
-    content: <ScheduledPage></ScheduledPage>,
+    component: ScheduledPage,
   },
   {
     url: "/future_projects",
-    content: <FutureProjectsPage></FutureProjectsPage>,
+    component: FutureProjectsPage,
   },
   {
     url: "/create_task",
-    content: <CreateTaskActionSheet></CreateTaskActionSheet>,
+    component: CreateTaskActionSheet,
   },
   {
     url: "/settings/about",
-    content: <AboutPage />,
+    component: AboutPage,
   },
   {
     url: "/settings/selfhosted-sync",
-    content: <SelfhostedSync />,
+    component: SelfhostedSync,
   },
   {
     url: "/views/:viewUid",
-    content: <ViewPage />,
+    component: ViewPage,
   },
 ]

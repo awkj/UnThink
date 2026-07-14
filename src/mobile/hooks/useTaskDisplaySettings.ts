@@ -9,6 +9,7 @@ import {
   showFutureTasksConfigKey,
 } from "@/services/config/config"
 import { IInstantiationService } from "@hamsterbase/foundation/instantiation"
+import { useState } from "react"
 
 interface useTaskDisplaySettingsOption {
   hideShowFutureTasks?: boolean
@@ -16,6 +17,7 @@ interface useTaskDisplaySettingsOption {
 
 export const useTaskDisplaySettingsMobile = (page: string, option?: useTaskDisplaySettingsOption) => {
   const instantiationService = useService(IInstantiationService)
+  const [now] = useState(Date.now)
   const globalSettings = useGlobalTaskDisplaySettings()
   const { value: showFutureTasks, setValue: setShowFutureTasks } = useConfig(
     showFutureTasksConfigKey(page, globalSettings.showFutureTasks),
@@ -47,7 +49,7 @@ export const useTaskDisplaySettingsMobile = (page: string, option?: useTaskDispl
   return {
     showFutureTasks,
     showCompletedTasks,
-    completedAfter: getTimeAfter(Date.now(), completedTasksRange),
+    completedAfter: getTimeAfter(now, completedTasksRange),
     openTaskDisplaySettings,
   }
 }

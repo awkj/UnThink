@@ -1,10 +1,32 @@
 import * as fs from "fs/promises"
 import * as path from "path"
 import { IDatabaseMeta } from "@/services/database/database"
+import { ManifestStorage, StorageFileAdapter } from "@/services/database/manifestStorage"
 import { getDataDirs, resolveDatabaseDir } from "./paths"
 
 const DIR_PREFIX = "db-"
-const FILE_EXT = ".loro"
+
+function manifestStorage(dir: string): ManifestStorage {
+  const adapter: StorageFileAdapter = {
+    readText: async (name) => {
+      try {
+        return await fs.readFile(path.join(dir, name), "utf8")
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code === "ENOENT") return null
+        throw error
+      }
+    },
+    readBinary: async (name) => new Uint8Array(await fs.readFile(path.join(dir, name))),
+    writeBinary: async (name, content) => fs.writeFile(path.join(dir, name), content),
+    atomicWriteText: async (name, content) => {
+      const temporary = path.join(dir, `${name}.tmp`)
+      await fs.writeFile(temporary, content, "utf8")
+      await fs.rename(temporary, path.join(dir, name))
+    },
+    remove: async (name) => fs.rm(path.join(dir, name), { force: true }),
+  }
+  return new ManifestStorage(adapter)
+}
 
 export async function listDatabases(): Promise<IDatabaseMeta[]> {
   const byId = new Map<string, IDatabaseMeta>()
@@ -48,8 +70,7 @@ export function resolveDatabase(
 
 export async function countTaskFiles(databaseId: string): Promise<number> {
   try {
-    const files = await fs.readdir(await resolveDatabaseDir(databaseId))
-    return files.filter((f) => f.endsWith(FILE_EXT) && f !== "_meta.json").length
+    return await manifestStorage(await resolveDatabaseDir(databaseId)).entryCount()
   } catch {
     return 0
   }
@@ -57,23 +78,10 @@ export async function countTaskFiles(databaseId: string): Promise<number> {
 
 export async function readSnapshotBlobs(databaseId: string): Promise<Uint8Array[]> {
   const dir = await resolveDatabaseDir(databaseId)
-  let files: string[]
   try {
-    files = await fs.readdir(dir)
+    return await manifestStorage(dir).load()
   } catch (err) {
     if ((err as NodeJS.ErrnoException).code === "ENOENT") return []
     throw err
   }
-  const taskFiles = files.filter((f) => f.endsWith(FILE_EXT) && f !== "_meta.json")
-
-  const blobs: Uint8Array[] = []
-  for (const name of taskFiles) {
-    try {
-      blobs.push(new Uint8Array(await fs.readFile(path.join(dir, name))))
-    } catch (err) {
-      if ((err as NodeJS.ErrnoException).code === "ENOENT") continue
-      throw err
-    }
-  }
-  return blobs
 }

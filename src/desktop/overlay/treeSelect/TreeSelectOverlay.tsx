@@ -5,6 +5,7 @@ import { ProjectIcon } from "@/desktop/components/todo/ProjectIcon"
 import { desktopStyles } from "@/desktop/theme/main"
 import { useService } from "@/ui/hooks/use-service"
 import { useWatchEvent } from "@/ui/hooks/use-watch-event"
+import { useResettableState } from "@/ui/hooks/useSyncedState"
 import { localize } from "@/nls"
 import { OverlayEnum } from "@/services/overlay/overlayEnum"
 import { IWorkbenchOverlayService } from "@/services/overlay/WorkbenchOverlayService"
@@ -102,7 +103,8 @@ const TreeSelectContent: React.FC<TreeSelectContentProps> = ({ controller }) => 
   const { currentAreaId, currentProjectId } = selection
   const areas = getOverlayAreas(todoService, searchText)
   const rootProjects = variant === "project" ? [] : getOverlayRootProjects(todoService, searchText)
-  const [expandedIds, setExpandedIds] = useState<Set<string>>(() => getInitialExpandedIds(areas, selection))
+  const selectionKey = `${variant}:${currentAreaId ?? ""}:${currentProjectId ?? ""}`
+  const [expandedIds, setExpandedIds] = useResettableState(selectionKey, () => getInitialExpandedIds(areas, selection))
   const isSearching = searchText.trim().length > 0
 
   useEffect(() => {
@@ -110,19 +112,6 @@ const TreeSelectContent: React.FC<TreeSelectContentProps> = ({ controller }) => 
       overlayRef.current.focus()
     }
   }, [])
-
-  useEffect(() => {
-    setExpandedIds(
-      getInitialExpandedIds(areas, {
-        currentAreaId,
-        currentProjectId,
-      }),
-    )
-    // Only re-seed when the overlay's selection context changes. `areas` is a fresh
-    // array reference on every render, so depending on it would clobber the user's
-    // manual chevron toggles.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentAreaId, currentProjectId, variant])
 
   const handleConfirmSelection = (id: TreeID | null) => {
     controller.confirmSelection(id)

@@ -42,5 +42,12 @@
     "android": {
       "minSdkVersion": 24
     }
+  },
+  "plugins": {
+    "deep-link": {
+      "desktop": {
+        "schemes": ["unthink"]
+      }
+    }
   }
 }

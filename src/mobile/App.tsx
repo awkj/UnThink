@@ -9,7 +9,7 @@ import { TaskDisplaySettings } from "@/mobile/overlay/taskDisplaySettings/TaskDi
 import { RecurringTaskSettings } from "@/mobile/overlay/recurringTaskSettings/RecurringTaskSettings"
 import { pages } from "@/mobile/pages.tsx"
 import { INavigationService } from "@/services/navigationService/navigationService"
-import { useEffect, useRef } from "react"
+import { Suspense, useEffect, useRef } from "react"
 import { BrowserRouter, HashRouter, Navigate, Outlet, Route, Routes, useNavigate } from "react-router"
 import { checkPlatform } from "@/ui/browser/checkPlatform"
 import { Toast } from "./overlay/toast/Toast"
@@ -74,9 +74,20 @@ export const App = () => {
       <Router>
         <Routes>
           <Route element={<ContentNavigation></ContentNavigation>}>
-            {pages.map((page) => (
-              <Route key={page.url} path={page.url} element={page.content} />
-            ))}
+            {pages.map((page) => {
+              const Page = page.component
+              return (
+                <Route
+                  key={page.url}
+                  path={page.url}
+                  element={
+                    <Suspense fallback={null}>
+                      <Page />
+                    </Suspense>
+                  }
+                />
+              )
+            })}
             <Route path="*" element={<Navigate to="/home" replace />} />
           </Route>
         </Routes>

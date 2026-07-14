@@ -9,6 +9,7 @@ import { CSS } from "@dnd-kit/utilities"
 import classNames from "classnames"
 import React from "react"
 import { styles } from "@/mobile/theme"
+import { useSyncedState } from "@/ui/hooks/useSyncedState"
 
 interface SubtaskItemProps {
   id: string
@@ -22,6 +23,7 @@ interface SubtaskItemProps {
   className?: string
   disableDragStyle?: boolean
   inputTestId?: string
+  inputDataId?: string
   statusButtonClassName?: string
   inputClassName?: string
   dragHandleClassName?: string
@@ -39,6 +41,7 @@ export const SubtaskItem: React.FC<SubtaskItemProps> = ({
   className,
   disableDragStyle = false,
   inputTestId,
+  inputDataId,
   statusButtonClassName,
   inputClassName,
   dragHandleClassName,
@@ -62,11 +65,7 @@ export const SubtaskItem: React.FC<SubtaskItemProps> = ({
     }
   })
 
-  const [inputValue, setInputValue] = React.useState(title)
-
-  React.useEffect(() => {
-    setInputValue(title)
-  }, [title])
+  const [inputValue, setInputValue] = useSyncedState(title)
 
   const handleBlur = () => {
     if (inputValue !== title) {
@@ -116,6 +115,7 @@ export const SubtaskItem: React.FC<SubtaskItemProps> = ({
         placeholder={localize("mobile.subtask.placeholder", "Subtask")}
         ref={inputRef}
         data-testid={inputTestId}
+        data-edit-subtask-id={inputDataId}
       />
       <DragHandleIcon
         className={classNames(styles.createTaskSubtaskDragHandle, dragHandleClassName)}

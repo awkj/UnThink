@@ -1,13 +1,13 @@
 import { IWebLoggerService, LogLevel, LogEntry } from "./webloggerService"
-import { WebLoggerIndexedDBStorage } from "./webloggerIndexedDBStorage"
+import { WebLoggerOpfsStorage } from "./webloggerOpfsStorage"
 
 export class WorkbenchWebLoggerService implements IWebLoggerService {
   readonly _serviceBrand: undefined
-  private storage: WebLoggerIndexedDBStorage
+  private storage: WebLoggerOpfsStorage
   private cleanupInterval: number | null = null
 
   constructor() {
-    this.storage = new WebLoggerIndexedDBStorage()
+    this.storage = new WebLoggerOpfsStorage()
     this.setupCleanupInterval()
   }
 

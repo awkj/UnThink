@@ -20,6 +20,7 @@ import { getTaskInfo } from "@/core/state/getTaskInfo"
 import { TaskInfo } from "@/core/state/type"
 import { useService } from "@/ui/hooks/use-service"
 import { useWatchEvent } from "@/ui/hooks/use-watch-event"
+import { useTodoEntitySubscription } from "@/ui/hooks/useTodoSelector"
 import { useCancelEdit } from "@/ui/hooks/useCancelEdit"
 import { useEdit } from "@/ui/hooks/useEdit"
 import { useEditTaskHooks } from "@/ui/hooks/useEditTask.tsx"
@@ -61,7 +62,7 @@ function formatDateISO(timestamp?: number): string {
 
 export const EditTaskItem: React.FC<EditTaskItemProps> = ({ taskInfo: taskInfoProp }) => {
   const todoService = useService(ITodoService)
-  useWatchEvent(todoService.onStateChange)
+  useTodoEntitySubscription(taskInfoProp.id)
   // Get fresh taskInfo from service state to reflect latest changes (reminders, recurring, etc.)
   const taskInfo = getTaskInfo(todoService.modelState, taskInfoProp.id)
   const isEditing = taskInfo.id === todoService.editingContent?.id
@@ -106,7 +107,7 @@ export const EditTaskItem: React.FC<EditTaskItemProps> = ({ taskInfo: taskInfoPr
       todoService.editItem(newTaskId)
     }, 60)
   }, [location.pathname, taskInfo.id, todoService])
-  const { textAreaProps } = useEdit({
+  const { textAreaProps, setNativeElement: setTitleInputElement } = useEdit({
     isEditing,
     title: taskInfo.title,
     onSave: (title: string) => {
@@ -117,7 +118,7 @@ export const EditTaskItem: React.FC<EditTaskItemProps> = ({ taskInfo: taskInfoPr
     enterKeyHint: "next",
     disableAutoFocus: !!taskInfo.title,
   })
-  const { textAreaProps: notesProps } = useEdit({
+  const { textAreaProps: notesProps, setNativeElement: setNotesInputElement } = useEdit({
     isEditing,
     title: taskInfo.notes ?? "",
     onSave: (notes: string) => {
@@ -353,9 +354,7 @@ export const EditTaskItem: React.FC<EditTaskItemProps> = ({ taskInfo: taskInfoPr
                         onTitleChange={taskActions.updateSubtaskTitle}
                         onCreate={() => taskActions.createSubtask(child.id)}
                         onDelete={taskActions.deleteSubtask}
-                        inputRef={(el: HTMLInputElement | null) => {
-                          if (el) taskActions.subtaskInputRefs.current[child.id] = el
-                        }}
+                        inputDataId={child.id}
                       />
                     ))}
                   </SortableContext>
@@ -494,9 +493,7 @@ export const EditTaskItem: React.FC<EditTaskItemProps> = ({ taskInfo: taskInfoPr
               {...textAreaProps}
               data-testid={MobileTestIds.EditTaskItem.TitleInput}
               ref={(el) => {
-                if (el) {
-                  textAreaProps.ref.current = el.nativeElement as HTMLInputElement
-                }
+                setTitleInputElement(el ? (el.nativeElement as HTMLInputElement) : null)
               }}
               autoSize={{ minRows: 1 }}
               className={styles.editTaskItemTitleInput}
@@ -522,9 +519,7 @@ export const EditTaskItem: React.FC<EditTaskItemProps> = ({ taskInfo: taskInfoPr
                 <TextArea
                   {...notesProps}
                   ref={(el) => {
-                    if (el) {
-                      notesProps.ref.current = el.nativeElement as HTMLInputElement
-                    }
+                    setNotesInputElement(el ? (el.nativeElement as HTMLInputElement) : null)
                   }}
                   className={styles.createTaskNotesTextarea}
                   autoSize={{ minRows: 2, maxRows: 4 }}

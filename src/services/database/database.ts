@@ -20,10 +20,10 @@ export const LocalDatabaseMeta: IDatabaseMeta = {
 
 export interface IDatabaseStorage {
   id: string
-  save(content: Uint8Array): Promise<string>
-  delete(key: string): Promise<void>
-  list(): Promise<string[]>
-  read(key: string): Promise<Uint8Array>
+  load(): Promise<Uint8Array[]>
+  append(content: Uint8Array): Promise<void>
+  compact(snapshot: Uint8Array): Promise<void>
+  entryCount(): Promise<number>
 }
 
 export interface IDatabaseService {

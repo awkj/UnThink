@@ -4,7 +4,8 @@ import { localize } from "@/nls"
 import { notesMarkdownRenderConfigKey } from "@/services/config/config"
 import { desktopStyles } from "@/desktop/theme/main"
 import TextArea, { TextAreaRef } from "rc-textarea"
-import React, { useEffect, useRef, useState } from "react"
+import React, { useRef, useState } from "react"
+import { useSyncedState } from "@/ui/hooks/useSyncedState"
 import { flushSync } from "react-dom"
 import ReactMarkdown from "react-markdown"
 
@@ -23,15 +24,11 @@ export const NotesField: React.FC<NotesFieldProps> = ({
   className,
 }) => {
   const [isEditing, setIsEditing] = useState(false)
-  const [textValue, setTextValue] = useState(value)
+  const [textValue, setTextValue] = useSyncedState(value)
   const textAreaRef = useRef<TextAreaRef>(null)
   const containerRef = useRef<HTMLDivElement>(null)
 
   const { value: notesMarkdownRender } = useConfig(notesMarkdownRenderConfigKey())
-
-  useEffect(() => {
-    setTextValue(value)
-  }, [value])
 
   const hasNotes = value && value.trim().length > 0
 

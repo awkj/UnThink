@@ -19,6 +19,7 @@ import { useTaskCommands } from "@/desktop/hooks/useTaskCommands"
 import { useService } from "@/ui/hooks/use-service"
 import { useWatchEvent } from "@/ui/hooks/use-watch-event"
 import { useRegisterEvent } from "@/ui/hooks/useRegisterEvent"
+import { useSynchronizeState } from "@/ui/hooks/useSyncedState"
 import { localize } from "@/nls"
 import { IListService } from "@/services/list/listService"
 import { ITodoService } from "@/services/todo/todoService"
@@ -59,9 +60,7 @@ export const Today = () => {
     tagFilter.currentTag,
   )
 
-  useEffect(() => {
-    setAllTags((previousTags) => (isSameTags(previousTags, todayItems.allTags) ? previousTags : todayItems.allTags))
-  }, [todayItems.allTags])
+  useSynchronizeState(setAllTags, todayItems.allTags, isSameTags)
 
   const items = todayItems.items
   const projects = items.filter((item) => item.type === "project")

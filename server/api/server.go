@@ -108,6 +108,7 @@ func New(
 	if len(attachmentStore) > 0 {
 		server.attachmentStore = attachmentStore[0]
 	}
+	go server.forwardDatabaseNotifications()
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/v1/health", server.health)
 	mux.Handle("GET /api/v1/attachments/config", server.authorize(http.HandlerFunc(server.attachmentConfig)))
@@ -122,6 +123,15 @@ func New(
 		mux.Handle("/", server.spaHandler())
 	}
 	return server.cors(mux)
+}
+
+func (s *Server) forwardDatabaseNotifications() {
+	if s.store == nil {
+		return
+	}
+	for event := range s.store.RevisionNotifications() {
+		s.revisions.publish(event.Space, revisionEvent{clientID: event.ClientID, revision: event.Revision})
+	}
 }
 
 func (s *Server) attachmentConfig(w http.ResponseWriter, r *http.Request) {
@@ -265,12 +275,6 @@ func (s *Server) appendChange(w http.ResponseWriter, r *http.Request) {
 		writeInternalError(w, err)
 		return
 	}
-	if !duplicate {
-		s.revisions.publish(r.PathValue("space"), revisionEvent{
-			clientID: request.ClientID,
-			revision: revision,
-		})
-	}
 	writeJSON(w, http.StatusOK, map[string]any{"revision": revision, "duplicate": duplicate})
 }
 
@@ -294,8 +298,6 @@ func (s *Server) events(w http.ResponseWriter, r *http.Request) {
 
 	heartbeat := time.NewTicker(25 * time.Second)
 	defer heartbeat.Stop()
-	revisionPoll := time.NewTicker(5 * time.Second)
-	defer revisionPoll.Stop()
 	clientID := r.URL.Query().Get("clientId")
 	lastRevision := int64(0)
 	if s.store != nil {
@@ -321,19 +323,6 @@ func (s *Server) events(w http.ResponseWriter, r *http.Request) {
 			}
 			flusher.Flush()
 			lastRevision = max(lastRevision, event.revision)
-		case <-revisionPoll.C:
-			if s.store == nil {
-				continue
-			}
-			status, err := s.store.Status(r.Context(), r.PathValue("space"))
-			if err != nil || status.Revision <= lastRevision {
-				continue
-			}
-			lastRevision = status.Revision
-			if _, err := fmt.Fprintf(w, "id: %d\nevent: revision\ndata: %d\n\n", lastRevision, lastRevision); err != nil {
-				return
-			}
-			flusher.Flush()
 		case <-heartbeat.C:
 			if _, err := io.WriteString(w, ": heartbeat\n\n"); err != nil {
 				return

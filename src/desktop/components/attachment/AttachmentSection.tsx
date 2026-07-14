@@ -61,14 +61,16 @@ const FilenameText: React.FC<{ filename: string; className?: string }> = ({ file
 
 const ThumbImage: React.FC<{ s3Key: string; filename: string }> = ({ s3Key, filename }) => {
   const attachmentService = useService(IAttachmentUploadService)
-  const [state, setState] = useState<{ status: "loading" } | { status: "ready"; url: string } | { status: "failed" }>({
-    status: "loading",
-  })
+  type ThumbnailState =
+    | { key: string; status: "loading" }
+    | { key: string; status: "ready"; url: string }
+    | { key: string; status: "failed" }
+  const [storedState, setState] = useState<ThumbnailState>({ key: s3Key, status: "loading" })
+  const state: ThumbnailState = storedState.key === s3Key ? storedState : { key: s3Key, status: "loading" }
 
   useEffect(() => {
     let revoked = false
     let createdUrl: string | null = null
-    setState({ status: "loading" })
     void attachmentService.getThumbnailUrl(s3Key).then((u) => {
       if (revoked) {
         if (u) URL.revokeObjectURL(u)
@@ -76,9 +78,9 @@ const ThumbImage: React.FC<{ s3Key: string; filename: string }> = ({ s3Key, file
       }
       if (u) {
         createdUrl = u
-        setState({ status: "ready", url: u })
+        setState({ key: s3Key, status: "ready", url: u })
       } else {
-        setState({ status: "failed" })
+        setState({ key: s3Key, status: "failed" })
       }
     })
     return () => {

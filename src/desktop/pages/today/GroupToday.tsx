@@ -22,6 +22,7 @@ import { useDesktopDialog } from "@/desktop/overlay/desktopDialog/useDesktopDial
 import { useService } from "@/ui/hooks/use-service"
 import { useWatchEvent } from "@/ui/hooks/use-watch-event"
 import { useRegisterEvent } from "@/ui/hooks/useRegisterEvent"
+import { useSynchronizeState } from "@/ui/hooks/useSyncedState"
 import { localize } from "@/nls"
 import { IListService } from "@/services/list/listService"
 import { ITodoService } from "@/services/todo/todoService"
@@ -66,9 +67,7 @@ export const GroupToday = () => {
     tagFilter.currentTag,
   )
 
-  useEffect(() => {
-    setAllTags((previousTags) => (isSameTags(previousTags, todayItems.allTags) ? previousTags : todayItems.allTags))
-  }, [todayItems.allTags])
+  useSynchronizeState(setAllTags, todayItems.allTags, isSameTags)
 
   const grouped = groupTodayItems(todayItems.items, todoService.modelState)
   // The mainList itemIds must match the rendered (grouped) order so keyboard

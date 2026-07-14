@@ -1,48 +1,67 @@
 import { IDatabaseMeta, IDatabaseService, IDatabaseStorage, LocalDatabaseMeta } from "./database"
+import { ManifestStorage, StorageFileAdapter } from "./manifestStorage"
 
 const ROOT_DIRECTORY = "unthink-v2"
-const FILE_EXTENSION = ".loro"
 
 async function readTextFile(directory: FileSystemDirectoryHandle, name: string): Promise<string> {
   return (await (await directory.getFileHandle(name)).getFile()).text()
 }
 
 class OpfsStorage implements IDatabaseStorage {
+  private readonly storage: ManifestStorage
+
   constructor(
-    private readonly directory: FileSystemDirectoryHandle,
+    directory: FileSystemDirectoryHandle,
     private readonly meta: IDatabaseMeta,
-  ) {}
+  ) {
+    const adapter: StorageFileAdapter = {
+      readText: async (name) => {
+        try {
+          return await (await (await directory.getFileHandle(name)).getFile()).text()
+        } catch (error) {
+          if (error instanceof DOMException && error.name === "NotFoundError") return null
+          throw error
+        }
+      },
+      readBinary: async (name) => {
+        const file = await (await directory.getFileHandle(name)).getFile()
+        return new Uint8Array(await file.arrayBuffer())
+      },
+      writeBinary: async (name, content) => {
+        const file = await directory.getFileHandle(name, { create: true })
+        const writer = await file.createWritable()
+        await writer.write(Uint8Array.from(content).buffer)
+        await writer.close()
+      },
+      atomicWriteText: async (name, content) => {
+        const file = await directory.getFileHandle(name, { create: true })
+        const writer = await file.createWritable()
+        await writer.write(content)
+        await writer.close()
+      },
+      remove: async (name) => directory.removeEntry(name),
+    }
+    this.storage = new ManifestStorage(adapter)
+  }
 
   get id(): string {
     return this.meta.id
   }
 
-  async save(content: Uint8Array): Promise<string> {
-    const key = crypto.randomUUID()
-    const file = await this.directory.getFileHandle(`${key}${FILE_EXTENSION}`, { create: true })
-    const writer = await file.createWritable()
-    await writer.write(Uint8Array.from(content).buffer)
-    await writer.close()
-    return key
+  load(): Promise<Uint8Array[]> {
+    return this.storage.load()
   }
 
-  async delete(key: string): Promise<void> {
-    await this.directory.removeEntry(`${key}${FILE_EXTENSION}`)
+  append(content: Uint8Array): Promise<void> {
+    return this.storage.append(content)
   }
 
-  async list(): Promise<string[]> {
-    const keys: string[] = []
-    for await (const [name, handle] of this.directory.entries()) {
-      if (handle.kind === "file" && name.endsWith(FILE_EXTENSION)) {
-        keys.push(name.slice(0, -FILE_EXTENSION.length))
-      }
-    }
-    return keys
+  compact(snapshot: Uint8Array): Promise<void> {
+    return this.storage.compact(snapshot)
   }
 
-  async read(key: string): Promise<Uint8Array> {
-    const file = await (await this.directory.getFileHandle(`${key}${FILE_EXTENSION}`)).getFile()
-    return new Uint8Array(await file.arrayBuffer())
+  entryCount(): Promise<number> {
+    return this.storage.entryCount()
   }
 }
 

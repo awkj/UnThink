@@ -13,20 +13,16 @@ export const Toast: React.FC = () => {
   const toastController: ToastController | null = workbenchOverlayService.getOverlay(OverlayEnum.toast)
   useWatchEvent(toastController?.onStatusChange)
 
-  const [isVisible, setIsVisible] = useState(false)
-
-  useEffect(() => {
-    if (toastController) {
-      const timer = setTimeout(() => {
-        setIsVisible(true)
-      }, 10)
-      return () => clearTimeout(timer)
-    } else {
-      setIsVisible(false)
-    }
-  }, [toastController])
-
   if (!toastController) return null
+  return <ToastContent controller={toastController} />
+}
+
+const ToastContent: React.FC<{ controller: ToastController }> = ({ controller: toastController }) => {
+  const [isVisible, setIsVisible] = useState(false)
+  useEffect(() => {
+    const timer = setTimeout(() => setIsVisible(true), 10)
+    return () => clearTimeout(timer)
+  }, [])
 
   const toastMessage = (
     <div

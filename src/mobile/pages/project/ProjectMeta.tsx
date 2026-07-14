@@ -9,7 +9,8 @@ import { localize } from "@/nls"
 import classNames from "classnames"
 import { format } from "date-fns"
 import Textarea from "rc-textarea"
-import React, { useEffect, useState } from "react"
+import React from "react"
+import { useSyncedState } from "@/ui/hooks/useSyncedState"
 import { AttrContainer, AttrStyles } from "@/mobile/components/attr/AttrContainer"
 import { AttrLabel } from "@/mobile/components/attr/AttrLabel"
 import { AttrTags } from "@/mobile/components/attr/AttrTags"
@@ -38,15 +39,8 @@ const ProjectMeta: React.FC<{ project: ProjectInfoState }> = ({ project }) => {
     handleLongPressStatusIcon,
   } = useProject(project)
 
-  const [title, setTitle] = useState(project?.title)
-  useEffect(() => {
-    setTitle(project?.title)
-  }, [project?.title])
-
-  const [notes, setNotes] = useState(project?.notes)
-  useEffect(() => {
-    setNotes(project?.notes)
-  }, [project?.notes])
+  const [title, setTitle] = useSyncedState(project?.title)
+  const [notes, setNotes] = useSyncedState(project?.notes)
 
   return (
     <div className={classNames(styles.screenEdgePadding, "flex flex-col gap-2")}>

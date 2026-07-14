@@ -3,11 +3,11 @@ import { AreaDetailState } from "@/core/state/type"
 import { useService } from "@/ui/hooks/use-service"
 import { ITodoService } from "@/services/todo/todoService"
 import { TreeID } from "loro-crdt"
-import { useWatchEvent } from "./use-watch-event"
+import { useTodoEntitySubscription } from "./useTodoSelector"
 
 export const useAreaDetail = (areaId?: TreeID) => {
   const todoService = useService(ITodoService)
-  useWatchEvent(todoService.onStateChange)
+  useTodoEntitySubscription(areaId)
 
   let areaDetail: AreaDetailState | null = null
   try {

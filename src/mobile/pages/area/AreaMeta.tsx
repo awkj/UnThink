@@ -3,7 +3,8 @@ import { AreaDetailState } from "@/core/state/type"
 import { styles } from "@/mobile/theme"
 import classNames from "classnames"
 import Textarea from "rc-textarea"
-import React, { useEffect, useState } from "react"
+import React from "react"
+import { useSyncedState } from "@/ui/hooks/useSyncedState"
 import { AttrStyles } from "@/mobile/components/attr/AttrContainer"
 import { AttrTags } from "@/mobile/components/attr/AttrTags"
 
@@ -21,10 +22,7 @@ interface AreaMetaProps {
 }
 
 const AreaMeta: React.FC<AreaMetaProps> = ({ areaDetail, onUpdateTitle, onEditTag }) => {
-  const [title, setTitle] = useState(areaDetail?.title)
-  useEffect(() => {
-    setTitle(areaDetail?.title)
-  }, [areaDetail?.title])
+  const [title, setTitle] = useSyncedState(areaDetail?.title)
 
   const areaTags = areaDetail.tags || []
 

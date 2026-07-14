@@ -16,6 +16,7 @@ import { useDesktopTaskDisplaySettings } from "@/desktop/hooks/useDesktopTaskDis
 import { desktopStyles } from "@/desktop/theme/main"
 import { useService } from "@/ui/hooks/use-service"
 import { useWatchEvent } from "@/ui/hooks/use-watch-event"
+import { useSynchronizeState } from "@/ui/hooks/useSyncedState"
 import { localize } from "@/nls"
 import { IEditService } from "@/services/edit/editService"
 import { IListService } from "@/services/list/listService"
@@ -90,9 +91,7 @@ export const ViewDetailPage: React.FC = () => {
         )
       : { items: [], groups: [], itemIds: [], willDisappearObjectIdSet: new Set<TreeID>(), allTags: [] }
 
-  useEffect(() => {
-    setAllTags((prev) => (isSameTags(prev, viewItems.allTags) ? prev : viewItems.allTags))
-  }, [viewItems.allTags])
+  useSynchronizeState(setAllTags, viewItems.allTags, isSameTags)
 
   const tasks = viewItems.items
   const itemIdsKey = viewItems.itemIds.join(",")

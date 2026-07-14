@@ -9,7 +9,7 @@ import { useDatepicker } from "@/desktop/overlay/datePicker/useDatepicker"
 import { desktopStyles } from "@/desktop/theme/main.ts"
 import { useService } from "@/ui/hooks/use-service"
 import { useTaskDisplaySettings } from "@/ui/hooks/useTaskDisplaySettings"
-import { useWatchEvent } from "@/ui/hooks/use-watch-event"
+import { useTodoEntitySubscription } from "@/ui/hooks/useTodoSelector"
 import { localize } from "@/nls"
 import { ITodoService } from "@/services/todo/todoService"
 import { TestIds } from "@/testIds"
@@ -185,7 +185,7 @@ export const ProjectDetailPanel: React.FC = () => {
   const todoService = useService(ITodoService)
   const projectId = useProjectId()
 
-  useWatchEvent(todoService.onStateChange)
+  useTodoEntitySubscription(projectId ?? undefined)
 
   if (!projectId) {
     return null

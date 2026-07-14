@@ -4,7 +4,7 @@ import { useTreeSelect } from "@/desktop/overlay/treeSelect/useTreeSelect"
 import { desktopStyles } from "@/desktop/theme/main"
 import { ProjectIcon } from "@/desktop/components/todo/ProjectIcon"
 import { useService } from "@/ui/hooks/use-service"
-import { useWatchEvent } from "@/ui/hooks/use-watch-event"
+import { useTodoLocationSubscription } from "@/ui/hooks/useTodoSelector"
 import { localize } from "@/nls"
 import { ITodoService } from "@/services/todo/todoService"
 import { TreeID } from "loro-crdt"
@@ -19,7 +19,7 @@ interface TaskLocationFieldProps {
 
 export const TaskLocationField: React.FC<TaskLocationFieldProps> = ({ itemId, label, emptyIcon }) => {
   const todoService = useService(ITodoService)
-  useWatchEvent(todoService.onStateChange)
+  useTodoLocationSubscription(itemId)
   const treeSelect = useTreeSelect()
   const resolvedLabel = label || localize("tasks.location", "Location")
 

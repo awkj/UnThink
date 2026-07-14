@@ -10,13 +10,13 @@ import { localize } from "@/nls"
 import { ITodoService } from "@/services/todo/todoService"
 import type { TreeID } from "loro-crdt"
 import { useService } from "@/ui/hooks/use-service"
-import { useWatchEvent } from "@/ui/hooks/use-watch-event"
+import { useTodoEntitySubscription } from "@/ui/hooks/useTodoSelector"
 import { MobileProjectCheckbox } from "../components/icon/MobileProjectCheckbox"
 import { useDialog } from "../overlay/dialog/useDialog"
 
 export const useArea = (areaId?: TreeID) => {
   const todoService = useService(ITodoService)
-  useWatchEvent(todoService.onStateChange)
+  useTodoEntitySubscription(areaId)
   const popupAction = usePopupAction()
   const tagEditor = useTagEditor()
   const back = useBack()

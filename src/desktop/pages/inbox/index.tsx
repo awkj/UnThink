@@ -17,6 +17,7 @@ import { useTaskCommands } from "@/desktop/hooks/useTaskCommands"
 import { useService } from "@/ui/hooks/use-service"
 import { useWatchEvent } from "@/ui/hooks/use-watch-event"
 import { useRegisterEvent } from "@/ui/hooks/useRegisterEvent"
+import { useSynchronizeState } from "@/ui/hooks/useSyncedState"
 import { localize } from "@/nls"
 import { IListService } from "@/services/list/listService"
 import { ITodoService } from "@/services/todo/todoService"
@@ -79,9 +80,7 @@ export const Inbox = () => {
     tags: tagFilter.currentTag,
   })
 
-  useEffect(() => {
-    setAllTags((previousTags) => (isSameTags(previousTags, latestAllTags) ? previousTags : latestAllTags))
-  }, [latestAllTags])
+  useSynchronizeState(setAllTags, latestAllTags, isSameTags)
 
   const inboxTaskIds = inboxTasks.map((task) => task.id)
 

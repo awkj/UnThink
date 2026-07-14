@@ -16,6 +16,7 @@ import { useTaskCommands } from "@/desktop/hooks/useTaskCommands"
 import { desktopStyles } from "@/desktop/theme/main"
 import { useService } from "@/ui/hooks/use-service"
 import { useWatchEvent } from "@/ui/hooks/use-watch-event"
+import { useSynchronizeState } from "@/ui/hooks/useSyncedState"
 import { useTaskDisplaySettings } from "@/ui/hooks/useTaskDisplaySettings"
 import { localize } from "@/nls"
 import { IEditService } from "@/services/edit/editService"
@@ -101,9 +102,7 @@ const AreaPageContent: React.FC<AreaPageContentProps> = ({ area, areaId }) => {
   areaDetail?.projectList.forEach((project) => project.tags?.forEach((tag) => allTagsSet.add(tag)))
   const latestAllTags = Array.from(allTagsSet).sort()
 
-  useEffect(() => {
-    setAllTags((previousTags) => (isSameTags(previousTags, latestAllTags) ? previousTags : latestAllTags))
-  }, [latestAllTags])
+  useSynchronizeState(setAllTags, latestAllTags, isSameTags)
 
   if (!areaDetail) {
     return null

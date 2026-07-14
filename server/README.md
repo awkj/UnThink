@@ -123,5 +123,23 @@ does not interpret CRDT contents. The events endpoint is an authenticated SSE
 stream that emits committed revision numbers and excludes revisions uploaded by
 the subscribing client. It sends a heartbeat every 25 seconds; reverse proxies
 must allow streaming responses and disable response buffering for this route.
+Instances exchange revision signals through PostgreSQL `LISTEN/NOTIFY`; the
+dedicated listener reconnects with bounded exponential backoff and SSE does not
+poll the revision table.
 Space names are trimmed and normalized to lowercase, making them
 case-insensitive across every sync endpoint.
+
+## Database administration
+
+The same environment variables used by the server are used by these commands:
+
+```bash
+go run ./cmd/tasks-server backup ./tasks-backup.json
+go run ./cmd/tasks-server restore ./tasks-backup.json
+go run ./cmd/tasks-server rebuild
+```
+
+Restore and rebuild are destructive. Backups are versioned JSON containing
+spaces, snapshots, remaining changes and client acknowledgement watermarks.
+Published SQL migrations have SHA-256 checksums; startup fails if an applied
+migration no longer matches its embedded contents.

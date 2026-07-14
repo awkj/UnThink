@@ -5,7 +5,7 @@ import { usePopupAction } from "@/mobile/overlay/popupAction/usePopupAction"
 import { styles } from "@/mobile/theme"
 import { localize } from "@/nls"
 import { TestIds } from "@/testIds"
-import React, { useCallback, useEffect, useMemo, useState } from "react"
+import React, { useCallback, useMemo, useState } from "react"
 import { TagFilterBar } from "./TagFilterBar"
 import { TAG_FILTER_ALL, TAG_FILTER_UNTAGGED, TagFilter, isSameTagFilter } from "./tagFilter"
 
@@ -36,7 +36,7 @@ export interface MobileTagFilter {
  * function and feed the result's `allTags` back via `observeTags`.
  */
 export function useMobileTagFilter(): MobileTagFilter {
-  const [value, selectTag] = useState<TagFilter>(TAG_FILTER_ALL)
+  const [selectedValue, selectTag] = useState<TagFilter>(TAG_FILTER_ALL)
   const [tags, setTags] = useState<string[]>([])
   const popupAction = usePopupAction()
 
@@ -44,11 +44,7 @@ export function useMobileTagFilter(): MobileTagFilter {
     setTags((previousTags) => (isSameTags(previousTags, latestAllTags) ? previousTags : latestAllTags))
   }, [])
 
-  useEffect(() => {
-    if (value.type === "tag" && !tags.includes(value.value)) {
-      selectTag(TAG_FILTER_ALL)
-    }
-  }, [value, tags])
+  const value = selectedValue.type === "tag" && !tags.includes(selectedValue.value) ? TAG_FILTER_ALL : selectedValue
 
   const openTagFilter = useCallback(() => {
     const makeItem = (name: string, itemValue: TagFilter): PopupActionItem => ({
