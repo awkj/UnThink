@@ -28,6 +28,12 @@ body::-webkit-scrollbar {
   -webkit-user-select: none;
 }
 
+input,
+textarea {
+  -webkit-user-select: text;
+  user-select: text;
+}
+
 body {
   background-color: var(--color-bg1);
   -webkit-font-smoothing: antialiased;

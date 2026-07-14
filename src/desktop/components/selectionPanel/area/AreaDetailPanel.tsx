@@ -1,5 +1,5 @@
 import { areaTitleInputKey } from "@/ui/components/edit/inputKeys.ts"
-import { AreaIcon, MenuIcon } from "@/ui/components/icons"
+import { AreaIcon, EllipsisVertical } from "@/ui/components/icons"
 import { getAreaDetail } from "@/core/state/getArea"
 import { EntityHeader } from "@/desktop/components/common/EntityHeader"
 import { desktopStyles } from "@/desktop/theme/main.ts"
@@ -48,7 +48,7 @@ const AreaDetailPanelContent: React.FC<IAreaDetailPanelContentProps> = ({ areaId
 
   const headerActions = [
     {
-      icon: <MenuIcon strokeWidth={ICON_STROKE_WIDTH} />,
+      icon: <EllipsisVertical strokeWidth={ICON_STROKE_WIDTH} />,
       handleClick: handleMenuClick,
       title: localize("common.more", "More"),
     },

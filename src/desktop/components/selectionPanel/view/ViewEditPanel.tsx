@@ -1,4 +1,4 @@
-import { MenuIcon, ViewIcon } from "@/ui/components/icons"
+import { EllipsisVertical, ViewIcon } from "@/ui/components/icons"
 import { renderRuleError } from "@/core/filter/renderError"
 import { compileTaskRule } from "@/core/filter/taskRuleCompiler"
 import { getView } from "@/core/state/views/getView"
@@ -70,7 +70,7 @@ export const ViewEditPanel: React.FC<ViewEditPanelProps> = ({ viewUid }) => {
 
   const headerActions = [
     {
-      icon: <MenuIcon />,
+      icon: <EllipsisVertical />,
       handleClick: handleMenuClick,
       title: localize("common.more", "More"),
     },

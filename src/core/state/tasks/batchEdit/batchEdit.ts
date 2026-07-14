@@ -1,17 +1,17 @@
-import { TaskModel } from '@/core/model';
-import { BatchEditParams, BatchEditParamsSchema, BatchEditAction } from './types';
-import { executeAddTask } from './actions/addTask';
-import { executeAddHeading } from './actions/addHeading';
-import { executeUpdateTask } from './actions/updateTask';
-import { executeUpdateHeading } from './actions/updateHeading';
-import { executeUpdateProject } from './actions/updateProject';
-import { executeUpdateArea } from './actions/updateArea';
-import { executeDeleteItem } from './actions/deleteItem';
+import { TaskModel } from "@/core/model"
+import { BatchEditParams, BatchEditParamsSchema, BatchEditAction } from "./types"
+import { executeAddTask } from "./actions/addTask"
+import { executeAddHeading } from "./actions/addHeading"
+import { executeUpdateTask } from "./actions/updateTask"
+import { executeUpdateHeading } from "./actions/updateHeading"
+import { executeUpdateProject } from "./actions/updateProject"
+import { executeUpdateArea } from "./actions/updateArea"
+import { executeDeleteItem } from "./actions/deleteItem"
 
 export interface BatchEditResult {
-  success: boolean;
-  groupsProcessed: number;
-  actionsProcessed: number;
+  success: boolean
+  groupsProcessed: number
+  actionsProcessed: number
 }
 
 /**
@@ -23,14 +23,14 @@ export interface BatchEditResult {
  */
 export function batchEdit(model: TaskModel, params: BatchEditParams): BatchEditResult {
   // 使用 zod 校验参数
-  const validatedParams = BatchEditParamsSchema.parse(params);
+  const validatedParams = BatchEditParamsSchema.parse(params)
 
-  let actionsProcessed = 0;
+  let actionsProcessed = 0
 
   for (const group of validatedParams.groups) {
     for (const action of group.actions) {
-      executeAction(model, action);
-      actionsProcessed++;
+      executeAction(model, action)
+      actionsProcessed++
     }
   }
 
@@ -38,7 +38,7 @@ export function batchEdit(model: TaskModel, params: BatchEditParams): BatchEditR
     success: true,
     groupsProcessed: validatedParams.groups.length,
     actionsProcessed,
-  };
+  }
 }
 
 /**
@@ -46,35 +46,34 @@ export function batchEdit(model: TaskModel, params: BatchEditParams): BatchEditR
  */
 function executeAction(model: TaskModel, action: BatchEditAction): void {
   switch (action.type) {
-    case 'addTask':
-      executeAddTask(model, action);
-      break;
-    case 'addHeading':
-      executeAddHeading(model, action);
-      break;
-    case 'updateTask':
-      executeUpdateTask(model, action);
-      break;
-    case 'updateHeading':
-      executeUpdateHeading(model, action);
-      break;
-    case 'updateProject':
-      executeUpdateProject(model, action);
-      break;
-    case 'updateArea':
-      executeUpdateArea(model, action);
-      break;
-    case 'deleteItem':
-      executeDeleteItem(model, action);
-      break;
+    case "addTask":
+      executeAddTask(model, action)
+      break
+    case "addHeading":
+      executeAddHeading(model, action)
+      break
+    case "updateTask":
+      executeUpdateTask(model, action)
+      break
+    case "updateHeading":
+      executeUpdateHeading(model, action)
+      break
+    case "updateProject":
+      executeUpdateProject(model, action)
+      break
+    case "updateArea":
+      executeUpdateArea(model, action)
+      break
+    case "deleteItem":
+      executeDeleteItem(model, action)
+      break
     default: {
       // TypeScript exhaustive check
-      const _exhaustiveCheck: never = action;
-      throw new Error(`Unknown action type: ${(_exhaustiveCheck as { type: string }).type}`);
+      const _exhaustiveCheck: never = action
+      throw new Error(`Unknown action type: ${(_exhaustiveCheck as { type: string }).type}`)
     }
   }
 }
 
 // 导出所有类型和 schema
-export * from './types';
-export { BatchEditValidationError } from './validation';
+export * from "./types"

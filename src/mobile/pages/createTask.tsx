@@ -3,7 +3,15 @@ import { formatRemainingDays } from "@/core/time/formatRemainingDays"
 import { formatReminderTime } from "@/core/time/formatReminderTime"
 import { isPastOrToday } from "@/core/time/isPast"
 import { mergeDateAndTime } from "@/core/time/mergeDateAndTime"
-import { BellIcon, CalendarIcon, CheckIcon, FlagIcon, ListChecksIcon, NotesIcon, TagIcon } from "@/ui/components/icons"
+import {
+  BellIcon,
+  CalendarIcon,
+  CheckIcon,
+  FlagIcon,
+  ListChecksIcon,
+  TagIcon,
+  TextAlignStart,
+} from "@/ui/components/icons"
 import { useCreateTask } from "@/ui/hooks/useCreateTask"
 import { useBack } from "@/ui/hooks/useBack"
 import { useDragSensors } from "@/ui/hooks/useDragSensors"
@@ -78,7 +86,7 @@ export const CreateTaskActionSheet: React.FC = () => {
     {
       type: "textArea",
       key: "notes",
-      icon: <NotesIcon className={styles.createTaskAttrIcon} />,
+      icon: <TextAlignStart className={styles.createTaskAttrIcon} />,
       content: taskManager.notes,
       onChange: (v) => taskManager.updateNotes(v),
       placeholder: localize("create_sask_action_sheet.task_notes_placeholder", "Add Notes..."),

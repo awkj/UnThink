@@ -4,7 +4,7 @@ import {
   ChevronRightIcon,
   CircleXIcon,
   CopyIcon,
-  HeadingIcon,
+  Type,
   PlusCircleIcon,
   TrashIcon,
 } from "@/ui/components/icons"
@@ -52,7 +52,7 @@ export const DesktopMenuItemComponent: React.FC<DesktopMenuItemComponentProps> =
       case "archive":
         return <ArchiveIcon className={desktopStyles.DesktopMenuItemIcon} />
       case "heading":
-        return <HeadingIcon className={desktopStyles.DesktopMenuItemIcon} />
+        return <Type className={desktopStyles.DesktopMenuItemIcon} />
       default:
         return <span className={desktopStyles.DesktopMenuItemIconEmpty} />
     }

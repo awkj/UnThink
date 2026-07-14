@@ -1,5 +1,5 @@
-import { getTodayTimestampInUtc } from "@/core/common/getTodayTimestampInUtc"
-import { DeleteIcon, MenuIcon, TaskDisplaySettingsIcon, ViewIcon } from "@/ui/components/icons"
+import { getTodayTimestampInUtc } from "@/core/time/getTodayTimestampInUtc"
+import { DeleteIcon, EllipsisVertical, TaskDisplaySettingsIcon, ViewIcon } from "@/ui/components/icons"
 import { compileTaskRule } from "@/core/filter/taskRuleCompiler"
 import { getView } from "@/core/state/views/getView"
 import { getViewItems, matchRuleIds } from "@/core/state/views/getViewItems"
@@ -131,7 +131,7 @@ export const ViewPage = () => {
       ...(view
         ? [
             {
-              icon: <MenuIcon className={styles.headerActionButtonIcon} strokeWidth={1.5} />,
+              icon: <EllipsisVertical className={styles.headerActionButtonIcon} strokeWidth={1.5} />,
               onClick: handleMoreOptions,
             },
           ]

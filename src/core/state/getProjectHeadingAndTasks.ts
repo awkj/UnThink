@@ -1,6 +1,6 @@
 import { DragDropElements } from "@/core/dnd/dragDropCollision"
 import type { TreeID } from "loro-crdt"
-import { FilterOption, isHeadingVisible, isTaskVisible } from "../time/filterProjectAndTask"
+import { FilterOption, isHeadingVisible, isTaskVisible } from "./visibility/filterProjectAndTask"
 import { getProject } from "./getProject"
 import { FlattenedItem, flattenedItemsToResult, FlattenedResult } from "./home/flattenedItemsToResult.ts"
 import { ITaskModelData, ProjectHeadingInfo, TaskInfo } from "./type"

@@ -1,4 +1,4 @@
-import { getTodayTimestampInUtc } from "@/core/common/getTodayTimestampInUtc"
+import { getTodayTimestampInUtc } from "@/core/time/getTodayTimestampInUtc"
 import { ScheduledIcon } from "@/ui/components/icons"
 import { ModelTypes } from "@/core/enum.ts"
 import { getScheduledTasks } from "@/core/state/scheduled/getScheduledTask"

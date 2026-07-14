@@ -1,10 +1,10 @@
-import { getTodayTimestampInUtc } from "@/core/common/getTodayTimestampInUtc"
+import { getTodayTimestampInUtc } from "@/core/time/getTodayTimestampInUtc"
 import { SOMEDAY_TIMESTAMP } from "@/core/time/someday"
 import { ruleFactory } from "./ruleFactory"
 import { taskRuleSchema } from "./taskRuleSchema"
 import type { ParseResult } from "./ruleFactory"
 
-export const DAY_MS = 24 * 60 * 60 * 1000
+const DAY_MS = 24 * 60 * 60 * 1000
 
 /**
  * Constants available in task-rule expressions:

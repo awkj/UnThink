@@ -1,5 +1,5 @@
 import { LoroMap, LoroMovableList } from "loro-crdt"
-import { ModelKeys } from "./enum"
+import { ModelKeys } from "../enum"
 
 export type ArrayUpdateOptions = {
   type: "array"
@@ -23,7 +23,7 @@ export type UpdateOptions =
       newValue?: string
     }
 
-export function updateTaskItem(map: LoroMap, options: UpdateOptions[]) {
+function updateTaskItem(map: LoroMap, options: UpdateOptions[]) {
   options.forEach((option) => {
     switch (option.type) {
       case "array": {

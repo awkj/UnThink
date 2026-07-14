@@ -1,7 +1,7 @@
-import { Archive, BookCheck, Bookmark, CalendarDays, Inbox, Layers, LucideProps, Sparkles, Star } from "lucide-react"
+import { Archive, BookCheck, Bookmark, CalendarDays, Inbox, Layers, Sparkles, Star } from "lucide-react"
 import React from "react"
 
-type ThingsIconProps = Omit<LucideProps, "color" | "strokeWidth" | "absoluteStrokeWidth">
+type ThingsIconProps = Omit<React.ComponentProps<typeof Inbox>, "color" | "strokeWidth" | "absoluteStrokeWidth">
 
 const STROKE_WIDTH = 3
 

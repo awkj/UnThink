@@ -1,4 +1,4 @@
-import { formatTheme } from "@/core/common/formatTheme"
+import { formatTheme } from "@/ui/theme/formatTheme"
 
 export const desktopStyles = {
   sidebarContainerStyle: /*tw*/ "w-full h-full pt-2 flex flex-col",
@@ -162,6 +162,11 @@ export const desktopStyles = {
   AuthFormSubmitButton: /*tw*/ "self-start",
   DefaultInputField:
     /*tw*/ "w-full h-13 rounded-lg border border-line-regular bg-bg1 px-3 py-3 text-base font-normal leading-5 text-t1 placeholder-t3 focus:border-brand focus:pr-8 focus:outline-none",
+  InputFieldRevealContainer: /*tw*/ "relative",
+  InputFieldRevealPadding: /*tw*/ "pr-8",
+  InputFieldRevealButton:
+    /*tw*/ "absolute right-2 top-1/2 -translate-y-1/2 flex size-5 items-center justify-center text-t3 transition-colors hover:text-t1",
+  InputFieldRevealIcon: /*tw*/ "size-3.5",
 
   SelectContainer: /*tw*/ "relative",
   SelectTrigger:
@@ -475,7 +480,7 @@ export const desktopStyles = {
   SettingsContentBackButton: /*tw*/ "p-3",
   SettingsContentInner: /*tw*/ "mx-auto flex w-full max-w-2xl flex-col gap-12 px-4 pb-32",
   SettingsContentInnerWithBack: /*tw*/ "pt-6",
-  SettingsContentInnerWithoutBack: /*tw*/ "pt-10",
+  SettingsContentInnerWithoutBack: /*tw*/ "pt-6",
   SettingsContentPageTitle: /*tw*/ "px-4 text-3xl font-semibold leading-9 text-t1",
 
   EntityPageNotFoundContainer: /*tw*/ "h-full w-full bg-bg1 flex items-center justify-center",

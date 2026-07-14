@@ -13,7 +13,7 @@ import React, { useRef } from "react"
 import { TaskIcon } from "./TaskIcon"
 
 import { EditableInputSpan } from "@/ui/components/edit/EditableInputSpan"
-import { DragHandleIcon, NotesIcon, SubtaskIcon } from "@/ui/components/icons"
+import { DragHandleIcon, SubtaskIcon, TextAlignStart } from "@/ui/components/icons"
 import { getTaskItemTags } from "@/core/state/getTaskItemTags"
 import { useService } from "@/ui/hooks/use-service"
 import { useSync } from "@/ui/hooks/use-sync"
@@ -251,7 +251,7 @@ export const TaskListItem: React.FC<TaskListItemProps> = ({
             className={titleClassName}
             placeholder={localize("tasks.untitled", "New Task")}
           />
-          {task.notes && <NotesIcon className={desktopStyles.TaskListItemIcon} />}
+          {task.notes && <TextAlignStart className={desktopStyles.TaskListItemIcon} />}
           {task.children && task.children.length > 0 && <SubtaskIcon className={desktopStyles.TaskListItemIcon} />}
         </div>
         <ItemTagsList tags={tags} isSelected={isSelected} />

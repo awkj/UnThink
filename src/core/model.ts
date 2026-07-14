@@ -2,7 +2,7 @@ import { ItemStatusEnum, ModelKeys, ModelTypes, TaskModelListKeys } from "@/core
 import { LoroDoc, LoroMap, LoroMovableList, LoroTreeNode, PeerID, TreeID, UndoManager, VersionVector } from "loro-crdt"
 import { nanoid } from "nanoid"
 import { Emitter } from "@hamsterbase/foundation/event"
-import { dateAssigned, FilterCondition, filterConditions } from "./list.ts"
+import { dateAssigned, FilterCondition, filterConditions } from "./model/filterConditions"
 import { getInvalidTaskData } from "./state/getInvalidTaskData.ts"
 import { createRecurringTask } from "./state/createRecurringTask.ts"
 import {
@@ -37,7 +37,7 @@ import {
   TaskViewSchema,
   UpdateTaskViewSchema,
 } from "./type.ts"
-import { patch } from "./utils.ts"
+import { patch } from "./model/patch"
 
 const ParentRules: Record<string, string[]> = {
   [ModelTypes.task]: [ModelTypes.area, ModelTypes.project, ModelTypes.projectHeading, ModelTypes.root, ModelTypes.task],

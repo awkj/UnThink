@@ -1,7 +1,7 @@
 import {
   AlarmClock,
-  AlertCircle,
-  AlignLeft,
+  CircleAlert,
+  TextAlignStart,
   Archive,
   ArrowLeft,
   ArrowRight,
@@ -25,7 +25,7 @@ import {
   Circle,
   CircleCheck,
   CircleCheckBig,
-  CircleHelp,
+  CircleQuestionMark,
   CirclePlus,
   CircleSmall,
   CircleX,
@@ -35,15 +35,17 @@ import {
   Code,
   Copy,
   Download,
+  Eye,
+  EyeOff,
   Database,
   File,
   FileText,
   Image,
-  Filter,
+  Funnel,
   Flag,
   GripVertical,
   Hash,
-  Home,
+  House,
   Inbox,
   Info,
   KeyRound,
@@ -53,7 +55,7 @@ import {
   LocateFixed,
   MessageSquare,
   MessageSquareReply,
-  MoreVertical,
+  EllipsisVertical,
   Notebook,
   Palette,
   PanelLeft,
@@ -64,19 +66,19 @@ import {
   RotateCcw,
   Repeat,
   Repeat2,
-  Loader2,
+  LoaderCircle,
   Search,
   Send,
   Sparkles,
   Tags,
-  ServerIcon,
+  Server,
   Settings,
   SlidersHorizontal,
   Square,
   SquareTerminal,
   Sun,
   Trash2,
-  TypeIcon,
+  Type,
   User,
   X,
   FolderInput,
@@ -86,10 +88,8 @@ export const AreaExpandedIcon = ChevronRight
 export const BackIcon = ArrowLeft
 export const TodayIcon = Sun
 export const DueIcon = LocateFixed
-export const HomeIcon = Home
 export const InboxIcon = Inbox
 export const LogIcon = CircleCheck
-export const MenuIcon = MoreVertical
 export const NoteIcon = FileText
 export const FileIcon = File
 export const ScheduledIcon = Calendar
@@ -109,13 +109,11 @@ export const PlusIcon = Plus
 export const PlusCircleIcon = CirclePlus
 export const KeyIcon = KeyRound
 export const LaterProjectsIcon = CalendarClock
-export const HeadingIcon = TypeIcon
 export const HashIcon = Hash
 export const EditIcon = PenLine
 export const NavIcon = ChevronRight
 export const DeleteIcon = X
 export const CloudIcon = Cloud
-export const SelfHostedSyncIcon = ServerIcon
 export const CloudOffIcon = CloudAlert
 export const CloudSlashIcon = CloudOff
 export const ImageIcon = Image
@@ -131,16 +129,15 @@ export const LeftIcon = ChevronLeft
 export const RightIcon = ChevronRight
 export const CircleIcon = Circle
 export const InfoIcon = Info
-export const AlertCircleIcon = AlertCircle
 export const CircleCheckIcon = CircleCheckBig
-export const CircleHelpIcon = CircleHelp
 export const CalendarCheckIcon = CalendarCheck
 export const CalendarXIcon = CalendarX
 export const CopyIcon = Copy
 export const CodeIcon = Code
 export const DownloadIcon = Download
+export const EyeIcon = Eye
+export const EyeOffIcon = EyeOff
 export const ChevronDownIcon = ChevronDown
-export const Loader2Icon = Loader2
 export const AlarmIcon = AlarmClock
 export const PanelLeftIcon = PanelLeft
 export const SyncIcon = RefreshCw
@@ -162,10 +159,9 @@ export const ArrowUpToLineIcon = ArrowUpToLine
 export const StopIcon = Square
 export const SendIcon = Send
 export const NotebookIcon = Notebook
-export const NotesIcon = AlignLeft
 export const CalendarIcon = Calendar
 export const FlagIcon = Flag
-export const FilterIcon = Filter
+export { CircleAlert, CircleQuestionMark, EllipsisVertical, Funnel, House, LoaderCircle, Server, TextAlignStart, Type }
 export const ListChecksIcon = ListChecks
 export const BellIcon = Bell
 export const CircleXIcon = CircleX

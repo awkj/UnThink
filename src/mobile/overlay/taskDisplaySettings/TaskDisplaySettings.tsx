@@ -1,4 +1,4 @@
-import { taskDisplaySettingOptions } from "@/core/common/TaskDisplaySettings"
+import { taskDisplaySettingOptions } from "@/ui/settings/taskDisplaySettings"
 import { CalendarRangeIcon, LogIcon, ScheduledIcon } from "@/ui/components/icons"
 import { TimeAfterEnum } from "@/core/time/getTimeAfter"
 import { useService } from "@/ui/hooks/use-service"

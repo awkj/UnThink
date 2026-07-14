@@ -1,4 +1,4 @@
-import { PROJECT_COMMIT_HASH } from "@/core/common/version"
+import { PROJECT_COMMIT_HASH } from "@/core/version"
 import { generateUuid } from "@hamsterbase/foundation/uuid"
 import { nanoid } from "nanoid"
 import { LogEntry, LogLevel } from "./webloggerService"

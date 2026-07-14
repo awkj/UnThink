@@ -1,4 +1,4 @@
-import { taskDisplaySettingOptions } from "@/core/common/TaskDisplaySettings"
+import { taskDisplaySettingOptions } from "@/ui/settings/taskDisplaySettings"
 import { getTimeAfter } from "@/core/time/getTimeAfter"
 import {
   completedTasksRangeConfigKey,

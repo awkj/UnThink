@@ -1,5 +1,5 @@
-import { getTodayTimestampInUtc } from "@/core/common/getTodayTimestampInUtc"
-import { FilterIcon, InboxIcon } from "@/ui/components/icons"
+import { getTodayTimestampInUtc } from "@/core/time/getTodayTimestampInUtc"
+import { Funnel, InboxIcon } from "@/ui/components/icons"
 import { TaskList } from "@/ui/components/taskList/taskList.ts"
 import { calculateDragPosition } from "@/core/dnd/calculateDragPosition"
 import { getInboxTasks } from "@/core/state/inbox/getInboxTasks"
@@ -162,7 +162,7 @@ export const Inbox = () => {
       title={localize("inbox", "Inbox")}
       extraActions={[
         {
-          icon: <FilterIcon strokeWidth={1.5} />,
+          icon: <Funnel strokeWidth={1.5} />,
           handleClick: tagFilter.clickFilter,
           title: localize("tasks.filterByTag", "Filter by Tag"),
           testId: TestIds.EntityHeader.FilterToggleButton,

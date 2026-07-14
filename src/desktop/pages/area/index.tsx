@@ -1,9 +1,9 @@
-import { getTodayTimestampInUtc } from "@/core/common/getTodayTimestampInUtc"
+import { getTodayTimestampInUtc } from "@/core/time/getTodayTimestampInUtc"
 import { areaPageTitleInputId } from "@/ui/components/edit/inputId"
 import { areaTitleInputKey } from "@/ui/components/edit/inputKeys"
-import { FilterIcon, ThingsAreaIcon } from "@/ui/components/icons"
+import { Funnel, ThingsAreaIcon } from "@/ui/components/icons"
 import { getAreaDetail } from "@/core/state/getArea"
-import { isTaskVisible } from "@/core/time/filterProjectAndTask"
+import { isTaskVisible } from "@/core/state/visibility/filterProjectAndTask"
 import { EntityHeader } from "@/desktop/components/common/EntityHeader"
 import { DesktopPage } from "@/desktop/components/DesktopPage"
 import { DesktopProjectList } from "@/desktop/components/DesktopProjectList/DesktopProjectList"
@@ -169,7 +169,7 @@ const AreaPageContent: React.FC<AreaPageContentProps> = ({ area, areaId }) => {
           placeholder={localize("area.untitled", "New Area")}
           extraActions={[
             {
-              icon: <FilterIcon strokeWidth={1.5} />,
+              icon: <Funnel strokeWidth={1.5} />,
               handleClick: tagFilter.clickFilter,
               title: localize("tasks.filterByTag", "Filter by Tag"),
               testId: TestIds.EntityHeader.FilterToggleButton,

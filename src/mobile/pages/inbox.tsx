@@ -1,4 +1,4 @@
-import { getTodayTimestampInUtc } from "@/core/common/getTodayTimestampInUtc"
+import { getTodayTimestampInUtc } from "@/core/time/getTodayTimestampInUtc"
 import { InboxIcon, TaskDisplaySettingsIcon } from "@/ui/components/icons"
 import { getInboxTasks } from "@/core/state/inbox/getInboxTasks"
 import { useService } from "@/ui/hooks/use-service.ts"

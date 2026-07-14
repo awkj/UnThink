@@ -1,4 +1,4 @@
-import { getTodayTimestampInUtc } from "@/core/common/getTodayTimestampInUtc"
+import { getTodayTimestampInUtc } from "@/core/time/getTodayTimestampInUtc"
 import { LogIcon } from "@/ui/components/icons"
 import { ModelTypes } from "@/core/enum.ts"
 import { getCompletedItems } from "@/core/state/completed/getCompletedItems"

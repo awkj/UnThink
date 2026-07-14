@@ -1,4 +1,11 @@
-import { ChevronRightIcon, CircleXIcon, CloseIcon, CircleHelpIcon, LogIcon, Loader2Icon } from "@/ui/components/icons"
+import {
+  ChevronRightIcon,
+  CircleQuestionMark,
+  CircleXIcon,
+  CloseIcon,
+  LoaderCircle,
+  LogIcon,
+} from "@/ui/components/icons"
 import { desktopStyles } from "@/desktop/theme/main"
 import { localize } from "@/nls"
 import type { UIToolCallInfo } from "@/services/ai/types"
@@ -66,7 +73,7 @@ const ToolStatus: React.FC<{ toolCall: UIToolCallInfo }> = ({ toolCall }) => {
   if (toolCall.status === "streaming") {
     return (
       <span className={getToolStatusClassName("neutral")}>
-        <Loader2Icon className={desktopStyles.AIChatToolStatusLoadingIcon} />
+        <LoaderCircle className={desktopStyles.AIChatToolStatusLoadingIcon} />
         {localize("ai_chat.executing", "Executing...")}
       </span>
     )
@@ -93,7 +100,7 @@ const ToolStatus: React.FC<{ toolCall: UIToolCallInfo }> = ({ toolCall }) => {
 
     return (
       <span className={getToolStatusClassName("warning")}>
-        <CircleHelpIcon className={desktopStyles.AIChatToolStatusIcon} />
+        <CircleQuestionMark className={desktopStyles.AIChatToolStatusIcon} />
         {localize("ai_chat.awaiting_confirm", "Awaiting")}
       </span>
     )
@@ -102,7 +109,7 @@ const ToolStatus: React.FC<{ toolCall: UIToolCallInfo }> = ({ toolCall }) => {
   if (toolCall.status === "pending") {
     return (
       <span className={getToolStatusClassName("neutral")}>
-        <Loader2Icon className={desktopStyles.AIChatToolStatusLoadingIcon} />
+        <LoaderCircle className={desktopStyles.AIChatToolStatusLoadingIcon} />
         {localize("ai_chat.executing", "Executing...")}
       </span>
     )

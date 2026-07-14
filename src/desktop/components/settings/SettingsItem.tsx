@@ -1,63 +1,64 @@
-import { desktopStyles } from '@/desktop/theme/main';
-import React from 'react';
-import { InputField } from '../Form/InputField/InputField';
-import { Select } from '../Form/Select/Select';
-import { Switch } from '../Switch';
-import { SettingButton } from './Button/Button';
+import { desktopStyles } from "@/desktop/theme/main"
+import React from "react"
+import { InputField } from "../Form/InputField/InputField"
+import { Select } from "../Form/Select/Select"
+import { Switch } from "../Switch"
+import { SettingButton } from "./Button/Button"
 
-export type ActionType = 'select' | 'switch' | 'button' | 'input';
+export type ActionType = "select" | "switch" | "button" | "input"
 
 export interface SelectAction {
-  type: 'select';
-  options: Array<{ value: string; label: string }>;
-  currentValue: string;
-  onChange: (value: string) => void;
+  type: "select"
+  options: Array<{ value: string; label: string }>
+  currentValue: string
+  onChange: (value: string) => void
 }
 
 export interface SwitchAction {
-  type: 'switch';
-  currentValue: boolean;
-  onChange: (value: boolean) => void;
-  disabled?: boolean;
+  type: "switch"
+  currentValue: boolean
+  onChange: (value: boolean) => void
+  disabled?: boolean
 }
 
 export interface ButtonAction {
-  type: 'button';
-  label: string;
-  onClick: () => void;
-  disabled?: boolean;
+  type: "button"
+  label: string
+  onClick: () => void
+  disabled?: boolean
 }
 
 export interface InputAction {
-  type: 'input';
-  inputType?: 'text' | 'password' | 'url';
-  placeholder?: string;
-  currentValue: string;
-  onChange: (value: string) => void;
+  type: "input"
+  inputType?: "text" | "password" | "url"
+  revealable?: boolean
+  placeholder?: string
+  currentValue: string
+  onChange: (value: string) => void
 }
 
-export type Action = SelectAction | SwitchAction | ButtonAction | InputAction;
+export type Action = SelectAction | SwitchAction | ButtonAction | InputAction
 
 export interface SettingsItemProps {
-  title: string;
-  description?: string;
-  action: Action;
+  title: string
+  description?: string
+  action: Action
 }
 
 export const SettingsItem: React.FC<SettingsItemProps> = ({ title, description, action }) => {
   const renderAction = () => {
     switch (action.type) {
-      case 'select':
-        return <Select value={action.currentValue} onChange={action.onChange} options={action.options} />;
-      case 'switch':
-        return <Switch checked={action.currentValue} onChange={action.onChange} disabled={action.disabled} />;
-      case 'button':
+      case "select":
+        return <Select value={action.currentValue} onChange={action.onChange} options={action.options} />
+      case "switch":
+        return <Switch checked={action.currentValue} onChange={action.onChange} disabled={action.disabled} />
+      case "button":
         return (
           <SettingButton onClick={action.onClick} disabled={action.disabled} inline size="medium">
             {action.label}
           </SettingButton>
-        );
-      case 'input':
+        )
+      case "input":
         return (
           <InputField
             type={action.inputType}
@@ -65,10 +66,11 @@ export const SettingsItem: React.FC<SettingsItemProps> = ({ title, description, 
             value={action.currentValue}
             onChange={(e) => action.onChange(e.target.value)}
             className={desktopStyles.SettingsItemInput}
+            revealable={action.revealable}
           />
-        );
+        )
     }
-  };
+  }
 
   return (
     <div className={desktopStyles.SettingsItemContainer}>
@@ -78,5 +80,5 @@ export const SettingsItem: React.FC<SettingsItemProps> = ({ title, description, 
       </div>
       <div className={desktopStyles.SettingsItemActionWrapper}>{renderAction()}</div>
     </div>
-  );
-};
+  )
+}

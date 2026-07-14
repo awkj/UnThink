@@ -1064,6 +1064,14 @@
     "defaultMessage": "dbName and storeName are required",
     "content": "dbName和storeName为必填项"
   },
+  "input.password.hide": {
+    "defaultMessage": "Hide password",
+    "content": "隐藏密码"
+  },
+  "input.password.show": {
+    "defaultMessage": "Show password",
+    "content": "显示密码"
+  },
   "invalid.date": {
     "defaultMessage": "Invalid date format",
     "content": "日期格式无效"
@@ -1657,8 +1665,8 @@
     "content": "在侧边栏显示 AI 对话"
   },
   "settings.ai.show_entry.description": {
-    "defaultMessage": "Show the AI Chat entry after the API URL and token are configured.",
-    "content": "配置 API 地址和 Token 后，可控制是否显示 AI 对话入口。"
+    "defaultMessage": "Control whether the AI Chat entry is shown in the sidebar.",
+    "content": "控制是否在侧边栏显示 AI 对话入口。"
   },
   "settings.appearance": {
     "defaultMessage": "Appearance",

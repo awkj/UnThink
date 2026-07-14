@@ -1,4 +1,4 @@
-import { formatTheme } from "@/core/common/formatTheme"
+import { formatTheme } from "@/ui/theme/formatTheme"
 import { baseStyles } from "./theme/base"
 
 formatTheme(baseStyles)

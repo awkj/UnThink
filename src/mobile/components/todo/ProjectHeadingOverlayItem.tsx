@@ -1,4 +1,4 @@
-import { MenuIcon } from "@/ui/components/icons"
+import { EllipsisVertical } from "@/ui/components/icons"
 import { ProjectHeadingInfo } from "@/core/state/type.ts"
 import { styles } from "@/mobile/theme"
 import classNames from "classnames"
@@ -29,7 +29,7 @@ export const ProjectHeadingOverlayItem: React.FC<ProjectHeadingOverlayItemProps>
     >
       <span className={styles.projectHeadingItemLabel}>{projectHeadingInfo.title}</span>
       <button className={styles.projectHeadingItemMenuButton}>
-        <MenuIcon className={styles.projectHeadingItemMenuIcon} strokeWidth={1.5} />
+        <EllipsisVertical className={styles.projectHeadingItemMenuIcon} strokeWidth={1.5} />
       </button>
     </div>
   )

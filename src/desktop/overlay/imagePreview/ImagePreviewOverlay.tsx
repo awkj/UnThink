@@ -1,4 +1,4 @@
-import { CloseIcon, DownloadIcon, Loader2Icon } from "@/ui/components/icons"
+import { CloseIcon, DownloadIcon, LoaderCircle } from "@/ui/components/icons"
 import { desktopStyles } from "@/desktop/theme/main"
 import { useService } from "@/ui/hooks/use-service"
 import { useWatchEvent } from "@/ui/hooks/use-watch-event"
@@ -76,7 +76,7 @@ const ImagePreviewContent: React.FC<{ controller: ImagePreviewController }> = ({
           onClick={(e) => e.stopPropagation()}
         />
       ) : (
-        <Loader2Icon className={desktopStyles.ImagePreviewLoading} strokeWidth={1.5} />
+        <LoaderCircle className={desktopStyles.ImagePreviewLoading} strokeWidth={1.5} />
       )}
     </div>
   )

@@ -1,4 +1,4 @@
-import { getTodayTimestampInUtc } from "@/core/common/getTodayTimestampInUtc"
+import { getTodayTimestampInUtc } from "@/core/time/getTodayTimestampInUtc"
 import { projectPageTitleInputId } from "@/ui/components/edit/inputId"
 import { ItemPosition } from "@/core/type"
 import { useService } from "@/ui/hooks/use-service"

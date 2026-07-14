@@ -1,4 +1,4 @@
-import { getTodayTimestampInUtc } from "@/core/common/getTodayTimestampInUtc"
+import { getTodayTimestampInUtc } from "@/core/time/getTodayTimestampInUtc"
 import { TaskDisplaySettingsIcon, TodayIcon } from "@/ui/components/icons"
 import { getTodayItems } from "@/core/state/today/getTodayItems"
 import { useService } from "@/ui/hooks/use-service"

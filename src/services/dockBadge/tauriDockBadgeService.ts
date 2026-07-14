@@ -1,5 +1,5 @@
 import { checkPlatform } from "@/ui/browser/checkPlatform"
-import { getTodayTimestampInUtc } from "@/core/common/getTodayTimestampInUtc"
+import { getTodayTimestampInUtc } from "@/core/time/getTodayTimestampInUtc"
 import { getInboxTasks } from "@/core/state/inbox/getInboxTasks"
 import { getTodayItems } from "@/core/state/today/getTodayItems"
 import { IConfigService } from "@/services/config/configService"

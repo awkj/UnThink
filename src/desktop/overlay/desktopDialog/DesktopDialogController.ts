@@ -1,4 +1,4 @@
-import { DialogAction, DialogActionValue, DialogButtonAction } from "@/core/common/componentsType/dialog"
+import { DialogAction, DialogActionValue, DialogButtonAction } from "@/ui/types/dialog"
 import { OverlayEnum } from "@/services/overlay/overlayEnum"
 import { Emitter } from "@hamsterbase/foundation/event"
 import { IDisposable } from "@hamsterbase/foundation/lifecycle"

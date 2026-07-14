@@ -1,4 +1,4 @@
-import { PROJECT_COMMIT_HASH } from "@/core/common/version"
+import { PROJECT_COMMIT_HASH } from "@/core/version"
 import { ListItemGroup, ListItemOption } from "@/mobile/components/listItem/listItem"
 import { useNavigate } from "react-router"
 import { SettingsIcon } from "@/ui/components/icons"

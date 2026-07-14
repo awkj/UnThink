@@ -1,4 +1,4 @@
-import { getTodayTimestampInUtc } from "@/core/common/getTodayTimestampInUtc"
+import { getTodayTimestampInUtc } from "@/core/time/getTodayTimestampInUtc"
 import { CalendarIcon, CheckIcon, InboxIcon, TodayIcon } from "@/ui/components/icons"
 import { getInboxTasks } from "@/core/state/inbox/getInboxTasks"
 import { getTodayItems } from "@/core/state/today/getTodayItems"

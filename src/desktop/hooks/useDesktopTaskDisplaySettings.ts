@@ -1,4 +1,4 @@
-import { taskDisplaySettingOptions } from "@/core/common/TaskDisplaySettings"
+import { taskDisplaySettingOptions } from "@/ui/settings/taskDisplaySettings"
 import { getTimeAfter, TimeAfterEnum } from "@/core/time/getTimeAfter.ts"
 import { DesktopMenuController, IMenuConfig } from "@/desktop/overlay/desktopMenu/DesktopMenuController.ts"
 import { useService } from "@/ui/hooks/use-service.ts"

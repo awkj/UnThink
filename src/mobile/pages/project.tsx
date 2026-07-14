@@ -1,5 +1,5 @@
-import { getTodayTimestampInUtc } from "@/core/common/getTodayTimestampInUtc.ts"
-import { MenuIcon, TaskDisplaySettingsIcon } from "@/ui/components/icons"
+import { getTodayTimestampInUtc } from "@/core/time/getTodayTimestampInUtc"
+import { EllipsisVertical, TaskDisplaySettingsIcon } from "@/ui/components/icons"
 import { TestIds } from "@/testIds"
 import { getProjectHeadingAndTasks } from "@/core/state/getProjectHeadingAndTasks.ts"
 import { getProject } from "@/core/state/getProject"
@@ -189,7 +189,7 @@ const ProjectContent: React.FC<ProjectContentProps> = ({ project, projectId }) =
         testId: TestIds.PageHeader.DisplaySettingsButton,
       },
       {
-        icon: <MenuIcon className={styles.headerActionButtonIcon} strokeWidth={1.5} />,
+        icon: <EllipsisVertical className={styles.headerActionButtonIcon} strokeWidth={1.5} />,
         onClick: handleMoreOptions,
         testId: TestIds.PageHeader.MenuButton,
       },

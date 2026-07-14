@@ -1,4 +1,4 @@
-import { MenuIcon } from "@/ui/components/icons"
+import { EllipsisVertical } from "@/ui/components/icons"
 import { ProjectHeadingInfo } from "@/core/state/type.ts"
 import { useService } from "@/ui/hooks/use-service"
 import { useCancelEdit } from "@/ui/hooks/useCancelEdit"
@@ -69,7 +69,7 @@ export const ProjectHeadingItem: React.FC<ProjectHeadingItemProps> = ({ projectH
           <span className={styles.projectHeadingItemLabel}>{projectHeadingInfo.title}</span>
         )}
         <button className={styles.projectHeadingItemMenuButton} onClick={handleMenuClick}>
-          <MenuIcon className={styles.projectHeadingItemMenuIcon} strokeWidth={1.5} />
+          <EllipsisVertical className={styles.projectHeadingItemMenuIcon} strokeWidth={1.5} />
         </button>
       </div>
     </div>

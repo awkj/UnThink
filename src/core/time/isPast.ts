@@ -1,11 +1,4 @@
-import { getTodayTimestampInUtc } from "@/core/common/getTodayTimestampInUtc"
-
-export function isPast(date?: number) {
-  if (!date) {
-    return false
-  }
-  return date < getTodayTimestampInUtc()
-}
+import { getTodayTimestampInUtc } from "@/core/time/getTodayTimestampInUtc"
 
 export function isTimestampInPast(date?: number) {
   if (!date) {

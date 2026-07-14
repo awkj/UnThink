@@ -1,4 +1,4 @@
-import { getTodayTimestampInUtc } from "@/core/common/getTodayTimestampInUtc"
+import { getTodayTimestampInUtc } from "@/core/time/getTodayTimestampInUtc"
 import { ThingsLaterIcon } from "@/ui/components/icons"
 import { getFutureProjects } from "@/core/state/home/getFutureProjects"
 import { EntityHeader } from "@/desktop/components/common/EntityHeader"

@@ -6,7 +6,7 @@ import {
   CodeIcon,
   CopyIcon,
   LaterProjectsIcon,
-  NotesIcon,
+  TextAlignStart,
   TagIcon,
   TodayIcon,
   ViewIcon,
@@ -132,7 +132,7 @@ const ViewMeta: React.FC<{ view: TaskViewSchema }> = ({ view }) => {
             style={{ border: "none", padding: 0 }}
           />
           <AttrContainer
-            icon={<NotesIcon className={styles.projectInfoMetaIcon} strokeWidth={1.5} />}
+            icon={<TextAlignStart className={styles.projectInfoMetaIcon} strokeWidth={1.5} />}
             attrStyles={viewInfoAttrStyles}
           >
             <Textarea

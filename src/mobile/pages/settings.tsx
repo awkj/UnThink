@@ -1,5 +1,5 @@
 import { getTheme } from "@/ui/browser/initializeTheme"
-import { taskDisplaySettingOptions } from "@/core/common/TaskDisplaySettings"
+import { taskDisplaySettingOptions } from "@/ui/settings/taskDisplaySettings"
 import { SettingsIcon } from "@/ui/components/icons"
 import { getCalendarWeekStartOptions } from "@/core/time/calendarWeekStart"
 import { useConfig } from "@/ui/hooks/useConfig"

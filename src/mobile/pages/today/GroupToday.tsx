@@ -1,4 +1,4 @@
-import { getTodayTimestampInUtc } from "@/core/common/getTodayTimestampInUtc"
+import { getTodayTimestampInUtc } from "@/core/time/getTodayTimestampInUtc"
 import { TaskDisplaySettingsIcon, TodayIcon } from "@/ui/components/icons"
 import { getProject } from "@/core/state/getProject"
 import { applyTodayGroupDragAction } from "@/core/state/today/applyTodayGroupDragAction"

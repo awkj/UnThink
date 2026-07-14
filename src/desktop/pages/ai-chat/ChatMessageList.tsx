@@ -1,4 +1,4 @@
-import { BrainIcon, ChevronDownIcon, ChevronRightIcon, Loader2Icon, StopIcon, SyncIcon } from "@/ui/components/icons"
+import { BrainIcon, ChevronDownIcon, ChevronRightIcon, LoaderCircle, StopIcon, SyncIcon } from "@/ui/components/icons"
 import { desktopStyles } from "@/desktop/theme/main"
 import { localize } from "@/nls"
 import type { ChatMessageItem, ContentBlock } from "@/services/ai/types"
@@ -110,7 +110,7 @@ const MessageFooter: React.FC<{
   if (status === "generating") {
     return (
       <span className={desktopStyles.AIChatMessageFooterStatus}>
-        <Loader2Icon className={desktopStyles.AIChatMessageFooterLoadingIcon} />
+        <LoaderCircle className={desktopStyles.AIChatMessageFooterLoadingIcon} />
         {localize("ai_chat.status_responding", "Generating...")}
       </span>
     )

@@ -4,9 +4,9 @@ import {
   CalendarIcon,
   FlagIcon,
   ListChecksIcon,
-  MenuIcon,
+  EllipsisVertical,
   MoveIcon,
-  NotesIcon,
+  TextAlignStart,
   Repeat2Icon,
   RepeatIcon,
   SubtaskIcon,
@@ -36,7 +36,7 @@ import { useTimePicker } from "@/mobile/overlay/timePicker/useTimePicker"
 import { styles } from "@/mobile/theme"
 import { localize } from "@/nls"
 import { ITodoService } from "@/services/todo/todoService"
-import { getTodayTimestampInUtc } from "@/core/common/getTodayTimestampInUtc"
+import { getTodayTimestampInUtc } from "@/core/time/getTodayTimestampInUtc"
 import { closestCenter, DndContext, MouseSensor, TouchSensor, useSensor, useSensors } from "@dnd-kit/core"
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import classNames from "classnames"
@@ -505,7 +505,7 @@ export const EditTaskItem: React.FC<EditTaskItemProps> = ({ taskInfo: taskInfoPr
           className={styles.editTaskItemMenuButton}
           onClick={handleMenuClick}
         >
-          <MenuIcon className={styles.projectHeadingItemMenuIcon} />
+          <EllipsisVertical className={styles.projectHeadingItemMenuIcon} />
         </button>
       </div>
 
@@ -515,7 +515,7 @@ export const EditTaskItem: React.FC<EditTaskItemProps> = ({ taskInfo: taskInfoPr
           <div className={styles.editTaskItemExpandedRow}>
             <div className={styles.editTaskItemExpandedSpacer}></div>
             <div className={styles.editTaskItemExpandedContent}>
-              <AttrContainer icon={<NotesIcon className={styles.editTaskAttrIcon} />}>
+              <AttrContainer icon={<TextAlignStart className={styles.editTaskAttrIcon} />}>
                 <TextArea
                   {...notesProps}
                   ref={(el) => {

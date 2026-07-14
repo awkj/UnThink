@@ -1,4 +1,4 @@
-import { DragHandleIcon, NotesIcon } from "@/ui/components/icons"
+import { DragHandleIcon, TextAlignStart } from "@/ui/components/icons"
 import { getProjectItemTags } from "@/core/state/getProjectItemTags"
 import { ProjectInfoState } from "@/core/state/type"
 import { desktopStyles } from "@/desktop/theme/main"
@@ -84,7 +84,7 @@ export const DesktopProjectListItem: React.FC<DesktopProjectListItemProps> = ({
           <h3 className={desktopStyles.DesktopProjectListItemTitle} data-testid={TestIds.ProjectListItem.Title}>
             {project.title || localize("project.untitled", "New Project")}
           </h3>
-          {project.notes && <NotesIcon className={desktopStyles.TaskListItemIcon} />}
+          {project.notes && <TextAlignStart className={desktopStyles.TaskListItemIcon} />}
         </div>
         <ItemTagsList tags={tags} isSelected={false} />
       </div>

@@ -1,7 +1,7 @@
-import { getTodayTimestampInUtc } from "@/core/common/getTodayTimestampInUtc"
-import { CheckIcon, FilterIcon, MenuIcon, TagIcon, TaskDisplaySettingsIcon } from "@/ui/components/icons"
+import { getTodayTimestampInUtc } from "@/core/time/getTodayTimestampInUtc"
+import { CheckIcon, EllipsisVertical, Funnel, TagIcon, TaskDisplaySettingsIcon } from "@/ui/components/icons"
 import { TestIds } from "@/testIds"
-import { isTaskVisible } from "@/core/time/filterProjectAndTask"
+import { isTaskVisible } from "@/core/state/visibility/filterProjectAndTask"
 import { useService } from "@/ui/hooks/use-service"
 import { useSynchronizeState } from "@/ui/hooks/useSyncedState"
 import { useArea } from "@/mobile/hooks/useArea"
@@ -11,7 +11,7 @@ import { styles } from "@/mobile/theme"
 import { ITodoService } from "@/services/todo/todoService"
 import { computeSectionRounding } from "@/mobile/components/dnd/projectedRounding"
 import { getAreaDragEndPositionAction } from "@/core/dnd/area"
-import { areaCollisionDetectionStrategyFactory } from "@/core/dnd/areaCollisionDetchtionStrawe"
+import { areaCollisionDetectionStrategyFactory } from "@/core/dnd/areaCollisionDetectionStrategy"
 import { DragDropElements } from "@/core/dnd/dragDropCollision"
 import { DragEndEvent, useDndContext } from "@dnd-kit/core"
 import classNames from "classnames"
@@ -273,13 +273,13 @@ export const AreaPage = () => {
         title: "",
         actions: [
           {
-            icon: <FilterIcon className={styles.headerActionButtonIcon} strokeWidth={1.5} />,
+            icon: <Funnel className={styles.headerActionButtonIcon} strokeWidth={1.5} />,
             onClick: handleOpenTagFilter,
             testId: TestIds.PageHeader.FilterButton,
             isActive: isTagFilterActive,
           },
           { icon: <TaskDisplaySettingsIcon />, onClick: openTaskDisplaySettings },
-          { icon: <MenuIcon />, onClick: handleMoreOptions, testId: TestIds.PageHeader.MenuButton },
+          { icon: <EllipsisVertical />, onClick: handleMoreOptions, testId: TestIds.PageHeader.MenuButton },
         ],
       }}
       meta={<AreaMeta areaDetail={areaDetail} onUpdateTitle={handleUpdateTitle} onEditTag={handleEditTag} />}

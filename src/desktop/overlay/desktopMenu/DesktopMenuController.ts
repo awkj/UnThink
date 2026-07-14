@@ -34,6 +34,13 @@ export interface IMenuSubmenuConfig {
   disabled?: boolean
 }
 
+export interface DesktopMenuStatusSnapshot {
+  activeIndex: number | null
+  activeMenu: IMenuConfig | null
+  activeSubmenuIndex: number | null
+  isSubmenuOpen: boolean
+}
+
 export type MenuPlacement =
   | "top"
   | "bottom"
@@ -192,18 +199,20 @@ export class DesktopMenuController implements IDisposable {
   }
 
   getSubmenuStyle({
+    status,
     menuItemHeight,
     menuWidth,
     menuHeight,
     submenuWidth,
   }: {
+    status: DesktopMenuStatusSnapshot
     menuItemHeight: number
     menuWidth: number
     menuHeight?: number
     submenuWidth: number
   }) {
-    const submenuHeight = this.activeMenu?.submenu
-      ? this.activeMenu.submenu.reduce((acc, group) => acc + group.length, 0) * menuItemHeight
+    const submenuHeight = status.activeMenu?.submenu
+      ? status.activeMenu.submenu.reduce((acc, group) => acc + group.length, 0) * menuItemHeight
       : 0
 
     const menuStyle = this.getMenuStyle({
@@ -213,7 +222,7 @@ export class DesktopMenuController implements IDisposable {
     })
     const menuLeft = menuStyle.left as number
     const menuTop = menuStyle.top as number
-    const submenuTop = menuTop + menuContentPadding + (this.activeIndex ?? 0) * menuItemHeight
+    const submenuTop = menuTop + menuContentPadding + (status.activeIndex ?? 0) * menuItemHeight
     const screenWidth = window.innerWidth
 
     const preferredRightLeft = menuLeft + menuWidth + menuItemOffset
@@ -271,6 +280,16 @@ export class DesktopMenuController implements IDisposable {
   private _activeIndex: number | null = null
   private _activeSubmenuIndex: number | null = null
   private _isSubmenuOpen: boolean = false
+  private _statusSnapshot: DesktopMenuStatusSnapshot = {
+    activeIndex: null,
+    activeMenu: null,
+    activeSubmenuIndex: null,
+    isSubmenuOpen: false,
+  }
+
+  get statusSnapshot(): DesktopMenuStatusSnapshot {
+    return this._statusSnapshot
+  }
 
   get activeIndex(): number | null {
     return this._activeIndex
@@ -325,6 +344,12 @@ export class DesktopMenuController implements IDisposable {
   }
 
   fireStatusChange() {
+    this._statusSnapshot = {
+      activeIndex: this.activeIndex,
+      activeMenu: this.activeMenu,
+      activeSubmenuIndex: this.activeSubmenuIndex,
+      isSubmenuOpen: this.isSubmenuOpen,
+    }
     this._onStatusChange.fire()
   }
 

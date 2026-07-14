@@ -1,15 +1,14 @@
 import type {
   DesktopMenuController,
+  DesktopMenuStatusSnapshot,
   IMenuConfig,
   IMenuSubmenuConfig,
 } from "@/desktop/overlay/desktopMenu/DesktopMenuController.ts"
 import { desktopStyles } from "@/desktop/theme/main"
-import { useService } from "@/ui/hooks/use-service"
-import { useWatchEvent } from "@/ui/hooks/use-watch-event"
+import { useWorkbenchOverlay } from "@/ui/hooks/useWorkbenchOverlay"
 import { OverlayEnum } from "@/services/overlay/overlayEnum"
-import { IWorkbenchOverlayService } from "@/services/overlay/WorkbenchOverlayService"
 import { TestIds } from "@/testIds"
-import React, { useCallback, useEffect, useRef } from "react"
+import React, { useCallback, useEffect, useRef, useSyncExternalStore } from "react"
 import { DesktopMenuItemComponent } from "./DesktopMenuItemComponent"
 import { DesktopSubmenuComponent } from "./DesktopSubmenuComponent"
 import "./commands"
@@ -19,8 +18,22 @@ interface IDesktopMenuContentProps {
   controller: DesktopMenuController
 }
 
+function useDesktopMenuStatus(controller: DesktopMenuController): DesktopMenuStatusSnapshot {
+  const subscribe = useCallback(
+    (onStoreChange: () => void) => {
+      const disposable = controller.onStatusChange(onStoreChange)
+      return () => disposable.dispose()
+    },
+    [controller],
+  )
+  const getSnapshot = useCallback(() => controller.statusSnapshot, [controller])
+
+  return useSyncExternalStore(subscribe, getSnapshot)
+}
+
 const DesktopMenuContent: React.FC<IDesktopMenuContentProps> = ({ controller }) => {
   const menuRef = useRef<HTMLDivElement>(null)
+  const status = useDesktopMenuStatus(controller)
   const hasDescriptions = controller.hasDescriptions
   const menuItemHeight = calculateElementHeight(
     hasDescriptions ? desktopStyles.DesktopMenuItemRichBase : desktopStyles.DesktopMenuItemBase,
@@ -44,20 +57,21 @@ const DesktopMenuContent: React.FC<IDesktopMenuContentProps> = ({ controller }) 
     menuHeight,
   })
   const submenuStyle =
-    controller.activeIndex !== null && controller.activeMenu?.submenu && controller.isSubmenuOpen
+    status.activeIndex !== null && status.activeMenu?.submenu && status.isSubmenuOpen
       ? controller.getSubmenuStyle({
+          status,
           menuItemHeight,
           menuWidth,
           menuHeight,
           submenuWidth,
         })
       : null
-  const submenuItemCount = controller.activeMenu?.submenu
-    ? controller.activeMenu.submenu.reduce((acc, group) => acc + group.length, 0)
+  const submenuItemCount = status.activeMenu?.submenu
+    ? status.activeMenu.submenu.reduce((acc, group) => acc + group.length, 0)
     : 0
   const submenuHeight =
     submenuItemCount * menuItemHeight +
-    Math.max(0, (controller.activeMenu?.submenu?.length ?? 0) - 1) * dividerHeight +
+    Math.max(0, (status.activeMenu?.submenu?.length ?? 0) - 1) * dividerHeight +
     menuPadding * 2 +
     menuBorder
   const wrapperLeft = submenuStyle
@@ -96,8 +110,6 @@ const DesktopMenuContent: React.FC<IDesktopMenuContentProps> = ({ controller }) 
         top: (submenuStyle.top as number) - wrapperTop,
       }
     : undefined
-
-  useWatchEvent(controller.onStatusChange)
 
   // 在组件挂载时设置焦点
   useEffect(() => {
@@ -142,35 +154,30 @@ const DesktopMenuContent: React.FC<IDesktopMenuContentProps> = ({ controller }) 
                   item={item}
                   onItemClick={handleItemClick}
                   onMouseEnter={() => controller.setActiveIndex(index)}
-                  isActive={controller.activeIndex === index}
+                  isActive={status.activeIndex === index}
                   showCheckmarks={controller.showCheckmarks}
                 />
               </React.Fragment>
             ))}
           </div>
         </div>
-        {controller.activeIndex !== null &&
-          controller.activeMenu?.submenu &&
-          controller.isSubmenuOpen &&
-          popupSubmenuStyle && (
-            <DesktopSubmenuComponent
-              submenu={controller.activeMenu.submenu}
-              style={popupSubmenuStyle}
-              onItemClick={handleItemClick}
-              activeSubmenuIndex={controller.activeSubmenuIndex}
-              onMouseEnter={(index) => controller.setActiveSubmenuIndex(index)}
-              showCheckmarks={controller.showSubmenuCheckmarks}
-            />
-          )}
+        {status.activeIndex !== null && status.activeMenu?.submenu && status.isSubmenuOpen && popupSubmenuStyle && (
+          <DesktopSubmenuComponent
+            submenu={status.activeMenu.submenu}
+            style={popupSubmenuStyle}
+            onItemClick={handleItemClick}
+            activeSubmenuIndex={status.activeSubmenuIndex}
+            onMouseEnter={(index) => controller.setActiveSubmenuIndex(index)}
+            showCheckmarks={status.activeMenu.submenu.some((group) => group.some((item) => item.checked !== undefined))}
+          />
+        )}
       </div>
     </>
   )
 }
 
 export const DesktopMenu: React.FC = () => {
-  const workbenchOverlayService = useService(IWorkbenchOverlayService)
-  useWatchEvent(workbenchOverlayService.onOverlayChange)
-  const controller: DesktopMenuController | null = workbenchOverlayService.getOverlay(OverlayEnum.desktopMenu)
+  const controller = useWorkbenchOverlay<DesktopMenuController>(OverlayEnum.desktopMenu)
   if (!controller || !controller.menuConfig) return null
   return <DesktopMenuContent controller={controller} />
 }

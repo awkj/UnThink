@@ -1,4 +1,4 @@
-import { CalendarIcon, FlagIcon, NotesIcon, TagIcon } from "@/ui/components/icons"
+import { CalendarIcon, FlagIcon, TagIcon, TextAlignStart } from "@/ui/components/icons"
 import { ProjectInfoState } from "@/core/state/type"
 import { getDateFromUTCTimeStamp } from "@/core/time/getDateFromUTCTimeStamp"
 import { getDateFnsLocale } from "@/locales/common/locale"
@@ -92,7 +92,7 @@ const ProjectMeta: React.FC<{ project: ProjectInfoState }> = ({ project }) => {
             />
           )}
           <AttrContainer
-            icon={<NotesIcon className={styles.projectInfoMetaIcon} strokeWidth={1.5} />}
+            icon={<TextAlignStart className={styles.projectInfoMetaIcon} strokeWidth={1.5} />}
             attrStyles={projectInfoAttrStyles}
           >
             <Textarea

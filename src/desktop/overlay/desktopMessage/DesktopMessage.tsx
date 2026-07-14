@@ -1,6 +1,6 @@
 import { OverlayEnum } from "@/services/overlay/overlayEnum"
 import React, { useEffect, useState } from "react"
-import { AlertCircleIcon, CheckIcon, CloseIcon, InfoIcon } from "@/ui/components/icons"
+import { CheckIcon, CircleAlert, CloseIcon, InfoIcon } from "@/ui/components/icons"
 import { useService } from "@/ui/hooks/use-service"
 import { useWatchEvent } from "@/ui/hooks/use-watch-event"
 import { IWorkbenchOverlayService } from "@/services/overlay/WorkbenchOverlayService"
@@ -11,7 +11,7 @@ import { localize } from "@/nls"
 const MessageIcon: React.FC<{ type: MessageType }> = ({ type }) => {
   const iconMap = {
     success: <CheckIcon />,
-    error: <AlertCircleIcon />,
+    error: <CircleAlert />,
     info: <InfoIcon />,
   }
 

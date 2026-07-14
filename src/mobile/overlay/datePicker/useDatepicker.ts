@@ -1,7 +1,7 @@
 import { useService } from "@/ui/hooks/use-service"
 import { IInstantiationService } from "@hamsterbase/foundation/instantiation"
 import { DatePickerActionSheetController } from "./DatePickerActionSheetController"
-import { CancelError } from "@/core/common/error"
+import { CancelError } from "@/core/errors/CancelError"
 
 interface DatePickerOptions {
   initialDate?: number | undefined

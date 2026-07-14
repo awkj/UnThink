@@ -1,4 +1,4 @@
-import { CheckIcon, FilterIcon, TagIcon } from "@/ui/components/icons"
+import { CheckIcon, Funnel, TagIcon } from "@/ui/components/icons"
 import type { HeaderAction } from "@/mobile/components/PageHeader"
 import { PopupActionItem } from "@/mobile/overlay/popupAction/PopupActionController"
 import { usePopupAction } from "@/mobile/overlay/popupAction/usePopupAction"
@@ -68,7 +68,7 @@ export function useMobileTagFilter(): MobileTagFilter {
 
   const headerAction = useMemo<HeaderAction>(
     () => ({
-      icon: <FilterIcon className={styles.headerActionButtonIcon} strokeWidth={1.5} />,
+      icon: <Funnel className={styles.headerActionButtonIcon} strokeWidth={1.5} />,
       onClick: openTagFilter,
       testId: TestIds.PageHeader.FilterButton,
       isActive: value.type !== "all",

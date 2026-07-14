@@ -1,5 +1,5 @@
-import { getTodayTimestampInUtc } from "@/core/common/getTodayTimestampInUtc.ts"
-import { HomeIcon, SettingsIcon, SyncIcon } from "@/ui/components/icons"
+import { getTodayTimestampInUtc } from "@/core/time/getTodayTimestampInUtc"
+import { House, SettingsIcon, SyncIcon } from "@/ui/components/icons"
 import {
   CreateAreaMenuIcon,
   CreateProjectMenuIcon,
@@ -185,7 +185,7 @@ export const MobileHome = () => {
     <PageLayout
       disableSticky
       header={{
-        renderIcon: (className: string) => <HomeIcon className={className} />,
+        renderIcon: (className: string) => <House className={className} />,
         actions: [
           {
             icon: <SettingsIcon className={styles.headerActionButtonIcon} strokeWidth={1.5} />,

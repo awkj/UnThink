@@ -1,6 +1,6 @@
-import { getTodayTimestampInUtc } from "@/core/common/getTodayTimestampInUtc"
+import { getTodayTimestampInUtc } from "@/core/time/getTodayTimestampInUtc"
 import { viewPageTitleInputId } from "@/ui/components/edit/inputId"
-import { FilterIcon, ThingsViewIcon } from "@/ui/components/icons"
+import { Funnel, ThingsViewIcon } from "@/ui/components/icons"
 import { TaskList } from "@/ui/components/taskList/taskList"
 import { compileTaskRule } from "@/core/filter/taskRuleCompiler"
 import { getView } from "@/core/state/views/getView"
@@ -138,7 +138,7 @@ export const ViewDetailPage: React.FC = () => {
           onSave={(value) => todoService.updateView(viewUid, { name: value })}
           extraActions={[
             {
-              icon: <FilterIcon strokeWidth={1.5} />,
+              icon: <Funnel strokeWidth={1.5} />,
               handleClick: tagFilter.clickFilter,
               title: localize("tasks.filterByTag", "Filter by Tag"),
               testId: TestIds.EntityHeader.FilterToggleButton,

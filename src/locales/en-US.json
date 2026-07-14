@@ -1064,6 +1064,14 @@
     "defaultMessage": "dbName and storeName are required",
     "content": "dbName and storeName are required"
   },
+  "input.password.hide": {
+    "defaultMessage": "Hide password",
+    "content": "Hide password"
+  },
+  "input.password.show": {
+    "defaultMessage": "Show password",
+    "content": "Show password"
+  },
   "invalid.date": {
     "defaultMessage": "Invalid date format",
     "content": "Invalid date format"
@@ -1657,8 +1665,8 @@
     "content": "Show AI Chat in Sidebar"
   },
   "settings.ai.show_entry.description": {
-    "defaultMessage": "Show the AI Chat entry after the API URL and token are configured.",
-    "content": "Show the AI Chat entry after the API URL and token are configured."
+    "defaultMessage": "Control whether the AI Chat entry is shown in the sidebar.",
+    "content": "Control whether the AI Chat entry is shown in the sidebar."
   },
   "settings.appearance": {
     "defaultMessage": "Appearance",

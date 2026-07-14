@@ -10,7 +10,6 @@ import {
   aiModelNameConfigKey,
   hideAIEntryConfigKey,
 } from "@/services/config/config"
-import { hasAIConfiguration } from "@/services/ai/aiService"
 import React from "react"
 
 export const AISettings: React.FC = () => {
@@ -18,7 +17,6 @@ export const AISettings: React.FC = () => {
   const { value: apiToken, setValue: setApiToken } = useConfig(aiApiTokenConfigKey())
   const { value: modelName, setValue: setModelName } = useConfig(aiModelNameConfigKey())
   const { value: hideAIEntry, setValue: setHideAIEntry } = useConfig(hideAIEntryConfigKey())
-  const isAIConfigured = hasAIConfiguration(apiUrl, apiToken)
 
   return (
     <SettingsContent title={localize("settings.ai", "AI Assistant")}>
@@ -28,13 +26,12 @@ export const AISettings: React.FC = () => {
             title={localize("settings.ai.show_entry", "Show AI Chat in Sidebar")}
             description={localize(
               "settings.ai.show_entry.description",
-              "Show the AI Chat entry after the API URL and token are configured.",
+              "Control whether the AI Chat entry is shown in the sidebar.",
             )}
             action={{
               type: "switch",
-              currentValue: isAIConfigured && !hideAIEntry,
+              currentValue: !hideAIEntry,
               onChange: (showAIEntry) => setHideAIEntry(!showAIEntry),
-              disabled: !isAIConfigured,
             }}
           />
         </ItemGroup>
@@ -58,6 +55,7 @@ export const AISettings: React.FC = () => {
             action={{
               type: "input",
               inputType: "password",
+              revealable: true,
               placeholder: localize("settings.ai.api_token.placeholder", "Enter your API token"),
               currentValue: apiToken,
               onChange: setApiToken,

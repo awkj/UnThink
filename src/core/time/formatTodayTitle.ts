@@ -1,4 +1,4 @@
-import { getTodayTimestampInUtc } from "@/core/common/getTodayTimestampInUtc"
+import { getTodayTimestampInUtc } from "@/core/time/getTodayTimestampInUtc"
 import { getCurrentLocale, getDateFnsLocale } from "@/locales/common/locale"
 import { format } from "date-fns"
 import { getDateFromUTCTimeStamp } from "./getDateFromUTCTimeStamp"

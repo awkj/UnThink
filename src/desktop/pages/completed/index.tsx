@@ -1,5 +1,5 @@
-import { getTodayTimestampInUtc } from "@/core/common/getTodayTimestampInUtc"
-import { CheckIcon, FilterIcon } from "@/ui/components/icons"
+import { getTodayTimestampInUtc } from "@/core/time/getTodayTimestampInUtc"
+import { CheckIcon, Funnel } from "@/ui/components/icons"
 import { TaskList } from "@/ui/components/taskList/taskList.ts"
 import { ModelTypes } from "@/core/enum.ts"
 import { getCompletedItems } from "@/core/state/completed/getCompletedItems"
@@ -51,7 +51,7 @@ export const Completed = () => {
           title={localize("completed_tasks.title", "Completed")}
           extraActions={[
             {
-              icon: <FilterIcon strokeWidth={1.5} />,
+              icon: <Funnel strokeWidth={1.5} />,
               handleClick: tagFilter.clickFilter,
               title: localize("tasks.filterByTag", "Filter by Tag"),
               testId: TestIds.EntityHeader.FilterToggleButton,

@@ -1,5 +1,5 @@
 import { TreeID } from "loro-crdt"
-import { ProjectHeadingInfo, ProjectInfoState, TaskInfo } from "../state/type"
+import { ProjectHeadingInfo, ProjectInfoState, TaskInfo } from "../type"
 
 export interface FilterOption {
   showCompletedTasks: boolean

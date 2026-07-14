@@ -6,10 +6,3 @@ export const formatCalendarMonth = (date: Date) => {
   }
   return format(date, "MMMM yyyy")
 }
-
-export const formatShortMonth = (date: Date) => {
-  if (globalThis.language === "zh-CN") {
-    return format(date, "M月")
-  }
-  return format(date, "MMM")
-}

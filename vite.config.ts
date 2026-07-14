@@ -1,6 +1,7 @@
 import tailwindcss from "@tailwindcss/vite"
 import react, { reactCompilerPreset } from "@vitejs/plugin-react"
 import babel from "@rolldown/plugin-babel"
+import transformImports from "@rolldown/plugin-transform-imports"
 import path from "node:path"
 import wasm from "vite-plugin-wasm"
 import { nodePolyfills } from "vite-plugin-node-polyfills"
@@ -29,6 +30,12 @@ const tauriBuildFamily = tauriPlatform
     ? "mobile"
     : "desktop"
   : "web"
+
+const lucideImportTransforms: [string, string][] = [
+  ["Repeat2", "lucide-react/dist/esm/icons/repeat-2.mjs"],
+  ["Trash2", "lucide-react/dist/esm/icons/trash-2.mjs"],
+  ["*", "lucide-react/dist/esm/icons/{{kebabCase member}}.mjs"],
+]
 
 function tauriPlatformEntryPlugin(): Plugin | false {
   if (tauriBuildFamily === "web") return false
@@ -136,6 +143,16 @@ export default defineConfig({
 
   plugins: [
     tauriPlatformEntryPlugin(),
+    transformImports({
+      "date-fns": {
+        transform: "date-fns/{{member}}",
+        preventFullImport: true,
+      },
+      "lucide-react": {
+        transform: lucideImportTransforms,
+        preventFullImport: true,
+      },
+    }),
     nodePolyfills({
       include: ["process", "util"],
       globals: { process: true },
@@ -162,8 +179,6 @@ export default defineConfig({
           "src/main.desktop.tsx",
           "src/main.mobile.tsx",
           "src/cli/**",
-          "src/core/time/getTimeStampFromDateStr.ts",
-          "src/core/time/isStartOfDay.ts",
           "**/*.d.ts",
           "**/*.test.ts",
           "**/*.worker.ts",

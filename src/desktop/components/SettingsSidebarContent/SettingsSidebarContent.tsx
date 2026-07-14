@@ -1,4 +1,4 @@
-import { AIIcon, BackIcon, DownloadIcon, PaletteIcon, SelfHostedSyncIcon } from "@/ui/components/icons"
+import { AIIcon, BackIcon, DownloadIcon, PaletteIcon, Server } from "@/ui/components/icons"
 import { useService } from "@/ui/hooks/use-service"
 import { useWatchEvent } from "@/ui/hooks/use-watch-event"
 import { localize } from "@/nls"
@@ -36,7 +36,7 @@ const groups = [
         id: "selfhosted-sync",
         label: localize("sync.selfHostedSync", "Selfhosted Sync"),
         path: "/desktop/settings/selfhosted-sync",
-        icon: SelfHostedSyncIcon,
+        icon: Server,
       },
       {
         id: "import-export",

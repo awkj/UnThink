@@ -1,4 +1,4 @@
-import { getTodayTimestampInUtc } from "@/core/common/getTodayTimestampInUtc.ts"
+import { getTodayTimestampInUtc } from "@/core/time/getTodayTimestampInUtc"
 import { CalendarIcon, CheckIcon, InboxIcon, ThingsAIIcon, TodayIcon } from "@/ui/components/icons"
 import { getInboxTasks } from "@/core/state/inbox/getInboxTasks"
 import { getTodayItems } from "@/core/state/today/getTodayItems"
@@ -7,8 +7,7 @@ import { useService } from "@/ui/hooks/use-service"
 import { useWatchEvent } from "@/ui/hooks/use-watch-event"
 import { useTaskDisplaySettings } from "@/ui/hooks/useTaskDisplaySettings"
 import { localize } from "@/nls"
-import { aiApiTokenConfigKey, aiApiUrlConfigKey, hideAIEntryConfigKey } from "@/services/config/config"
-import { hasAIConfiguration } from "@/services/ai/aiService"
+import { hideAIEntryConfigKey } from "@/services/config/config"
 import { ITodoService } from "@/services/todo/todoService.ts"
 import classNames from "classnames"
 import React from "react"
@@ -43,10 +42,7 @@ export const SidebarMenu: React.FC = () => {
   const todoService = useService(ITodoService)
   useWatchEvent(todoService.onStateChange)
   const { value: hideAIEntry } = useConfig(hideAIEntryConfigKey())
-  const { value: aiApiUrl } = useConfig(aiApiUrlConfigKey())
-  const { value: aiApiToken } = useConfig(aiApiTokenConfigKey())
-  const showAIEntry = !hideAIEntry && hasAIConfiguration(aiApiUrl, aiApiToken)
-  const links = showAIEntry ? [aiChatLink, ...baseLinks] : baseLinks
+  const links = hideAIEntry ? baseLinks : [aiChatLink, ...baseLinks]
   const todayItems = getTodayItems(todoService.modelState, getTodayTimestampInUtc())
   const { showFutureTasks, showCompletedTasks, completedAfter } = useTaskDisplaySettings("inbox")
   const { uncompletedTasksCount } = getInboxTasks(todoService.modelState, {

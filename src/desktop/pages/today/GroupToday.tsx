@@ -1,6 +1,6 @@
-import { getTodayTimestampInUtc } from "@/core/common/getTodayTimestampInUtc"
+import { getTodayTimestampInUtc } from "@/core/time/getTodayTimestampInUtc"
 import { useDesktopDndSensors } from "@/ui/hooks/useDesktopDndSensors"
-import { FilterIcon, TodayIcon } from "@/ui/components/icons"
+import { Funnel, TodayIcon } from "@/ui/components/icons"
 import { TaskList } from "@/ui/components/taskList/taskList.ts"
 import { getProject } from "@/core/state/getProject"
 import { getTodayItems } from "@/core/state/today/getTodayItems"
@@ -214,7 +214,7 @@ export const GroupToday = () => {
           renderIcon={() => <TodayIcon className="text-module-today" strokeWidth={1.5} />}
           extraActions={[
             {
-              icon: <FilterIcon strokeWidth={1.5} />,
+              icon: <Funnel strokeWidth={1.5} />,
               handleClick: tagFilter.clickFilter,
               title: localize("tasks.filterByTag", "Filter by Tag"),
               testId: TestIds.EntityHeader.FilterToggleButton,

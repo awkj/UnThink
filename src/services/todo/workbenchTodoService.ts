@@ -27,7 +27,6 @@ import { IDatabaseStorage } from "@/services/database/database"
 import { LoroPersistenceWorkerClient } from "@/services/database/loroPersistenceWorkerClient"
 import { EditingContent, ITodoService, TaskCommand, VIEW_SCHEMA_VERSION } from "@/services/todo/todoService.ts"
 import type { TreeID } from "loro-crdt"
-import { debounceTime, Subject } from "rxjs"
 import { Emitter } from "@hamsterbase/foundation/event"
 import { DisposableStore } from "@hamsterbase/foundation/lifecycle"
 
@@ -64,15 +63,19 @@ export class WorkbenchTodoService implements ITodoService {
   private _editingContent: EditingContent | null = null
 
   private _keepAliveElements: string[] = []
-  private _clearKeepAliveSubject = new Subject<void>()
+  private _clearKeepAliveTimer: ReturnType<typeof setTimeout> | null = null
 
   private _storageId: string | null = null
 
-  constructor() {
-    this._clearKeepAliveSubject.pipe(debounceTime(1000)).subscribe(() => {
+  private scheduleClearKeepAlive() {
+    if (this._clearKeepAliveTimer !== null) {
+      clearTimeout(this._clearKeepAliveTimer)
+    }
+    this._clearKeepAliveTimer = setTimeout(() => {
+      this._clearKeepAliveTimer = null
       this._keepAliveElements = []
       this._onStateChange.fire()
-    })
+    }, 1000)
   }
 
   get editingContent() {
@@ -263,7 +266,7 @@ export class WorkbenchTodoService implements ITodoService {
   }
 
   private addKeepAliveElement(element: string) {
-    this._clearKeepAliveSubject.next()
+    this.scheduleClearKeepAlive()
     this._keepAliveElements.push(element)
     this._onStateChange.fire()
   }

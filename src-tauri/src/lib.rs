@@ -12,7 +12,23 @@ fn native_navigation_route(id: &str) -> Option<&'static str> {
 
 #[cfg(target_os = "macos")]
 fn setup_macos(app: &mut tauri::App) -> tauri::Result<()> {
-    use tauri::{Emitter, Manager, menu::MenuBuilder, tray::TrayIconBuilder};
+    use tauri::{
+        Emitter, Manager,
+        menu::{MenuBuilder, SubmenuBuilder},
+        tray::TrayIconBuilder,
+    };
+
+    // WKWebView delegates the standard editing shortcuts to the macOS responder
+    // chain. Registering the native menu roles keeps Cmd+X/C/V/A working in
+    // HTML inputs without reimplementing clipboard behavior in JavaScript.
+    let edit_menu = SubmenuBuilder::new(app, "Edit")
+        .cut()
+        .copy()
+        .paste()
+        .select_all()
+        .build()?;
+    let app_menu = MenuBuilder::new(app).item(&edit_menu).build()?;
+    app.set_menu(app_menu)?;
 
     let menu = MenuBuilder::new(app)
         .text("today", "Today")

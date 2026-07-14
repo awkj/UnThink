@@ -3,7 +3,7 @@ import { IDisposable } from "@hamsterbase/foundation/lifecycle"
 import { IWorkbenchOverlayService, OverlayInitOptions } from "@/services/overlay/WorkbenchOverlayService"
 import { IInstantiationService } from "@hamsterbase/foundation/instantiation"
 import { OverlayEnum } from "@/services/overlay/overlayEnum"
-import { DialogAction, DialogActionValue, DialogButtonAction } from "@/core/common/componentsType/dialog"
+import { DialogAction, DialogActionValue, DialogButtonAction } from "@/ui/types/dialog"
 
 export interface DialogOptions {
   title: string

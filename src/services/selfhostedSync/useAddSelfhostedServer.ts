@@ -1,4 +1,4 @@
-import { DialogAction, DialogActionValue } from "@/core/common/componentsType/dialog"
+import { DialogAction, DialogActionValue } from "@/ui/types/dialog"
 import { useService } from "@/ui/hooks/use-service"
 import { useWatchEvent } from "@/ui/hooks/use-watch-event"
 import { localize } from "@/nls"

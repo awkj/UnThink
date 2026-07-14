@@ -1,4 +1,4 @@
-import { FilterIcon } from "@/ui/components/icons"
+import { Funnel } from "@/ui/components/icons"
 import { projectPageTitleInputId } from "@/ui/components/edit/inputId"
 import { projectTitleInputKey } from "@/ui/components/edit/inputKeys"
 import { getProject } from "@/core/state/getProject"
@@ -134,7 +134,7 @@ export const ProjectHeader: React.FC<ProjectHeaderProps> = ({
       placeholder={localize("project.untitled", "New Project")}
       extraActions={[
         {
-          icon: <FilterIcon strokeWidth={1.5} />,
+          icon: <Funnel strokeWidth={1.5} />,
           handleClick: onToggleFilter,
           title: localize("tasks.filterByTag", "Filter by Tag"),
           testId: TestIds.EntityHeader.FilterToggleButton,

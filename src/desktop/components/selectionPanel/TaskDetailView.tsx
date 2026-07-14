@@ -1,5 +1,5 @@
 import { useTaskItemActions } from "@/ui/hooks/useTaskItemActions"
-import { CloseIcon, FlagIcon, MenuIcon, ScheduledIcon } from "@/ui/components/icons"
+import { CloseIcon, EllipsisVertical, FlagIcon, ScheduledIcon } from "@/ui/components/icons"
 import { taskTitleInputKey } from "@/ui/components/edit/inputKeys.ts"
 import { TaskInfo } from "@/core/state/type.ts"
 import { EntityHeader } from "@/desktop/components/common/EntityHeader"
@@ -48,7 +48,7 @@ export const TaskDetailView: React.FC<TaskDetailViewProps> = ({ task, onClearSel
 
   const headerActions = [
     {
-      icon: <MenuIcon />,
+      icon: <EllipsisVertical />,
       handleClick: handleMenuClick,
       title: localize("common.more", "More"),
       testId: TestIds.TaskDetail.MenuButton,

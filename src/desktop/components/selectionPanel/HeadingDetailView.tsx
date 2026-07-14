@@ -1,5 +1,5 @@
 import { projectHeadingTitleInputKey } from "@/ui/components/edit/inputKeys.ts"
-import { CloseIcon, HashIcon, MenuIcon } from "@/ui/components/icons"
+import { CloseIcon, EllipsisVertical, HashIcon } from "@/ui/components/icons"
 import { ProjectHeadingInfo } from "@/core/state/type.ts"
 import { EntityHeader } from "@/desktop/components/common/EntityHeader"
 import { useDesktopProjectHeader } from "@/desktop/hooks/useDesktopProjectHeader"
@@ -30,7 +30,7 @@ export const HeadingDetailView: React.FC<HeadingDetailViewProps> = ({ heading, o
   const { handleMenuClick } = useDesktopProjectHeader({ projectHeadingInfo: heading })
   const headerActions = [
     {
-      icon: <MenuIcon strokeWidth={ICON_STROKE_WIDTH} />,
+      icon: <EllipsisVertical strokeWidth={ICON_STROKE_WIDTH} />,
       handleClick: handleMenuClick,
       title: localize("common.more", "More"),
       testId: TestIds.HeadingDetail.MenuButton,

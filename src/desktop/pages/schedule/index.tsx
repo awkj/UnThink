@@ -1,5 +1,5 @@
-import { getTodayTimestampInUtc } from "@/core/common/getTodayTimestampInUtc"
-import { FilterIcon, ScheduledIcon } from "@/ui/components/icons"
+import { getTodayTimestampInUtc } from "@/core/time/getTodayTimestampInUtc"
+import { Funnel, ScheduledIcon } from "@/ui/components/icons"
 import { TaskList } from "@/ui/components/taskList/taskList.ts"
 import { getScheduledTasks } from "@/core/state/scheduled/getScheduledTask"
 import { EntityHeader } from "@/desktop/components/common/EntityHeader"
@@ -54,7 +54,7 @@ export const Schedule = () => {
           title={localize("schedule", "Schedule")}
           extraActions={[
             {
-              icon: <FilterIcon strokeWidth={1.5} />,
+              icon: <Funnel strokeWidth={1.5} />,
               handleClick: tagFilter.clickFilter,
               title: localize("tasks.filterByTag", "Filter by Tag"),
               testId: TestIds.EntityHeader.FilterToggleButton,

@@ -1,4 +1,4 @@
-import { DeleteIcon, HeadingIcon, MoveIcon, ScheduledIcon, TagsIcon, TargetIcon } from "@/ui/components/icons"
+import { DeleteIcon, MoveIcon, ScheduledIcon, TagsIcon, TargetIcon, Type } from "@/ui/components/icons"
 import { ProjectInfoState } from "@/core/state/type"
 import { ItemStatus } from "@/core/type"
 import { useBack } from "@/ui/hooks/useBack.ts"
@@ -149,7 +149,7 @@ const useProject = (project: ProjectInfoState | null) => {
         {
           items: [
             {
-              icon: <HeadingIcon />,
+              icon: <Type />,
               name: localize("project.add_heading", "Add Heading"),
               onClick: handleAddHeading,
             },

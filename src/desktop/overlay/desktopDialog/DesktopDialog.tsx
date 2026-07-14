@@ -1,4 +1,4 @@
-import { DialogButtonAction } from "@/core/common/componentsType/dialog"
+import { DialogButtonAction } from "@/ui/types/dialog"
 import { InputField } from "@/desktop/components/Form/InputField/InputField"
 import { SettingButton } from "@/desktop/components/settings/Button/Button"
 import { desktopStyles } from "@/desktop/theme/main"

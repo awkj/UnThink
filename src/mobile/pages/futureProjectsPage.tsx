@@ -1,4 +1,4 @@
-import { getTodayTimestampInUtc } from "@/core/common/getTodayTimestampInUtc"
+import { getTodayTimestampInUtc } from "@/core/time/getTodayTimestampInUtc"
 import { LaterProjectsIcon } from "@/ui/components/icons"
 import { getFutureProjects } from "@/core/state/home/getFutureProjects"
 import { useService } from "@/ui/hooks/use-service.ts"

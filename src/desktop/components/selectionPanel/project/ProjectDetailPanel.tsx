@@ -1,6 +1,6 @@
-import { getTodayTimestampInUtc } from "@/core/common/getTodayTimestampInUtc"
+import { getTodayTimestampInUtc } from "@/core/time/getTodayTimestampInUtc"
 import { projectTitleInputKey } from "@/ui/components/edit/inputKeys.ts"
-import { AreaIcon, FlagIcon, MenuIcon, ScheduledIcon } from "@/ui/components/icons"
+import { AreaIcon, EllipsisVertical, FlagIcon, ScheduledIcon } from "@/ui/components/icons"
 import { getProjectHeadingAndTasks } from "@/core/state/getProjectHeadingAndTasks"
 import { getProject } from "@/core/state/getProject"
 import { EntityHeader } from "@/desktop/components/common/EntityHeader"
@@ -114,7 +114,7 @@ const ProjectDetailPanelContent: React.FC<IProjectDetailPanelContentProps> = ({ 
 
   const headerActions = [
     {
-      icon: <MenuIcon />,
+      icon: <EllipsisVertical />,
       handleClick: handleMenuClick,
       title: localize("common.more", "More"),
       testId: TestIds.ProjectDetailPanel.MenuButton,

@@ -3,7 +3,7 @@ import {
   CloudSlashIcon,
   FileIcon,
   ImageIcon,
-  Loader2Icon,
+  LoaderCircle,
   PlusIcon,
   RightArrowIcon,
 } from "@/ui/components/icons"
@@ -90,7 +90,7 @@ const ThumbImage: React.FC<{ s3Key: string; filename: string }> = ({ s3Key, file
   }, [s3Key, attachmentService])
 
   if (state.status === "loading") {
-    return <Loader2Icon className={desktopStyles.AttachmentRowThumbLoading} strokeWidth={1.5} />
+    return <LoaderCircle className={desktopStyles.AttachmentRowThumbLoading} strokeWidth={1.5} />
   }
   if (state.status === "failed") {
     return <ImageIcon className={desktopStyles.AttachmentRowThumbIcon} strokeWidth={1.5} />
