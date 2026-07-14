@@ -13,13 +13,17 @@ interface EditableInputProps {
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void
   onBlur?: () => void
   onStartEdit?: (currentValue: string, cursor: number) => void
+  onSelect?: (e: React.SyntheticEvent<HTMLInputElement>) => void
   placeholder: string
   onSave: (value: string) => void
   className?: string
 }
 
 export const EditableInputSpan = forwardRef<HTMLInputElement, EditableInputProps>(
-  ({ inputKey, defaultValue, onChange, onBlur, placeholder, onSave, className, onStartEdit, isFocused }, ref) => {
+  (
+    { inputKey, defaultValue, onChange, onBlur, onSelect, placeholder, onSave, className, onStartEdit, isFocused },
+    ref,
+  ) => {
     const editService = useService(IEditService)
     useWatchEvent(editService.onInputChange, (e) => {
       return e.inputKey === inputKey
@@ -53,10 +57,6 @@ export const EditableInputSpan = forwardRef<HTMLInputElement, EditableInputProps
       onStartEdit?.(inputValue, position)
     }
 
-    const handleSelect = (e: React.SyntheticEvent<HTMLInputElement>) => {
-      onStartEdit?.(e.currentTarget.value, e.currentTarget.selectionStart ?? 0)
-    }
-
     return (
       <React.Fragment>
         <div
@@ -86,7 +86,7 @@ export const EditableInputSpan = forwardRef<HTMLInputElement, EditableInputProps
           })}
           value={inputValue}
           onChange={handleInputChange}
-          onSelect={handleSelect}
+          onSelect={onSelect}
           onBlur={handleInputBlur}
           placeholder={placeholder}
         />

@@ -103,10 +103,8 @@ The Compose stack starts RustFS on its internal ports `9000`/`9001` and creates
 the `tasks-attachments` bucket automatically. On the host, the S3 API listens on
 `127.0.0.1:8401` and the management console on `127.0.0.1:8402` by default.
 
-When a Tasks client connects to the self-hosted sync server, it automatically
-detects attachment support through the authenticated
-`GET /api/v1/attachments/config` endpoint. Existing clients migrate on their
-next startup. A manually configured third-party S3 service is not overwritten.
+When a Tasks client connects to the self-hosted sync server, it uses that server
+for attachment storage, replacing any previous attachment storage configuration.
 
 Clients upload and download through the Tasks API using the existing bearer
 token. The Go server streams objects to and from RustFS over the private Docker
@@ -130,7 +128,6 @@ Authorization: Bearer <AUTH_TOKEN>
 ```
 
 - `GET /api/v1/health`
-- `GET /api/v1/attachments/config`
 - `PUT /api/v1/attachments/objects/{key...}`
 - `GET /api/v1/attachments/objects/{key...}`
 - `GET /api/v1/spaces/{space}/status`

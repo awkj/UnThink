@@ -1,6 +1,5 @@
 import { LocalServerSDK } from "@/services/serverApi/main"
 import { AppendChangeResponse, SyncChangesPage, SyncSnapshot, SyncStatus } from "@/services/serverApi/sync"
-import { SelfhostedAttachmentConfig } from "@/services/serverApi/attachments"
 
 export class SelfhostedServerStorage {
   private readonly sdk: LocalServerSDK
@@ -21,10 +20,6 @@ export class SelfhostedServerStorage {
 
   status(): Promise<SyncStatus> {
     return this.sdk.sync.status(this.folder)
-  }
-
-  attachmentConfig(): Promise<SelfhostedAttachmentConfig> {
-    return this.sdk.attachments.config()
   }
 
   changes(after: number, clientId: string): Promise<SyncChangesPage> {

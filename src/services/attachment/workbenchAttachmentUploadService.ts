@@ -167,11 +167,7 @@ export class WorkbenchAttachmentUploadService implements IAttachmentUploadServic
     this._onChange.fire()
   }
 
-  async applySelfhostedConfig(serverId: string, endpoint: string, authToken: string): Promise<boolean> {
-    const current = this.getConfig()
-    if (current && !isSelfhostedAttachmentConfig(current)) {
-      return false
-    }
+  async applySelfhostedConfig(serverId: string, endpoint: string, authToken: string): Promise<void> {
     const config: SelfhostedAttachmentStorageConfig = {
       transport: "selfhosted",
       endpoint: endpoint.replace(/\/$/, ""),
@@ -182,7 +178,6 @@ export class WorkbenchAttachmentUploadService implements IAttachmentUploadServic
     this.cachedClient = null
     this.cachedConfigSignature = null
     this._onChange.fire()
-    return true
   }
 
   async clearSelfhostedConfig(serverId: string): Promise<void> {

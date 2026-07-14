@@ -48,6 +48,30 @@ test("desktop and mobile routes survive a hard refresh", async ({ page }) => {
   await expect(page.locator("#root")).not.toBeEmpty({ timeout: 15_000 })
 })
 
+test("desktop task titles keep the caret where the user moves it", async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== "chromium", "task list inline editing is a desktop interaction")
+
+  await page.goto("/inbox")
+  const addTaskInput = page.getByPlaceholder(/Add Task|添加任务/)
+  await addTaskInput.fill("caret target")
+  await addTaskInput.press("Enter")
+
+  const task = page.getByTestId("task-list-item").filter({ hasText: "caret target" })
+  await expect(task).toBeVisible()
+  await task.getByText("caret target", { exact: true }).click()
+
+  const titleInput = task.locator('input[data-title-text="true"]')
+  await expect(titleInput).toBeFocused()
+  const inputBox = await titleInput.boundingBox()
+  expect(inputBox).not.toBeNull()
+  await titleInput.click({ position: { x: 2, y: inputBox!.height / 2 } })
+  await expect.poll(() => titleInput.evaluate((input) => input.selectionStart)).toBe(0)
+  await expect(titleInput).toBeFocused()
+
+  await titleInput.press("X")
+  await expect(titleInput).toHaveValue("Xcaret target")
+})
+
 test("service worker starts the app shell offline", async ({ page, context }) => {
   await page.goto("/inbox")
   await page.evaluate(() => navigator.serviceWorker.ready)

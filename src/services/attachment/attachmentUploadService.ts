@@ -51,7 +51,7 @@ export interface IAttachmentUploadService {
 
   getConfig(): AttachmentStorageConfig | null
   setConfig(config: S3Config | null): Promise<void>
-  applySelfhostedConfig(serverId: string, endpoint: string, authToken: string): Promise<boolean>
+  applySelfhostedConfig(serverId: string, endpoint: string, authToken: string): Promise<void>
   clearSelfhostedConfig(serverId: string): Promise<void>
   testConnection(config: S3Config): Promise<TestConnectionResult>
 

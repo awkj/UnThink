@@ -17,12 +17,10 @@ import { DragHandleIcon, SubtaskIcon, TextAlignStart } from "@/ui/components/ico
 import { getTaskItemTags } from "@/core/state/getTaskItemTags"
 import { useService } from "@/ui/hooks/use-service"
 import { useSync } from "@/ui/hooks/use-sync"
-import { useContextKeyValue } from "@/ui/hooks/useContextKeyValue"
 import { IAttachmentUploadService } from "@/services/attachment/attachmentUploadService"
 import { ITodoService } from "@/services/todo/todoService"
 import { useSortable } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
-import { InputFocusedContext } from "@hamsterbase/foundation/contextkey"
 import { ItemTagsList } from "./ItemTagsList"
 
 export interface TaskListItemProps {
@@ -87,18 +85,8 @@ export const TaskListItem: React.FC<TaskListItemProps> = ({
   const longPress = useLongPress(() => {
     taskItemActions.cancelTask()
   })
-  const isInputFocused = useContextKeyValue(InputFocusedContext)
-
   const handleStartEdit = (value: string, cursor: number) => {
-    if (taskList.cursorId === task.id) {
-      taskList.updateInputValue(value)
-      if (taskList.cursorOffset !== null) {
-        if (isInputFocused) {
-          taskList.updateCursor(cursor)
-          return
-        }
-      }
-    }
+    taskList.updateInputValue(value)
     taskList.select(task.id, {
       offset: cursor,
       multipleMode: false,
@@ -198,6 +186,10 @@ export const TaskListItem: React.FC<TaskListItemProps> = ({
     taskList.updateInputValue(e.target.value)
   }
 
+  const handleSelect = (e: React.SyntheticEvent<HTMLInputElement>) => {
+    taskList.updateCursor(e.currentTarget.selectionStart ?? 0)
+  }
+
   const titleClassName = classNames(desktopStyles.TaskListItemTitleInput, {
     [desktopStyles.TaskListItemTitleInputCompleted]: task.status === "completed",
   })
@@ -243,6 +235,7 @@ export const TaskListItem: React.FC<TaskListItemProps> = ({
             ref={inputRef}
             defaultValue={task.title}
             onChange={handleChange}
+            onSelect={handleSelect}
             isFocused={isEditing}
             onStartEdit={handleStartEdit}
             onSave={(value) => {

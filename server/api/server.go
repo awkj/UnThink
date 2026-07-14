@@ -138,7 +138,6 @@ func New(
 	go server.forwardDatabaseNotifications()
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/v1/health", server.health)
-	mux.Handle("GET /api/v1/attachments/config", server.authorize(http.HandlerFunc(server.attachmentConfig)))
 	mux.Handle("PUT /api/v1/attachments/objects/{key...}", server.authorize(http.HandlerFunc(server.putAttachment)))
 	mux.Handle("GET /api/v1/attachments/objects/{key...}", server.authorize(http.HandlerFunc(server.getAttachment)))
 	mux.Handle("GET /api/v1/spaces/{space}/status", server.authorize(server.canonicalizeSpace(http.HandlerFunc(server.status))))
@@ -161,14 +160,6 @@ func (s *Server) forwardDatabaseNotifications() {
 	for event := range s.store.RevisionNotifications() {
 		s.revisions.publish(event.Space, revisionEvent{clientID: event.ClientID, revision: event.Revision})
 	}
-}
-
-func (s *Server) attachmentConfig(w http.ResponseWriter, r *http.Request) {
-	if s.attachmentStore == nil {
-		writeError(w, http.StatusNotFound, "self-hosted attachment storage is not configured")
-		return
-	}
-	writeJSON(w, http.StatusOK, map[string]string{"transport": "server"})
 }
 
 func (s *Server) putAttachment(w http.ResponseWriter, r *http.Request) {
@@ -278,8 +269,8 @@ func (s *Server) status(w http.ResponseWriter, r *http.Request) {
 		writeInternalError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]int64{
-		"revision": status.Revision, "snapshotRevision": status.SnapshotRevision,
+	writeJSON(w, http.StatusOK, map[string]any{
+		"protocol": 2, "revision": status.Revision, "snapshotRevision": status.SnapshotRevision,
 	})
 }
 

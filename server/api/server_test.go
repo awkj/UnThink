@@ -133,7 +133,7 @@ func TestSyncAPI(t *testing.T) {
 		t.Fatalf("unexpected second append response: %#v", result[0])
 	}
 	status := requestJSON(t, server.URL, http.MethodGet, "/api/v1/spaces/"+space+"/status", nil)
-	if status["revision"].(float64) != 2 {
+	if status["protocol"].(float64) != 2 || status["revision"].(float64) != 2 {
 		t.Fatalf("unexpected status: %#v", status)
 	}
 
@@ -211,12 +211,11 @@ func TestJSONZstdNegotiation(t *testing.T) {
 	server := httptest.NewServer(handler)
 	t.Cleanup(server.Close)
 
-	req, err := http.NewRequest(http.MethodGet, server.URL+"/api/v1/attachments/config", nil)
+	req, err := http.NewRequest(http.MethodGet, server.URL+"/api/v1/attachments/objects/test", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 	req.Header.Set("Accept-Encoding", "zstd")
-	req.Header.Set("Authorization", "Bearer "+testToken)
 	response, err := http.DefaultClient.Do(req)
 	if err != nil {
 		t.Fatal(err)
@@ -234,35 +233,16 @@ func TestJSONZstdNegotiation(t *testing.T) {
 	if err := json.NewDecoder(decoder).Decode(&result); err != nil {
 		t.Fatal(err)
 	}
-	if result["transport"] != "server" {
+	if result["error"] != "invalid or missing bearer token" {
 		t.Fatalf("unexpected JSON response: %#v", result)
 	}
 }
 
-func TestAttachmentConfig(t *testing.T) {
+func TestAttachmentObjects(t *testing.T) {
 	attachments := newMemoryAttachmentStore()
 	handler := api.New(nil, testToken, "*", "", attachments)
 	server := httptest.NewServer(handler)
 	t.Cleanup(server.Close)
-
-	unauthorized := request(t, server.URL, http.MethodGet, "/api/v1/attachments/config", "", nil)
-	defer unauthorized.Body.Close()
-	if unauthorized.StatusCode != http.StatusUnauthorized {
-		t.Fatalf("unauthorized status = %d", unauthorized.StatusCode)
-	}
-
-	response := request(t, server.URL, http.MethodGet, "/api/v1/attachments/config", testToken, nil)
-	defer response.Body.Close()
-	if response.StatusCode != http.StatusOK {
-		t.Fatalf("attachment config status = %d", response.StatusCode)
-	}
-	var result map[string]any
-	if err := json.NewDecoder(response.Body).Decode(&result); err != nil {
-		t.Fatal(err)
-	}
-	if result["transport"] != "server" || len(result) != 1 {
-		t.Fatalf("unexpected attachment config: %#v", result)
-	}
 
 	upload := request(
 		t,

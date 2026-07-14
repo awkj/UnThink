@@ -68,6 +68,7 @@ export class LocalServerClient {
   async getCBORSequence<T>(api: string): Promise<{ values: T[]; headers: Record<string, string> }> {
     const response = await this.requestRaw("GET", api, undefined, "application/cbor-seq")
     this.throwIfError(response)
+    this.assertContentType(response, "application/cbor-seq")
     return { values: decodeCBORSequence<T>(response.body), headers: response.headers }
   }
 
@@ -80,6 +81,7 @@ export class LocalServerClient {
       "application/cbor-seq",
     )
     this.throwIfError(response)
+    this.assertContentType(response, "application/cbor-seq")
     return decodeCBORSequence<T>(response.body)
   }
 
@@ -104,6 +106,7 @@ export class LocalServerClient {
       "application/cbor",
     )
     this.throwIfError(response)
+    this.assertContentType(response, "application/cbor")
     return decodeCBOR<T>(response.body)
   }
 
@@ -144,6 +147,16 @@ export class LocalServerClient {
         }
         throw new HttpError(response.status, message)
       }
+    }
+  }
+
+  private assertContentType(response: LocalServerClientRequestLibResponse, expected: string): void {
+    const received = response.headers["content-type"]?.split(";", 1)[0]?.trim().toLowerCase() ?? "missing"
+    if (received !== expected) {
+      throw new Error(
+        `Sync server protocol mismatch: expected ${expected}, received ${received}. ` +
+          "Rebuild and redeploy the server and client from the same version.",
+      )
     }
   }
 }

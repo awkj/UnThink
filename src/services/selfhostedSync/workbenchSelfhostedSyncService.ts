@@ -148,7 +148,7 @@ export class WorkbenchSelfhostedSyncService implements ISelfhostedSyncService {
     this.metadata = metadata
     this.pendingServerRevision = 0
     this.startEventStream()
-    await this.syncAttachmentStorage(storage, newServer)
+    await this.syncAttachmentStorage(newServer)
     this._lastError = null
     this.onStateChangeEmitter.fire()
     await this.sync()
@@ -207,7 +207,7 @@ export class WorkbenchSelfhostedSyncService implements ISelfhostedSyncService {
       this.onStateChangeEmitter.fire()
       return
     }
-    await this.syncAttachmentStorage(storage, updatedConfig)
+    await this.syncAttachmentStorage(updatedConfig)
     this.startEventStream()
     this.onStateChangeEmitter.fire()
     await this.sync()
@@ -226,7 +226,7 @@ export class WorkbenchSelfhostedSyncService implements ISelfhostedSyncService {
     this.pendingServerRevision = 0
     if (enabled) {
       this._lastError = null
-      await this.syncAttachmentStorage(this.requireStorage(), config)
+      await this.syncAttachmentStorage(config)
       this.startEventStream()
       this.scheduleSync(0)
     } else {
@@ -321,7 +321,7 @@ export class WorkbenchSelfhostedSyncService implements ISelfhostedSyncService {
         await this.saveMetadata()
       }
       if (this.syncEnabled) {
-        await this.syncAttachmentStorage(this.storage, config)
+        await this.syncAttachmentStorage(config)
         this.startEventStream()
       }
     }
@@ -430,23 +430,8 @@ export class WorkbenchSelfhostedSyncService implements ISelfhostedSyncService {
     }
   }
 
-  private async syncAttachmentStorage(
-    storage: SelfhostedServerStorage,
-    serverConfig: ISelfhostedSyncServerConfig,
-  ): Promise<void> {
-    try {
-      const config = await storage.attachmentConfig()
-      if (config.transport === "server") {
-        await this.attachmentService.applySelfhostedConfig(
-          serverConfig.id,
-          serverConfig.entrypoint,
-          serverConfig.authToken,
-        )
-      }
-    } catch {
-      // Older self-hosted servers do not expose attachment configuration.
-      // Task synchronization remains available and a custom S3 config is preserved.
-    }
+  private async syncAttachmentStorage(serverConfig: ISelfhostedSyncServerConfig): Promise<void> {
+    await this.attachmentService.applySelfhostedConfig(serverConfig.id, serverConfig.entrypoint, serverConfig.authToken)
   }
 
   private requireStorage(): SelfhostedServerStorage {

@@ -7,14 +7,12 @@ import { desktopStyles } from "@/desktop/theme/main"
 import { useService } from "@/ui/hooks/use-service"
 import { useSync } from "@/ui/hooks/use-sync"
 import { useWatchEvent } from "@/ui/hooks/use-watch-event"
-import { useContextKeyValue } from "@/ui/hooks/useContextKeyValue"
 import { useRegisterEvent } from "@/ui/hooks/useRegisterEvent.ts"
 import { ITodoService } from "@/services/todo/todoService"
 import { useSortable } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
 import classNames from "classnames"
 import React, { useRef } from "react"
-import { InputFocusedContext } from "@hamsterbase/foundation/contextkey"
 import { localize } from "@/nls"
 
 export interface DesktopHeadingListItemProps {
@@ -51,20 +49,11 @@ export const DesktopHeadingListItem: React.FC<DesktopHeadingListItemProps> = ({
   const isSelected = taskList?.selectedIds.includes(projectHeadingInfo.id) ?? false
   const isFocused = taskList?.isFocused ?? false
 
-  const isInputFocused = useContextKeyValue(InputFocusedContext)
   const handleStartEdit = (value: string, cursor: number) => {
     if (!taskList) {
       return
     }
-    if (taskList.cursorId === projectHeadingInfo.id) {
-      taskList.updateInputValue(value)
-      if (taskList.cursorOffset !== null) {
-        if (isInputFocused) {
-          taskList.updateCursor(cursor)
-          return
-        }
-      }
-    }
+    taskList.updateInputValue(value)
     taskList.select(projectHeadingInfo.id, {
       offset: cursor,
       multipleMode: false,
@@ -137,6 +126,9 @@ export const DesktopHeadingListItem: React.FC<DesktopHeadingListItemProps> = ({
           defaultValue={projectHeadingInfo.title}
           onChange={(e) => {
             taskList?.updateInputValue(e.target.value)
+          }}
+          onSelect={(e) => {
+            taskList?.updateCursor(e.currentTarget.selectionStart ?? 0)
           }}
           isFocused={isSelected}
           onStartEdit={handleStartEdit}

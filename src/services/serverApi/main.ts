@@ -1,6 +1,5 @@
 import { LocalServerClient, LocalServerClientOptions, LocalServerClientRequestLibOption } from "./client"
 import { Sync } from "./sync"
-import { Attachments } from "./attachments"
 
 export class LocalServerSDK {
   static fetchToRequestLib = (fetch: typeof globalThis.fetch) => {
@@ -20,12 +19,10 @@ export class LocalServerSDK {
   private readonly client: LocalServerClient
 
   public sync: Sync
-  public attachments: Attachments
 
   constructor(private options: LocalServerClientOptions) {
     this.client = new LocalServerClient(options)
     this.sync = new Sync(this.client)
-    this.attachments = new Attachments(this.client)
   }
 
   clone() {

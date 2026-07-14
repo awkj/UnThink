@@ -5,6 +5,10 @@ export interface SyncStatus {
   snapshotRevision: number
 }
 
+interface SyncServerStatus extends SyncStatus {
+  protocol: number
+}
+
 export interface SyncChange {
   revision: number
   clientId: string
@@ -48,8 +52,15 @@ export interface PutSnapshotRequest {
 export class Sync {
   constructor(private client: LocalServerClient) {}
 
-  status(space: string): Promise<SyncStatus> {
-    return this.client.get<SyncStatus>(`v1/spaces/${encodeURIComponent(space)}/status`)
+  async status(space: string): Promise<SyncStatus> {
+    const status = await this.client.get<SyncServerStatus>(`v1/spaces/${encodeURIComponent(space)}/status`)
+    if (status.protocol !== 2) {
+      throw new Error(
+        `Sync server protocol mismatch: expected version 2, received ${status.protocol ?? "missing"}. ` +
+          "Rebuild and redeploy the server and client from the same version.",
+      )
+    }
+    return status
   }
 
   async changes(
