@@ -6,10 +6,10 @@ import {
 import { IConfigService } from "@/services/config/configService"
 import { ITodoService } from "@/services/todo/todoService"
 import { IAttachmentUploadService } from "@/services/attachment/attachmentUploadService"
-import { ByteBuffer, decodeBase64, encodeBase64 } from "@hamsterbase/foundation/buffer"
 import { Emitter } from "@hamsterbase/foundation/event"
 import { generateUuid } from "@hamsterbase/foundation/uuid"
 import { LoroDoc } from "loro-crdt"
+import { HttpError } from "@/services/serverApi/error"
 import { SelfhostedServerStorage } from "./SelfhostedServerStorage"
 import {
   ISelfhostedSyncMetadata,
@@ -187,6 +187,10 @@ export class WorkbenchSelfhostedSyncService implements ISelfhostedSyncService {
         }
       : this.metadata
 
+    if (serverChanged) {
+      await this.unregisterClient(this.storage, this.metadata.clientId)
+    }
+
     this.stopEventStream()
     this.clearScheduledSync()
     await this.configService.save(thirdpartySyncServersConfigKey(), updatedConfig)
@@ -234,6 +238,14 @@ export class WorkbenchSelfhostedSyncService implements ISelfhostedSyncService {
 
   async removeServer(): Promise<void> {
     const config = this.config
+    if (this.syncRequest) {
+      await this.syncRequest.catch(() => {
+        // Removal must still be possible when the server is unavailable.
+      })
+    }
+    if (this.storage && this.metadata) {
+      await this.unregisterClient(this.storage, this.metadata.clientId)
+    }
     if (config) {
       await this.attachmentService.clearSelfhostedConfig(config.id)
       await this.configService.save(selfhostedSyncMetadataConfigKey(config.id), null)
@@ -334,31 +346,42 @@ export class WorkbenchSelfhostedSyncService implements ISelfhostedSyncService {
     const metadata = this.requireMetadata()
     let cursor = metadata.serverRevision
     while (true) {
-      const page = await storage.changes(cursor, metadata.clientId)
-      const payloads: Array<{ revision: number; data: Uint8Array }> = []
-      if (page.snapshot) {
-        payloads.push({
-          revision: page.snapshot.revision,
-          data: decodeBase64(page.snapshot.payload).buffer,
-        })
-        metadata.snapshotRevision = Math.max(metadata.snapshotRevision, page.snapshot.revision)
-      }
-      for (const change of page.changes) {
-        payloads.push({ revision: change.revision, data: decodeBase64(change.payload).buffer })
-      }
-
-      if (payloads.length > 0) {
-        const data = payloads.map((item) => item.data)
+      let page
+      try {
+        page = await storage.changes(cursor, metadata.clientId)
+      } catch (error) {
+        if (!(error instanceof HttpError && error.status === 409 && error.code === "snapshot_required")) {
+          throw error
+        }
+        const snapshot = await storage.snapshot()
         this.applyingRemoteChanges = true
         try {
-          await this.todoService.import(data, this.todoService.storageId)
+          await this.todoService.import([snapshot.payload], this.todoService.storageId)
         } finally {
           this.applyingRemoteChanges = false
         }
-        metadata.uploadedVersion = mergeVersions(metadata.uploadedVersion, getPayloadVersion(data))
-        cursor = Math.max(cursor, ...payloads.map((item) => item.revision))
+        metadata.uploadedVersion = mergeVersions(metadata.uploadedVersion, getPayloadVersion([snapshot.payload]))
+        metadata.snapshotRevision = Math.max(metadata.snapshotRevision, snapshot.revision)
+        metadata.serverRevision = Math.max(metadata.serverRevision, snapshot.revision)
+        cursor = metadata.serverRevision
+        await this.saveMetadata()
+        continue
       }
-      metadata.serverRevision = page.hasMore ? cursor : page.revision
+
+      const payloads = page.changes.map((change) => change.payload)
+
+      if (payloads.length > 0) {
+        this.applyingRemoteChanges = true
+        try {
+          await this.todoService.import(payloads, this.todoService.storageId)
+        } finally {
+          this.applyingRemoteChanges = false
+        }
+        metadata.uploadedVersion = mergeVersions(metadata.uploadedVersion, getPayloadVersion(payloads))
+      }
+      cursor = page.nextRevision
+      metadata.snapshotRevision = Math.max(metadata.snapshotRevision, page.snapshotRevision)
+      metadata.serverRevision = page.hasMore ? page.nextRevision : page.revision
       await this.saveMetadata()
       if (!page.hasMore) break
     }
@@ -372,7 +395,7 @@ export class WorkbenchSelfhostedSyncService implements ISelfhostedSyncService {
       return false
     }
     const patch = this.todoService.exportPatch(metadata.uploadedVersion, this.todoService.storageId)
-    await storage.appendChange(metadata.clientId, generateUuid(), encodeBase64(ByteBuffer.wrap(patch)))
+    await storage.appendChange(metadata.clientId, generateUuid(), patch)
     metadata.uploadedVersion = mergeVersions(metadata.uploadedVersion, currentVersion)
     await this.saveMetadata()
     return true
@@ -389,17 +412,22 @@ export class WorkbenchSelfhostedSyncService implements ISelfhostedSyncService {
       return
     }
     const snapshot = this.todoService.exportPatch({}, this.todoService.storageId)
-    const status = await storage.putSnapshot(
-      metadata.clientId,
-      metadata.serverRevision,
-      encodeBase64(ByteBuffer.wrap(snapshot)),
-    )
+    const status = await storage.putSnapshot(metadata.clientId, metadata.serverRevision, snapshot)
     metadata.snapshotRevision = status.snapshotRevision
     await this.saveMetadata()
   }
 
   private createStorage(config: ISelfhostedSyncServerConfig): SelfhostedServerStorage {
     return new SelfhostedServerStorage(config.entrypoint, config.authToken, config.folder)
+  }
+
+  private async unregisterClient(storage: SelfhostedServerStorage | null, clientId: string): Promise<void> {
+    if (!storage) return
+    try {
+      await storage.deleteClient(clientId)
+    } catch {
+      // Client leases expire server-side, so a failed best-effort unregister does not pin history forever.
+    }
   }
 
   private async syncAttachmentStorage(

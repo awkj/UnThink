@@ -136,11 +136,16 @@ Authorization: Bearer <AUTH_TOKEN>
 - `GET /api/v1/spaces/{space}/status`
 - `GET /api/v1/spaces/{space}/changes?after=0&clientId=<id>`
 - `GET /api/v1/spaces/{space}/events?clientId=<id>`
+- `GET /api/v1/spaces/{space}/snapshot`
 - `POST /api/v1/spaces/{space}/changes`
 - `PUT /api/v1/spaces/{space}/snapshot`
+- `DELETE /api/v1/spaces/{space}/clients/{clientId}`
 
-Payloads are base64-encoded Loro changes or snapshots. The server deliberately
-does not interpret CRDT contents. The events endpoint is an authenticated SSE
+Snapshots use `application/cbor`; incremental change requests and responses use
+`application/cbor-seq`. Payload fields are CBOR byte strings and are stored as
+PostgreSQL `BYTEA`, without Base64 expansion. JSON responses negotiate HTTP zstd
+compression through `Accept-Encoding`. The server deliberately does not
+interpret CRDT contents. The events endpoint is an authenticated SSE
 stream that emits committed revision numbers and excludes revisions uploaded by
 the subscribing client. It sends a heartbeat every 25 seconds; reverse proxies
 must allow streaming responses and disable response buffering for this route.

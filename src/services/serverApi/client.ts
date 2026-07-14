@@ -1,14 +1,16 @@
+import { decodeCBOR, decodeCBORSequence, encodeCBOR, encodeCBORSequence } from "./cbor"
 import { HttpError } from "./error"
 
 export interface LocalServerClientRequestLibOption {
   method: string
   headers: Record<string, string>
-  body?: string
+  body?: string | Uint8Array
 }
 
 export interface LocalServerClientRequestLibResponse {
   status: number
-  body: string
+  body: Uint8Array
+  headers: Record<string, string>
 }
 
 export interface LocalServerClientRequestLib {
@@ -23,6 +25,8 @@ export interface LocalServerClientOptions {
 
 export type LocalServerErrorResponse = {
   error: string
+  code?: string | number
+  details?: unknown
 }
 
 export type LocalServerResponse<T> = T | LocalServerErrorResponse
@@ -38,34 +42,102 @@ export class LocalServerClient {
   }
 
   post<T>(api: string, data?: unknown) {
-    return this.request<T>("POST", api, data)
+    return this.requestJSON<T>("POST", api, data)
   }
 
   put<T>(api: string, data?: unknown) {
-    return this.request<T>("PUT", api, data)
+    return this.requestJSON<T>("PUT", api, data)
   }
 
   get<T>(api: string) {
-    return this.request<T>("GET", api)
+    return this.requestJSON<T>("GET", api)
   }
 
-  private async request<T>(method: string, api: string, data?: unknown): Promise<T> {
+  delete(api: string): Promise<void> {
+    return this.requestVoid("DELETE", api)
+  }
+
+  getCBOR<T>(api: string): Promise<T> {
+    return this.requestCBOR<T>("GET", api)
+  }
+
+  putCBOR<T>(api: string, data: unknown): Promise<T> {
+    return this.requestCBOR<T>("PUT", api, data)
+  }
+
+  async getCBORSequence<T>(api: string): Promise<{ values: T[]; headers: Record<string, string> }> {
+    const response = await this.requestRaw("GET", api, undefined, "application/cbor-seq")
+    this.throwIfError(response)
+    return { values: decodeCBORSequence<T>(response.body), headers: response.headers }
+  }
+
+  async postCBORSequence<T>(api: string, values: unknown[]): Promise<T[]> {
+    const response = await this.requestRaw(
+      "POST",
+      api,
+      encodeCBORSequence(values),
+      "application/cbor-seq",
+      "application/cbor-seq",
+    )
+    this.throwIfError(response)
+    return decodeCBORSequence<T>(response.body)
+  }
+
+  private async requestJSON<T>(method: string, api: string, data?: unknown): Promise<T> {
+    const response = await this.requestRaw(
+      method,
+      api,
+      data === undefined ? undefined : JSON.stringify(data),
+      "application/json",
+      "application/json",
+    )
+    this.throwIfError(response)
+    return JSON.parse(new TextDecoder().decode(response.body)) as T
+  }
+
+  private async requestCBOR<T>(method: string, api: string, data?: unknown): Promise<T> {
+    const response = await this.requestRaw(
+      method,
+      api,
+      data === undefined ? undefined : encodeCBOR(data),
+      "application/cbor",
+      "application/cbor",
+    )
+    this.throwIfError(response)
+    return decodeCBOR<T>(response.body)
+  }
+
+  private async requestVoid(method: string, api: string): Promise<void> {
+    const response = await this.requestRaw(method, api, undefined, "application/json")
+    this.throwIfError(response)
+  }
+
+  private async requestRaw(
+    method: string,
+    api: string,
+    body: string | Uint8Array | undefined,
+    accept: string,
+    contentType?: string,
+  ): Promise<LocalServerClientRequestLibResponse> {
     const requestLib = this.options.requestLib
     const endpoint = this.options.endpoint.replace(/\/$/, "")
-    const response = await requestLib(`${endpoint}/api/${api}`, {
+    return requestLib(`${endpoint}/api/${api}`, {
       method: method,
       headers: {
-        "Content-Type": "application/json",
+        Accept: accept,
+        ...(contentType === undefined ? {} : { "Content-Type": contentType }),
         authorization: `Bearer ${this.options.authToken}`,
       },
-      ...(data === undefined ? {} : { body: JSON.stringify(data) }),
+      ...(body === undefined ? {} : { body }),
     })
+  }
 
-    if (response.status !== 200) {
-      const message = response.body
+  private throwIfError(response: LocalServerClientRequestLibResponse): void {
+    if (response.status < 200 || response.status >= 300) {
+      const message = new TextDecoder().decode(response.body)
       try {
         const parsedError = JSON.parse(message) as LocalServerErrorResponse
-        throw new HttpError(response.status, parsedError.error)
+        throw new HttpError(response.status, parsedError.error, parsedError.code, parsedError.details ?? parsedError)
       } catch (error) {
         if (error instanceof HttpError) {
           throw error
@@ -73,7 +145,5 @@ export class LocalServerClient {
         throw new HttpError(response.status, message)
       }
     }
-
-    return JSON.parse(response.body) as T
   }
 }

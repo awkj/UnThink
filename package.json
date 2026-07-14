@@ -136,6 +136,7 @@
     "@tauri-apps/plugin-fs": "^2.5.1",
     "@tauri-apps/plugin-notification": "^2.3.3",
     "@tauri-apps/plugin-opener": "^2.5.4",
+    "cbor-x": "^1.6.4",
     "i18next": "^26.3.6",
     "react-i18next": "^17.0.9",
     "use-sync-external-store": "1.6.0",

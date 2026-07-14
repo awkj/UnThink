@@ -9,27 +9,29 @@ export interface SyncChange {
   revision: number
   clientId: string
   changeId: string
-  payload: string
+  payload: Uint8Array
   createdAt: number
 }
 
 export interface SyncSnapshot {
   revision: number
-  payload: string
+  payload: Uint8Array
   createdAt: number
 }
 
 export interface SyncChangesPage {
   revision: number
+  nextRevision: number
+  snapshotRevision: number
+  payloadBytes: number
   hasMore: boolean
   changes: SyncChange[]
-  snapshot?: SyncSnapshot
 }
 
 export interface AppendChangeRequest {
   clientId: string
   changeId: string
-  payload: string
+  payload: Uint8Array
 }
 
 export interface AppendChangeResponse {
@@ -40,7 +42,7 @@ export interface AppendChangeResponse {
 export interface PutSnapshotRequest {
   clientId: string
   coversRevision: number
-  payload: string
+  payload: Uint8Array
 }
 
 export class Sync {
@@ -50,20 +52,56 @@ export class Sync {
     return this.client.get<SyncStatus>(`v1/spaces/${encodeURIComponent(space)}/status`)
   }
 
-  changes(space: string, after: number, clientId: string, limit = 500): Promise<SyncChangesPage> {
+  async changes(
+    space: string,
+    after: number,
+    clientId: string,
+    limit = 500,
+    maxBytes = 2 << 20,
+  ): Promise<SyncChangesPage> {
     const query = new URLSearchParams({
       after: String(after),
       clientId,
       limit: String(limit),
+      maxBytes: String(maxBytes),
     })
-    return this.client.get<SyncChangesPage>(`v1/spaces/${encodeURIComponent(space)}/changes?${query.toString()}`)
+    const response = await this.client.getCBORSequence<SyncChange>(
+      `v1/spaces/${encodeURIComponent(space)}/changes?${query.toString()}`,
+    )
+    const headerNumber = (name: string) => {
+      const value = Number(response.headers[name])
+      if (!Number.isSafeInteger(value) || value < 0) throw new Error(`Invalid ${name} response header`)
+      return value
+    }
+    return {
+      revision: headerNumber("x-unthink-revision"),
+      nextRevision: headerNumber("x-unthink-next-revision"),
+      snapshotRevision: headerNumber("x-unthink-snapshot-revision"),
+      payloadBytes: headerNumber("x-unthink-payload-bytes"),
+      hasMore: response.headers["x-unthink-has-more"] === "true",
+      changes: response.values,
+    }
   }
 
-  appendChange(space: string, request: AppendChangeRequest): Promise<AppendChangeResponse> {
-    return this.client.post<AppendChangeResponse>(`v1/spaces/${encodeURIComponent(space)}/changes`, request)
+  async appendChange(space: string, request: AppendChangeRequest): Promise<AppendChangeResponse> {
+    const responses = await this.client.postCBORSequence<AppendChangeResponse>(
+      `v1/spaces/${encodeURIComponent(space)}/changes`,
+      [request],
+    )
+    const response = responses[0]
+    if (!response) throw new Error("Append change response is empty")
+    return response
   }
 
   putSnapshot(space: string, request: PutSnapshotRequest): Promise<SyncStatus> {
-    return this.client.put<SyncStatus>(`v1/spaces/${encodeURIComponent(space)}/snapshot`, request)
+    return this.client.putCBOR<SyncStatus>(`v1/spaces/${encodeURIComponent(space)}/snapshot`, request)
+  }
+
+  snapshot(space: string): Promise<SyncSnapshot> {
+    return this.client.getCBOR<SyncSnapshot>(`v1/spaces/${encodeURIComponent(space)}/snapshot`)
+  }
+
+  deleteClient(space: string, clientId: string): Promise<void> {
+    return this.client.delete(`v1/spaces/${encodeURIComponent(space)}/clients/${encodeURIComponent(clientId)}`)
   }
 }

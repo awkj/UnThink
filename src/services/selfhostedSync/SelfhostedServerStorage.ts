@@ -1,5 +1,5 @@
 import { LocalServerSDK } from "@/services/serverApi/main"
-import { AppendChangeResponse, SyncChangesPage, SyncStatus } from "@/services/serverApi/sync"
+import { AppendChangeResponse, SyncChangesPage, SyncSnapshot, SyncStatus } from "@/services/serverApi/sync"
 import { SelfhostedAttachmentConfig } from "@/services/serverApi/attachments"
 
 export class SelfhostedServerStorage {
@@ -31,12 +31,20 @@ export class SelfhostedServerStorage {
     return this.sdk.sync.changes(this.folder, after, clientId)
   }
 
-  appendChange(clientId: string, changeId: string, payload: string): Promise<AppendChangeResponse> {
+  snapshot(): Promise<SyncSnapshot> {
+    return this.sdk.sync.snapshot(this.folder)
+  }
+
+  appendChange(clientId: string, changeId: string, payload: Uint8Array): Promise<AppendChangeResponse> {
     return this.sdk.sync.appendChange(this.folder, { clientId, changeId, payload })
   }
 
-  putSnapshot(clientId: string, coversRevision: number, payload: string): Promise<SyncStatus> {
+  putSnapshot(clientId: string, coversRevision: number, payload: Uint8Array): Promise<SyncStatus> {
     return this.sdk.sync.putSnapshot(this.folder, { clientId, coversRevision, payload })
+  }
+
+  deleteClient(clientId: string): Promise<void> {
+    return this.sdk.sync.deleteClient(this.folder, clientId)
   }
 
   async subscribeChanges(

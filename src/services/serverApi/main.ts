@@ -8,11 +8,12 @@ export class LocalServerSDK {
       const response = await fetch(url, {
         method: options.method,
         headers: options.headers,
-        ...(options.body === undefined ? {} : { body: options.body }),
+        ...(options.body === undefined ? {} : { body: options.body as BodyInit }),
       })
       const status = response.status
-      const body = await response.text()
-      return { status, body }
+      const body = new Uint8Array(await response.arrayBuffer())
+      const headers = Object.fromEntries(response.headers.entries())
+      return { status, body, headers }
     }
   }
 

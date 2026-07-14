@@ -1,119 +1,57 @@
-# 自托管同步流程与服务端 API
+# 自托管同步协议与实现
 
-本文描述 Unthink 当前自托管同步的实际实现，包括改动端、接收端、服务端通知链路、请求数量、异常恢复、快照压缩和附件接口。
+本文描述 Unthink 当前自托管同步的请求流程、媒体类型、数据保留和已知取舍。同步内容是 Loro CRDT 二进制数据，服务端只负责排序、保存和转发，不解析业务字段。
 
-## 1. 核心原则
+## 1. 协议概览
 
-同步系统由两条通道组成：
+同步使用三条链路：
 
-- SSE 通知通道只发送“某个 space 已提交到 revision N”，不传输 CRDT 数据。
-- HTTP 拉取通道通过 `GET /changes` 获取快照和增量 CRDT payload。
+- SSE 只发送“space 已到 revision N”的唤醒信号，不传 CRDT 数据。
+- Snapshot 使用单个 `application/cbor` 文档。
+- Changes 使用 `application/cbor-seq`，每个 change 是一个独立 CBOR data item。
 
-因此，SSE 是可能合并、可能中断的唤醒信号，服务端 revision 才是同步进度的事实来源。客户端重连、重新聚焦或漏掉通知后，仍可凭本地游标继续拉取。
+健康检查、状态、附件配置和错误响应仍是 JSON。客户端声明 `Accept-Encoding: zstd` 时，这些 JSON 响应由 HTTP `Content-Encoding: zstd` 压缩；未声明或不支持时返回 identity。CBOR 与 CBOR Sequence 当前不再叠加 HTTP 压缩，因为 Loro payload 已是紧凑二进制，且保持 item 边界更便于流式处理。
 
-任务内容使用 Loro CRDT。服务端只保存不透明的二进制 payload，不解析任务、项目或视图的业务字段。
+### 核心字段
 
-### 1.1 关键标识和游标
+| 字段 | 含义 |
+| --- | --- |
+| `space` | 同步空间，即配置中的 folder；服务端规范为小写 |
+| `clientId` | 一份设备同步配置的稳定标识，也用于 client lease |
+| `changeId` | 上传幂等键；同一 client 重试不会产生新 revision |
+| `revision` | space 内每次追加 change 后单调递增的序号 |
+| `serverRevision` | 客户端已完整导入到的服务端 revision |
+| `snapshotRevision` | 快照覆盖到的 revision |
+| `uploadedVersion` | 客户端已知存在于服务端的 Loro 版本向量 |
 
-| 名称                    | 所属方         | 含义                                                                   |
-| ----------------------- | -------------- | ---------------------------------------------------------------------- |
-| `space`                 | 客户端和服务端 | 同步空间，即配置中的 folder；服务端会去除首尾空白并转成小写            |
-| `clientId`              | 客户端         | 当前同步配置对应的设备标识；SSE 用它排除自己上传产生的通知             |
-| `changeId`              | 客户端         | 单次上传的幂等标识；相同 `clientId + changeId` 重试不会产生新 revision |
-| `revision`              | 服务端         | space 内单调递增的提交序号，每次成功追加 change 增加 1                 |
-| `serverRevision`        | 客户端         | 客户端已经拉取并处理到的服务端 revision                                |
-| `snapshotRevision`      | 客户端和服务端 | 当前快照覆盖到的 revision                                              |
-| `uploadedVersion`       | 客户端         | 已知已经存在于服务端或来自服务端的 Loro 版本向量                       |
-| `pendingServerRevision` | 客户端内存     | 同步期间收到但可能尚未覆盖的最高 SSE revision                          |
+CBOR 中 `payload` 是 byte string，客户端直接映射为 `Uint8Array`，PostgreSQL 中直接保存为 `BYTEA`。协议中不再使用 Base64，因此没有约 33% 的 Base64 膨胀，也没有重复编码和解码。
 
-客户端持久化 `clientId`、`serverRevision`、`snapshotRevision` 和 `uploadedVersion`。服务端不保存客户端业务状态，只保存 change、snapshot 和客户端确认游标。
+## 2. 改动端流程
 
-## 2. 总体数据链路
-
-```mermaid
-sequenceDiagram
-    participant A as 改动端 A
-    participant API as Tasks API
-    participant DB as PostgreSQL
-    participant SSE as Revision Hub / SSE
-    participant B as 接收端 B
-
-    B->>API: GET /events?clientId=B（长连接）
-    A->>API: POST /changes（clientId=A, changeId, payload）
-    API->>DB: 事务内 revision + 1、写入 change、pg_notify
-    DB-->>API: 事务提交并发出 revision 通知
-    API-->>A: { revision, duplicate }
-    API->>SSE: 发布 { clientId: A, revision }
-    SSE-->>B: event: revision / data: revision
-    B->>API: GET /changes?after=本地游标&clientId=B
-    API-->>B: snapshot（可选）+ changes + 最新 revision
-    B->>B: 导入 Loro payload，更新本地游标和版本向量
-```
-
-服务端不会向 `clientId` 相同的 SSE 订阅者发送其自己上传产生的通知。但是 `GET /changes` 返回的是 space 的完整 revision 序列，并不会过滤同一 `clientId` 写入的 change。
-
-## 3. 改动端流程
-
-### 3.1 本地改动如何触发同步
-
-本地 TaskModel 发生变化后：
-
-1. Todo 服务发出状态变化事件。
-2. 如果该变化不是正在导入的远端变化，客户端以 500 ms 防抖调度一次同步。
-3. 500 ms 内的多次本地修改通常被合并进同一个 Loro patch。
-4. 如果两次修改跨过不同的防抖/同步周期，服务端可能收到多个 `POST /changes`，因此一次用户操作并不天然等于一个服务端 revision。
-
-同步暂停时不会建立 SSE，也不会执行计划同步；本地变化仍保存在本地数据库，恢复同步后再上传。
-
-### 3.2 一轮同步的请求顺序
-
-当前一轮同步按以下顺序执行：
+本地模型变化后，客户端等待 500 ms 防抖，然后执行一轮同步：
 
 ```mermaid
 flowchart TD
-    Start["开始同步"] --> Pull["拉取远端变化"]
-    Pull --> Local{"存在未上传的本地 Loro 版本？"}
-    Local -- 否 --> Compact["检查是否需要快照压缩"]
-    Local -- 是 --> Push["POST /changes 上传本地 patch"]
-    Push --> PullAgain["再次拉取，覆盖自己的提交和并发提交"]
-    PullAgain --> Compact
-    Compact --> Done["结束同步"]
+    A["本地模型变化"] --> B["GET changes：先合并远端"]
+    B --> C{"有未上传的 Loro 版本？"}
+    C -- "否" --> F["检查快照阈值"]
+    C -- "是" --> D["POST changes：CBOR Sequence"]
+    D --> E["GET changes：确认自己的 revision 和并发提交"]
+    E --> F
 ```
 
-具体步骤：
+1. `GET /changes?after=<serverRevision>` 拉取远端增量。
+2. 将每个 CBOR Sequence item 的 payload 导入本地 Loro。
+3. 若没有新本地版本，本轮不发送 POST，也不做第二次 GET。
+4. 若有新本地版本，导出一个 Loro patch，以单 item CBOR Sequence 调用 `POST /changes`。
+5. POST 成功后再 GET 一次，追平刚分配给自己的 revision，并覆盖上传期间的并发提交。
+6. revision 与上次 snapshot 相差至少 100 时，尝试上传完整 snapshot。
 
-1. 先调用 `GET /changes?after=<serverRevision>`。
-2. 导入服务端返回的 snapshot 和 changes，并更新 `serverRevision`、`snapshotRevision`、`uploadedVersion`。
-3. 比较当前 Loro 版本和 `uploadedVersion`。
-4. 如果没有新本地版本，不发送 POST，也不再执行第二次拉取。
-5. 如果存在新本地版本，导出从 `uploadedVersion` 开始的 patch，调用 `POST /changes`。
-6. POST 成功后更新 `uploadedVersion`，再调用一次 `GET /changes`：
-   - 拉回刚刚由自己写入的新 revision，使本地 `serverRevision` 与服务端一致；
-   - 捕获首次拉取和 POST 之间其他设备提交的并发变化。
-7. 最后检查是否需要生成快照。
+服务端追加 change 时，在 PostgreSQL 事务中完成幂等检查、space revision 加一、写入 `changes` 和 `pg_notify`。通知在事务提交后才投递，因此接收端收到 revision 时对应数据已经可读。
 
-先拉后推可以避免基于过旧状态导出 patch；仅在实际执行过 POST 时进行第二次拉取，可以消除纯远端同步中的重复空 GET。
+## 3. 被同步端流程
 
-### 3.3 服务端处理改动
-
-服务端收到 `POST /changes` 后，在一个 PostgreSQL 事务中：
-
-1. 按 `(space, clientId, changeId)` 查重。
-2. 如果已经存在，返回原 revision 和 `duplicate: true`，不重复写入。
-3. 如果不存在，将 space 的 revision 加 1。
-4. 写入不可变 change 记录。
-5. 调用 PostgreSQL `pg_notify('unthink_revisions', ...)`。
-6. 提交事务。
-7. 数据库通知监听器把 revision 转交给进程内 Revision Hub。
-8. Revision Hub 向该 space 的 SSE 订阅者发布通知，但跳过与改动端相同的 `clientId`。
-
-PostgreSQL 的通知在事务提交后才会投递，因此接收端收到 revision 时，对应 change 已经可以被拉取。
-
-## 4. 收到通知的同步端流程
-
-### 4.1 正常远端通知
-
-接收端长期保持：
+被同步端保持一个 SSE 长连接：
 
 ```http
 GET /api/v1/spaces/{space}/events?clientId=<clientId>
@@ -121,7 +59,7 @@ Accept: text/event-stream
 Authorization: Bearer <AUTH_TOKEN>
 ```
 
-远端提交后，接收端收到：
+其他设备提交后，它收到：
 
 ```text
 id: 13
@@ -129,342 +67,202 @@ event: revision
 data: 13
 ```
 
-客户端随后执行：
+随后通常只发一次 `GET /changes`。服务端以 `application/cbor-seq` 返回游标之后的 change，客户端导入后更新本地 revision。远端导入期间会屏蔽本地变更触发器，不会把导入再次当成自己的修改上传。
 
-1. 如果通知 revision 小于或等于本地 `serverRevision`，直接忽略。
-2. 否则记录最高的 `pendingServerRevision`。
-3. 当前没有同步时，立即启动同步。
-4. 调用一次 `GET /changes?after=<serverRevision>`。
-5. 导入返回的所有 payload；导入期间设置 `applyingRemoteChanges`，防止把远端导入误判成新的本地改动。
-6. 更新并持久化服务端游标和 Loro 版本向量。
-7. 如果接收端没有自己的待上传变化，本轮到此结束，不执行第二次 GET。
+同步期间再收到通知时，只记录最高的 `pendingServerRevision`：
 
-纯远端变化的正常网络请求是：
+- 当前 GET 已覆盖该 revision：不补请求。
+- 当前轮结束后服务端仍更高：再调度一轮。
+
+因此纯远端更新的正常成本是“一条已有 SSE 连接上的事件 + 一次 GET”。接收端同时存在本地待上传修改时，才是 `GET → POST → GET`。
+
+### 快照恢复
+
+`GET /changes` 不再把 snapshot 混入 changes 响应。若客户端游标早于当前 snapshot，服务端返回：
+
+```http
+HTTP/1.1 409 Conflict
+Content-Type: application/json
+
+{"error":"snapshot required","code":"snapshot_required","snapshotRevision":100}
+```
+
+客户端随后：
+
+1. `GET /snapshot` 获取单个 `application/cbor` 快照。
+2. 导入快照，把游标移动到 snapshot revision。
+3. 再次 `GET /changes?after=<snapshot revision>` 补齐快照之后的增量。
+
+这种拆分让 Snapshot 与增量各自保持稳定媒体类型，也避免在空 changes sequence 中塞入另一种对象。
+
+### 可靠性兜底
+
+- SSE 建立或重连后主动同步一次。
+- SSE 断线指数退避重连，最长 30 秒。
+- 普通同步失败指数退避，最长 60 秒。
+- 恢复在线、窗口聚焦、页面恢复可见时触发同步。
+- 每 60 秒执行一次兜底同步。
+- SSE 每 25 秒发 heartbeat。
+
+SSE 不是可靠队列，也不按 `Last-Event-ID` 重放；可靠性来自持久化 revision 游标和可重复调用的 changes API。
+
+## 4. 分页、体积和存储增长
+
+`GET /changes` 同时受条数和 payload 字节数限制：
+
+| 参数 | 默认值 | 最大值 |
+| --- | ---: | ---: |
+| `limit` | 500 条 | 1000 条 |
+| `maxBytes` | 2 MiB | 16 MiB |
+
+页面达到任一限制即停止，并通过响应头返回 `nextRevision` 和 `hasMore`。若单个 change 本身超过 `maxBytes`，服务端仍单独返回该 item，避免游标永久卡住；请求体和单次页面的硬上限仍是 16 MiB。
+
+这解决了“500 条小 change”和“500 条大 change”内存占用完全不同的问题。当前 Go 服务端仍会先从数据库读出至多 `limit + 1` 条，再按字节预算截断；它控制了 HTTP 响应体，但极端大行仍会占用服务端内存。进一步优化可在数据库层增加累计字节窗口或按较小批次流式扫描。
+
+### Changes 会不会无限增长
+
+不会在正常运行下无限增长，但增长是否能被回收取决于 snapshot 和 client lease：
+
+1. 客户端每相差 100 revision 上传一次快照。
+2. 清理水位为 `min(snapshotRevision, 所有有效 client 的 lastSeenRevision)`。
+3. 服务端后台每批删除最多 1000 条，避免一次大事务长时间锁表。
+4. 删除或切换同步配置时，客户端调用 `DELETE /clients/{clientId}` 主动释放水位。
+5. 90 天未续租的 client 自动过期；服务启动时和每小时执行过期清理。
+
+快照允许覆盖一个不超过当前服务端 revision 的历史点。这避免客户端导出快照期间又出现新提交，导致快照永远因“必须恰好等于最新 revision”而失败；快照之后的 changes 会继续保留和补发。
+
+若所有设备长期无法生成快照，changes 仍会增长。运维应监控每个 space 的 `revision - snapshotRevision`、changes 总字节数、最老有效 client 和数据库表膨胀。
+
+## 5. API
+
+除健康检查和静态页面外，接口均要求 Bearer Token。
+
+| 方法 | 路径 | 响应/用途 |
+| --- | --- | --- |
+| `GET` | `/api/v1/health` | JSON；数据库健康检查 |
+| `GET` | `/api/v1/spaces/{space}/status` | JSON；当前 revision 与 snapshot revision |
+| `GET` | `/api/v1/spaces/{space}/events` | SSE revision 通知 |
+| `GET` | `/api/v1/spaces/{space}/snapshot` | `application/cbor` |
+| `PUT` | `/api/v1/spaces/{space}/snapshot` | `application/cbor` |
+| `GET` | `/api/v1/spaces/{space}/changes` | `application/cbor-seq` |
+| `POST` | `/api/v1/spaces/{space}/changes` | 请求和响应均为 `application/cbor-seq` |
+| `DELETE` | `/api/v1/spaces/{space}/clients/{clientId}` | 注销 client lease，成功为 204 |
+| `GET` | `/api/v1/attachments/config` | JSON；附件能力 |
+| `PUT/GET` | `/api/v1/attachments/objects/{key...}` | 附件二进制上传/下载 |
+
+### GET changes
+
+```http
+GET /api/v1/spaces/{space}/changes?after=9&clientId=device-b&limit=500&maxBytes=2097152
+Accept: application/cbor-seq
+```
+
+成功响应头：
+
+```http
+Content-Type: application/cbor-seq
+X-Unthink-Revision: 13
+X-Unthink-Next-Revision: 13
+X-Unthink-Has-More: false
+X-Unthink-Payload-Bytes: 42817
+X-Unthink-Snapshot-Revision: 0
+```
+
+body 是零个或多个连续 CBOR data item，每个 item 的字段为：
 
 ```text
-已有的 SSE 长连接收到一条 revision 事件
-GET /changes?after=<旧 revision>
-```
-
-### 4.2 同步期间又收到通知
-
-如果当前同步尚未结束，新的 SSE 通知不会立即并发启动另一轮同步，而是只更新 `pendingServerRevision` 的最大值。
-
-当前轮结束后：
-
-- `pendingServerRevision <= serverRevision`：说明当前 GET 已经覆盖该通知，不补跑。
-- `pendingServerRevision > serverRevision`：说明还有更新未覆盖，调度且只调度一轮后续同步。
-
-这避免了过去“同步中收到 revision 13，当前请求其实已经拉到 13，但结束后仍完整执行两次 `after=13` 空拉取”的情况。
-
-### 4.3 接收端同时有本地改动
-
-如果接收端收到通知时自己也有未上传变化，请求顺序为：
-
-```text
-SSE revision 通知
-GET  /changes?after=<旧 revision>
-POST /changes
-GET  /changes?after=<第一次 GET 后的 revision>
-```
-
-第二次 GET 是必要的，因为 POST 会为接收端自己的 change 分配一个新 revision，并且期间仍可能有其他设备并发提交。
-
-### 4.4 分页
-
-`GET /changes` 默认每页最多返回 500 条 change。若响应中 `hasMore: true`，客户端用本页最后处理的 revision 继续 GET，直到 `hasMore: false`。
-
-因此积压超过一页时，一次通知会合理地产生多个 GET。
-
-### 4.5 SSE 重连和兜底同步
-
-SSE 只负责及时唤醒，不承担可靠消息队列职责：
-
-- SSE 建立成功后会主动触发一次同步，以覆盖断线期间的变化。
-- SSE 断线后按 1 秒起步的指数退避重连，最长 30 秒。
-- 普通同步失败按 2 秒起步的指数退避重试，最长 60 秒。
-- 浏览器恢复在线、窗口重新获得焦点、页面重新可见时会触发同步。
-- 客户端每 60 秒执行一次兜底同步。
-- 服务端每 25 秒发送 SSE heartbeat，维持长连接。
-
-服务端 SSE 不根据 `Last-Event-ID` 重放历史事件。重连后的主动 `GET /changes` 和客户端持久化游标负责补齐历史数据。
-
-## 5. 常见场景的请求数量
-
-下表不把已经存在的 SSE 长连接本身计为一次新请求。
-
-| 场景                                    | 请求序列                       | 说明                                  |
-| --------------------------------------- | ------------------------------ | ------------------------------------- |
-| 仅收到远端变化                          | `GET /changes`                 | 正常情况一次拉取完成                  |
-| 仅有本地变化，且本地游标已最新          | `GET → POST → GET`             | 先确认远端，再上传，再确认新 revision |
-| 收到远端变化，同时有本地待上传变化      | `GET → POST → GET`             | 合并远端后上传本地并再次追平          |
-| 同步中收到已被当前 GET 覆盖的通知       | 不增加请求                     | revision 去重                         |
-| 同步中收到更高且未覆盖的通知            | 当前轮结束后增加一轮           | 防止漏掉并发提交                      |
-| change 超过一页                         | 多个连续 GET                   | `hasMore` 分页                        |
-| 达到快照阈值                            | 正常同步后增加 `PUT /snapshot` | 当前阈值为距上次快照 100 个 revision  |
-| SSE 刚连接或重连                        | 一轮同步                       | 覆盖断线窗口                          |
-| 页面聚焦、恢复可见、恢复在线、60 秒轮询 | 一轮同步                       | 可靠性兜底，通常是一次空 GET          |
-
-## 6. 快照与旧 change 清理
-
-当 `serverRevision - snapshotRevision >= 100`，且没有未上传的本地版本时，客户端：
-
-1. 导出完整 Loro patch。
-2. 调用 `PUT /snapshot`，并传入当前 `serverRevision` 作为 `coversRevision`。
-3. 服务端只接受恰好等于当前 space revision 的快照；否则返回 `409 Conflict`，避免保存已经落后的快照。
-
-客户端每次拉取时，服务端会更新 `clients.last_seen_revision`。服务端只会删除同时满足以下条件的旧 changes：
-
-- 已经被 snapshot 覆盖；
-- 已经被所有已登记客户端确认。
-
-新客户端或游标早于快照的客户端拉取时，服务端先返回 snapshot，再返回快照之后的 changes。
-
-## 7. 服务端 API
-
-默认 API 前缀为 `/api/v1`。除健康检查和静态网页外，下列同步与附件接口都要求：
-
-```http
-Authorization: Bearer <AUTH_TOKEN>
-```
-
-### 7.1 接口总览
-
-| 方法   | 路径                                   | 用途                                                |
-| ------ | -------------------------------------- | --------------------------------------------------- |
-| `GET`  | `/api/v1/health`                       | 检查 API 和 PostgreSQL 是否可用；无需认证           |
-| `GET`  | `/api/v1/spaces/{space}/status`        | 查询当前 revision 和 snapshot revision              |
-| `GET`  | `/api/v1/spaces/{space}/changes`       | 按游标拉取 snapshot 和 change，并更新客户端确认游标 |
-| `GET`  | `/api/v1/spaces/{space}/events`        | 建立 SSE revision 通知流                            |
-| `POST` | `/api/v1/spaces/{space}/changes`       | 幂等追加一个 CRDT change                            |
-| `PUT`  | `/api/v1/spaces/{space}/snapshot`      | 写入覆盖当前 revision 的 CRDT 快照                  |
-| `GET`  | `/api/v1/attachments/config`           | 检测服务端是否提供附件存储                          |
-| `PUT`  | `/api/v1/attachments/objects/{key...}` | 上传附件对象                                        |
-| `GET`  | `/api/v1/attachments/objects/{key...}` | 下载附件对象                                        |
-
-所有 `{space}` 都会在服务端转为小写并去除首尾空白。
-
-### 7.2 健康检查
-
-```http
-GET /api/v1/health
-```
-
-成功响应：
-
-```json
-{
-  "status": "ok",
-  "database": "ok"
-}
-```
-
-数据库不可用时返回 `503 Service Unavailable`。
-
-### 7.3 查询同步状态
-
-```http
-GET /api/v1/spaces/{space}/status
-```
-
-响应：
-
-```json
 {
   "revision": 13,
-  "snapshotRevision": 0
+  "clientId": "device-a",
+  "changeId": "uuid",
+  "payload": h'...',
+  "createdAt": 1784050001000
 }
 ```
 
-客户端在新增或修改服务器配置时使用此接口验证 endpoint、token 和 space。
+空页是合法的空 body，元数据仍在响应头中。`X-Unthink-Revision` 是本次一致性读取看到的最高 revision；分页继续使用 `X-Unthink-Next-Revision`。
 
-### 7.4 拉取变化
-
-```http
-GET /api/v1/spaces/{space}/changes?after=9&clientId=<clientId>&limit=500
-```
-
-参数：
-
-| 参数       | 默认值 | 限制             | 含义                                                    |
-| ---------- | ------ | ---------------- | ------------------------------------------------------- |
-| `after`    | `0`    | 非负整数         | 只返回该 revision 之后的数据                            |
-| `clientId` | 空     | 客户端应始终传入 | 用于记录该客户端已确认到的 revision，不用于过滤返回内容 |
-| `limit`    | `500`  | `1..1000`        | 单页最多返回的 change 数量                              |
-
-响应：
-
-```json
-{
-  "revision": 13,
-  "hasMore": false,
-  "snapshot": {
-    "revision": 10,
-    "payload": "<base64>",
-    "createdAt": 1784050000000
-  },
-  "changes": [
-    {
-      "revision": 11,
-      "clientId": "device-a",
-      "changeId": "uuid",
-      "payload": "<base64>",
-      "createdAt": 1784050001000
-    }
-  ]
-}
-```
-
-`snapshot` 仅在客户端的 `after` 早于当前快照时出现。`revision` 是服务端查询时的 space 最新 revision，不一定等于本页最后一个 change；分页时应结合 `hasMore` 和已处理的最后 revision 继续拉取。
-
-### 7.5 SSE revision 通知
-
-```http
-GET /api/v1/spaces/{space}/events?clientId=<clientId>
-Accept: text/event-stream
-```
-
-连接建立时先返回注释：
-
-```text
-: connected
-```
-
-其他客户端提交后返回：
-
-```text
-id: 13
-event: revision
-data: 13
-```
-
-每 25 秒发送：
-
-```text
-: heartbeat
-```
-
-同一 `clientId` 上传的 revision 不会发给该订阅连接。Revision Hub 的每个订阅者队列只保留最新待处理 revision；这不会丢数据，因为客户端始终按游标拉取全部 changes。
-
-反向代理必须允许流式响应，并禁用该路由的响应缓冲。
-
-### 7.6 追加 change
+### POST changes
 
 ```http
 POST /api/v1/spaces/{space}/changes
-Content-Type: application/json
-
-{
-  "clientId": "device-a",
-  "changeId": "uuid",
-  "payload": "<base64 Loro patch>"
-}
+Content-Type: application/cbor-seq
+Accept: application/cbor-seq
 ```
 
-响应：
+请求 body 每个 item：
 
-```json
-{
-  "revision": 13,
-  "duplicate": false
-}
+```text
+{"clientId":"device-a","changeId":"uuid","payload":h'...'}
 ```
 
-约束：
+响应按请求顺序返回相同数量的 item：
 
-- `clientId`、`changeId`、`payload` 必填。
-- `payload` 必须是合法 Base64。
-- JSON 请求体上限为 16 MiB。
-- `(space, clientId, changeId)` 唯一；重复请求返回原 revision 和 `duplicate: true`。
+```text
+{"revision":13,"duplicate":false}
+```
 
-### 7.7 写入快照
+当前客户端一次只提交一个 item，协议允许最多 1000 个，为以后批量上传保留空间。`(space, clientId, changeId)` 唯一，重试返回原 revision 和 `duplicate: true`。
+
+### Snapshot
+
+读取：
+
+```http
+GET /api/v1/spaces/{space}/snapshot
+Accept: application/cbor
+```
+
+响应是一个 CBOR item：
+
+```text
+{"revision":100,"payload":h'...',"createdAt":1784050000000}
+```
+
+写入：
 
 ```http
 PUT /api/v1/spaces/{space}/snapshot
-Content-Type: application/json
-
-{
-  "clientId": "device-a",
-  "coversRevision": 100,
-  "payload": "<base64 full Loro patch>"
-}
+Content-Type: application/cbor
+Accept: application/cbor
 ```
 
-成功响应：
-
-```json
-{
-  "revision": 100,
-  "snapshotRevision": 100
-}
+```text
+{"clientId":"device-a","coversRevision":100,"payload":h'...'}
 ```
 
-约束：
+`coversRevision` 不得大于当前服务端 revision。比现有 snapshot 更旧或相同的上传是幂等无操作。
 
-- `clientId`、`payload` 必填，`coversRevision` 必须为非负整数。
-- `payload` 必须是合法 Base64。
-- JSON 请求体上限为 16 MiB。
-- `coversRevision` 必须等于服务端当前 revision；不相等返回 `409 Conflict`。
+### JSON zstd
 
-### 7.8 附件能力检测
+JSON 请求可声明：
 
 ```http
-GET /api/v1/attachments/config
+Accept-Encoding: zstd
 ```
 
-服务端配置了对象存储时：
+服务端在 JSON 响应上设置 `Content-Encoding: zstd` 和 `Vary: Accept-Encoding`。不支持 zstd 的客户端不声明该编码即可；错误响应也遵循相同协商。SSE、附件、CBOR 和 CBOR Sequence 不使用该中间件压缩。
 
-```json
-{
-  "transport": "server"
-}
-```
+## 6. 当前架构的主要弊端
 
-未配置附件存储时返回 `404 Not Found`。客户端会继续进行任务同步，并保留已有的自定义 S3 配置。
+- PostgreSQL `changes` 是中心化顺序日志，单个热点 space 的追加吞吐受行锁和单调 revision 限制。
+- SSE 只是提示，断线、代理缓冲或多实例进程重启都会造成通知丢失；虽不会丢数据，但会退化到轮询延迟。
+- 每个 change 作为独立数据库行有索引和行头开销；大量极小 patch 时，元数据占比可能高于 payload。
+- 快照由客户端生成，若所有客户端长期离线、暂停或持续失败，服务端无法自行理解 CRDT 并合并日志。
+- 90 天 lease 是可用性与历史保留的取舍：超期设备回来必须走 snapshot；若客户端离线超过租期且快照也损坏，就无法仅靠已清理 changes 恢复。
+- CBOR Sequence 便于逐 item 解析，但当前浏览器客户端仍先 `arrayBuffer()` 整页再解码，并未实现真正的流式增量导入。
+- POST 虽接受多个 sequence item，但当前逐条提交，各 item 各自原子，整个批次不是一个全有或全无的事务。
+- 单一 Bearer Token 目前是服务级权限，不提供按用户、space 或设备的细粒度授权与吊销审计。
 
-### 7.9 上传附件对象
+对于当前个人/小团队自托管规模，这些取舍能保持实现简单。若进入高吞吐或多租户场景，应优先增加每 space 配额与监控、服务端快照 worker、流式 CBOR 解码、批量原子追加以及细粒度认证。
 
-```http
-PUT /api/v1/attachments/objects/{key...}
-Content-Type: <object MIME type>
-Content-Length: <bytes>
+## 7. PostgreSQL 数据
 
-<binary body>
-```
+| 表 | 作用 |
+| --- | --- |
+| `spaces` | space 名称和当前 revision |
+| `changes` | 不可变 Loro change，payload 为 `BYTEA` |
+| `snapshots` | 每个 space 最新快照，payload 为 `BYTEA` |
+| `clients` | client 确认游标和 lease 更新时间 |
 
-成功返回 `204 No Content`。`Content-Length` 必填；key 不能为空且长度不能超过 2048。服务端把对象流式写入其配置的 S3 兼容存储。
-
-### 7.10 下载附件对象
-
-```http
-GET /api/v1/attachments/objects/{key...}
-```
-
-成功时返回二进制对象，并设置：
-
-- `Content-Type`
-- `Content-Length`
-- `Cache-Control: private, max-age=3600`
-
-附件二进制和附件元数据是两条不同链路：对象先通过附件接口上传；上传完成后，附件 key、文件名等元数据写入本地 CRDT，再通过普通任务同步传播到其他设备。
-
-## 8. PostgreSQL 中的数据
-
-| 表          | 作用                                                       |
-| ----------- | ---------------------------------------------------------- |
-| `spaces`    | 保存 space 名称和当前全局 revision                         |
-| `changes`   | 保存不可变 CRDT change；按 space revision 排序             |
-| `snapshots` | 每个 space 保存一份最新 CRDT 快照                          |
-| `clients`   | 保存每个 client 已确认到的 revision，用于安全清理旧 change |
-
-多 API 实例之间不直接通信。每个实例通过 PostgreSQL `LISTEN unthink_revisions` 接收其他实例提交产生的 `NOTIFY`，再把通知转发到自己持有的 SSE 连接。
-
-## 9. 正确性边界
-
-- SSE 可能被合并或断开，但不会影响最终一致性；GET 游标负责补齐数据。
-- 一个 revision 对应一个成功追加的 change，不一定对应一次用户手势。
-- `clientId` 用于通知排除、幂等命名空间和确认水位，不是用户身份。
-- 服务端不理解 CRDT 内容，冲突合并由客户端 Loro 完成。
-- 客户端导入远端变化时不会回声式地再次调度上传。
-- 如果接收端自身存在新本地版本，它仍会正常 POST；这不是远端通知的重复请求。
-- 只有所有已登记客户端都确认且已有快照覆盖后，服务端才会清理旧 changes。
+多个 API 实例通过 PostgreSQL `LISTEN/NOTIFY` 交换 revision 信号，再转发给各自持有的 SSE 连接；实际同步数据始终通过数据库和 HTTP 拉取。

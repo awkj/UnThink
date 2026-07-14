@@ -3,7 +3,7 @@ package api
 import (
 	"context"
 	"crypto/subtle"
-	"encoding/base64"
+	"database/sql"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -16,10 +16,13 @@ import (
 	"sync"
 	"time"
 
+	"github.com/fxamacker/cbor/v2"
 	"github.com/hamsterbase/tasks/server/database"
 )
 
 const maxBodyBytes = 16 << 20
+const defaultPagePayloadBytes = 2 << 20
+const maxPagePayloadBytes = 16 << 20
 
 type Server struct {
 	store           *database.Store
@@ -85,15 +88,39 @@ type AttachmentObjectStore interface {
 }
 
 type appendChangeRequest struct {
-	ClientID string `json:"clientId"`
-	ChangeID string `json:"changeId"`
-	Payload  string `json:"payload"`
+	ClientID string `cbor:"clientId"`
+	ChangeID string `cbor:"changeId"`
+	Payload  []byte `cbor:"payload"`
 }
 
 type putSnapshotRequest struct {
-	ClientID       string `json:"clientId"`
-	CoversRevision int64  `json:"coversRevision"`
-	Payload        string `json:"payload"`
+	ClientID       string `cbor:"clientId"`
+	CoversRevision int64  `cbor:"coversRevision"`
+	Payload        []byte `cbor:"payload"`
+}
+
+type appendChangeResponse struct {
+	Revision  int64 `cbor:"revision"`
+	Duplicate bool  `cbor:"duplicate"`
+}
+
+type syncChangeResponse struct {
+	Revision int64  `cbor:"revision"`
+	ClientID string `cbor:"clientId"`
+	ChangeID string `cbor:"changeId"`
+	Payload  []byte `cbor:"payload"`
+	Created  int64  `cbor:"createdAt"`
+}
+
+type syncSnapshotResponse struct {
+	Revision int64  `cbor:"revision"`
+	Payload  []byte `cbor:"payload"`
+	Created  int64  `cbor:"createdAt"`
+}
+
+type syncStatusResponse struct {
+	Revision         int64 `cbor:"revision" json:"revision"`
+	SnapshotRevision int64 `cbor:"snapshotRevision" json:"snapshotRevision"`
 }
 
 func New(
@@ -117,12 +144,14 @@ func New(
 	mux.Handle("GET /api/v1/spaces/{space}/status", server.authorize(server.canonicalizeSpace(http.HandlerFunc(server.status))))
 	mux.Handle("GET /api/v1/spaces/{space}/changes", server.authorize(server.canonicalizeSpace(http.HandlerFunc(server.changes))))
 	mux.Handle("GET /api/v1/spaces/{space}/events", server.authorize(server.canonicalizeSpace(http.HandlerFunc(server.events))))
+	mux.Handle("GET /api/v1/spaces/{space}/snapshot", server.authorize(server.canonicalizeSpace(http.HandlerFunc(server.getSnapshot))))
 	mux.Handle("POST /api/v1/spaces/{space}/changes", server.authorize(server.canonicalizeSpace(http.HandlerFunc(server.appendChange))))
 	mux.Handle("PUT /api/v1/spaces/{space}/snapshot", server.authorize(server.canonicalizeSpace(http.HandlerFunc(server.putSnapshot))))
+	mux.Handle("DELETE /api/v1/spaces/{space}/clients/{clientId}", server.authorize(server.canonicalizeSpace(http.HandlerFunc(server.deleteClient))))
 	if staticDir != "" {
 		mux.Handle("/", server.spaHandler())
 	}
-	return server.cors(mux)
+	return server.cors(negotiateResponseEncoding(mux))
 }
 
 func (s *Server) forwardDatabaseNotifications() {
@@ -196,7 +225,8 @@ func (s *Server) cors(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Access-Control-Allow-Origin", s.corsOrigin)
 		w.Header().Set("Access-Control-Allow-Headers", "Authorization, Content-Type")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, OPTIONS")
+		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+		w.Header().Set("Access-Control-Expose-Headers", "X-Unthink-Revision, X-Unthink-Next-Revision, X-Unthink-Has-More, X-Unthink-Payload-Bytes, X-Unthink-Snapshot-Revision")
 		if r.Method == http.MethodOptions {
 			w.WriteHeader(http.StatusNoContent)
 			return
@@ -254,28 +284,47 @@ func (s *Server) status(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) appendChange(w http.ResponseWriter, r *http.Request) {
-	var request appendChangeRequest
-	if err := decodeJSON(w, r, &request); err != nil {
+	decoder, err := newCBORDecoder(w, r, cborSequenceMediaType)
+	if err != nil {
 		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	if request.ClientID == "" || request.ChangeID == "" || request.Payload == "" {
-		writeError(w, http.StatusBadRequest, "clientId, changeId and payload are required")
+	requests := make([]appendChangeRequest, 0, 1)
+	for len(requests) <= 1000 {
+		var request appendChangeRequest
+		if err := decoder.Decode(&request); err != nil {
+			if errors.Is(err, io.EOF) {
+				break
+			}
+			writeError(w, http.StatusBadRequest, fmt.Sprintf("invalid CBOR sequence: %v", err))
+			return
+		}
+		if request.ClientID == "" || request.ChangeID == "" || len(request.Payload) == 0 {
+			writeError(w, http.StatusBadRequest, "clientId, changeId and payload are required")
+			return
+		}
+		requests = append(requests, request)
+	}
+	if len(requests) == 0 {
+		writeError(w, http.StatusBadRequest, "request body must contain at least one change")
 		return
 	}
-	payload, err := base64.StdEncoding.DecodeString(request.Payload)
-	if err != nil {
-		writeError(w, http.StatusBadRequest, "payload must be valid base64")
+	if len(requests) > 1000 {
+		writeError(w, http.StatusBadRequest, "request body must contain at most 1000 changes")
 		return
 	}
-	revision, duplicate, err := s.store.AppendChange(
-		r.Context(), r.PathValue("space"), request.ClientID, request.ChangeID, payload,
-	)
-	if err != nil {
-		writeInternalError(w, err)
-		return
+	responses := make([]any, 0, len(requests))
+	for _, request := range requests {
+		revision, duplicate, err := s.store.AppendChange(
+			r.Context(), r.PathValue("space"), request.ClientID, request.ChangeID, request.Payload,
+		)
+		if err != nil {
+			writeInternalError(w, err)
+			return
+		}
+		responses = append(responses, appendChangeResponse{Revision: revision, Duplicate: duplicate})
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"revision": revision, "duplicate": duplicate})
+	writeCBORSequence(w, http.StatusOK, responses...)
 }
 
 func (s *Server) events(w http.ResponseWriter, r *http.Request) {
@@ -343,66 +392,101 @@ func (s *Server) changes(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusBadRequest, "limit must be between 1 and 1000")
 		return
 	}
+	maxBytes, err := parseNonNegativeInt(r.URL.Query().Get("maxBytes"), defaultPagePayloadBytes)
+	if err != nil || maxBytes < 1 || maxBytes > maxPagePayloadBytes {
+		writeError(w, http.StatusBadRequest, "maxBytes must be between 1 and 16777216")
+		return
+	}
 	page, err := s.store.ListChanges(
-		r.Context(), r.PathValue("space"), r.URL.Query().Get("clientId"), after, int(limit),
+		r.Context(), r.PathValue("space"), r.URL.Query().Get("clientId"), after, int(limit), maxBytes,
 	)
 	if err != nil {
 		writeInternalError(w, err)
 		return
 	}
-	changes := make([]map[string]any, 0, len(page.Changes))
-	for _, change := range page.Changes {
-		changes = append(changes, map[string]any{
-			"revision":  change.Revision,
-			"clientId":  change.ClientID,
-			"changeId":  change.ChangeID,
-			"payload":   base64.StdEncoding.EncodeToString(change.Payload),
-			"createdAt": change.Created,
+	if page.SnapshotRevision > after {
+		writeJSON(w, http.StatusConflict, map[string]any{
+			"error": "snapshot required", "code": "snapshot_required",
+			"snapshotRevision": page.SnapshotRevision,
 		})
+		return
 	}
-	response := map[string]any{
-		"revision": page.Revision, "hasMore": page.HasMore, "changes": changes,
-	}
-	if page.Snapshot != nil {
-		response["snapshot"] = map[string]any{
-			"revision":  page.Snapshot.Revision,
-			"payload":   base64.StdEncoding.EncodeToString(page.Snapshot.Payload),
-			"createdAt": page.Snapshot.Created,
+	w.Header().Set("X-Unthink-Revision", strconv.FormatInt(page.Revision, 10))
+	w.Header().Set("X-Unthink-Next-Revision", strconv.FormatInt(page.NextRevision, 10))
+	w.Header().Set("X-Unthink-Has-More", strconv.FormatBool(page.HasMore))
+	w.Header().Set("X-Unthink-Payload-Bytes", strconv.FormatInt(page.PayloadBytes, 10))
+	w.Header().Set("X-Unthink-Snapshot-Revision", strconv.FormatInt(page.SnapshotRevision, 10))
+	w.Header().Set("Content-Type", cborSequenceMediaType)
+	w.WriteHeader(http.StatusOK)
+	encoder := cbor.NewEncoder(w)
+	for _, change := range page.Changes {
+		if err := encoder.Encode(syncChangeResponse{
+			Revision: change.Revision,
+			ClientID: change.ClientID,
+			ChangeID: change.ChangeID,
+			Payload:  change.Payload,
+			Created:  change.Created,
+		}); err != nil {
+			return
 		}
 	}
-	writeJSON(w, http.StatusOK, response)
+}
+
+func (s *Server) getSnapshot(w http.ResponseWriter, r *http.Request) {
+	snapshot, err := s.store.GetSnapshot(r.Context(), r.PathValue("space"))
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			writeError(w, http.StatusNotFound, "snapshot not found")
+			return
+		}
+		writeInternalError(w, err)
+		return
+	}
+	writeCBOR(w, http.StatusOK, syncSnapshotResponse{
+		Revision: snapshot.Revision,
+		Payload:  snapshot.Payload,
+		Created:  snapshot.Created,
+	})
 }
 
 func (s *Server) putSnapshot(w http.ResponseWriter, r *http.Request) {
 	var request putSnapshotRequest
-	if err := decodeJSON(w, r, &request); err != nil {
+	if err := decodeCBOR(w, r, &request); err != nil {
 		writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
-	if request.ClientID == "" || request.Payload == "" || request.CoversRevision < 0 {
+	if request.ClientID == "" || len(request.Payload) == 0 || request.CoversRevision < 0 {
 		writeError(w, http.StatusBadRequest,
 			"clientId, payload and a non-negative coversRevision are required")
 		return
 	}
-	payload, err := base64.StdEncoding.DecodeString(request.Payload)
-	if err != nil {
-		writeError(w, http.StatusBadRequest, "payload must be valid base64")
-		return
-	}
 	status, err := s.store.PutSnapshot(
-		r.Context(), r.PathValue("space"), request.CoversRevision, payload,
+		r.Context(), r.PathValue("space"), request.CoversRevision, request.Payload,
 	)
 	if err != nil {
-		if strings.Contains(err.Error(), "does not match server revision") {
+		if strings.Contains(err.Error(), "exceeds server revision") {
 			writeError(w, http.StatusConflict, err.Error())
 			return
 		}
 		writeInternalError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]int64{
-		"revision": status.Revision, "snapshotRevision": status.SnapshotRevision,
+	writeCBOR(w, http.StatusOK, syncStatusResponse{
+		Revision: status.Revision, SnapshotRevision: status.SnapshotRevision,
 	})
+}
+
+func (s *Server) deleteClient(w http.ResponseWriter, r *http.Request) {
+	clientID := strings.TrimSpace(r.PathValue("clientId"))
+	if clientID == "" {
+		writeError(w, http.StatusBadRequest, "clientId must not be empty")
+		return
+	}
+	if err := s.store.DeleteClient(r.Context(), r.PathValue("space"), clientID); err != nil {
+		writeInternalError(w, err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
 
 func (s *Server) spaHandler() http.Handler {

@@ -20,17 +20,20 @@ import (
 )
 
 const defaultUserID = "default"
+const clientLeaseDuration = 90 * 24 * time.Hour
+const cleanupBatchSize = 1000
 
 //go:embed migrations/*.sql
 var migrationFiles embed.FS
 
 type Store struct {
-	db             *sql.DB
-	databaseURL    string
-	authToken      string
-	notifications  chan RevisionNotification
-	listenerCancel context.CancelFunc
-	listenerPID    atomic.Uint32
+	db              *sql.DB
+	databaseURL     string
+	authToken       string
+	notifications   chan RevisionNotification
+	cleanupRequests chan int64
+	listenerCancel  context.CancelFunc
+	listenerPID     atomic.Uint32
 }
 
 type RevisionNotification struct {
@@ -59,10 +62,12 @@ type Snapshot struct {
 }
 
 type ChangePage struct {
-	Revision int64
-	Snapshot *Snapshot
-	Changes  []Change
-	HasMore  bool
+	Revision         int64
+	SnapshotRevision int64
+	NextRevision     int64
+	PayloadBytes     int64
+	Changes          []Change
+	HasMore          bool
 }
 
 type executor interface {
@@ -82,7 +87,8 @@ func Open(ctx context.Context, databaseURL, authToken string) (*Store, error) {
 	listenerCtx, listenerCancel := context.WithCancel(context.Background())
 	store := &Store{
 		db: db, databaseURL: databaseURL, authToken: authToken,
-		notifications: make(chan RevisionNotification, 64), listenerCancel: listenerCancel,
+		notifications:   make(chan RevisionNotification, 64),
+		cleanupRequests: make(chan int64, 64), listenerCancel: listenerCancel,
 	}
 	if err := store.migrate(ctx, authToken); err != nil {
 		listenerCancel()
@@ -98,6 +104,7 @@ func Open(ctx context.Context, databaseURL, authToken string) (*Store, error) {
 		db.Close()
 		return nil, errors.New("postgres revision listener did not become ready")
 	}
+	go store.runCleanup(listenerCtx)
 	return store, nil
 }
 
@@ -317,32 +324,44 @@ VALUES($1, $2, $3, $4, $5, $6)`,
 	return revision, false, nil
 }
 
-func (s *Store) ListChanges(ctx context.Context, space, clientID string, after int64, limit int) (ChangePage, error) {
+func (s *Store) ListChanges(
+	ctx context.Context,
+	space, clientID string,
+	after int64,
+	limit int,
+	maxPayloadBytes int64,
+) (ChangePage, error) {
 	spaceID, err := s.ensureSpace(ctx, s.db, space)
 	if err != nil {
 		return ChangePage{}, err
 	}
-	page := ChangePage{Changes: []Change{}}
-	seenRevision := after
-	if err := s.db.QueryRowContext(ctx, "SELECT revision FROM spaces WHERE id = $1", spaceID).
-		Scan(&page.Revision); err != nil {
+	tx, err := s.db.BeginTx(ctx, &sql.TxOptions{ReadOnly: true, Isolation: sql.LevelRepeatableRead})
+	if err != nil {
 		return ChangePage{}, err
 	}
-	var snapshot Snapshot
-	err = s.db.QueryRowContext(ctx,
-		"SELECT revision, payload, created_at FROM snapshots WHERE space_id = $1", spaceID).
-		Scan(&snapshot.Revision, &snapshot.Payload, &snapshot.Created)
-	if err == nil && after < snapshot.Revision {
-		page.Snapshot = &snapshot
-		after = snapshot.Revision
-		seenRevision = snapshot.Revision
-	} else if err != nil && !errors.Is(err, sql.ErrNoRows) {
+	defer tx.Rollback()
+	page := ChangePage{Changes: []Change{}, NextRevision: after}
+	if err := tx.QueryRowContext(ctx, `
+SELECT s.revision, COALESCE(sn.revision, 0)
+FROM spaces s LEFT JOIN snapshots sn ON sn.space_id = s.id
+WHERE s.id = $1`, spaceID).Scan(&page.Revision, &page.SnapshotRevision); err != nil {
 		return ChangePage{}, err
 	}
-	rows, err := s.db.QueryContext(ctx, `
+	if after < page.SnapshotRevision {
+		if err := tx.Commit(); err != nil {
+			return ChangePage{}, err
+		}
+		if err := s.acknowledgeClient(ctx, spaceID, clientID, after); err != nil {
+			return ChangePage{}, err
+		}
+		return page, nil
+	}
+	rows, err := tx.QueryContext(ctx, `
 SELECT revision, client_id, change_id, payload, created_at
-FROM changes WHERE space_id = $1 AND revision > $2 ORDER BY revision ASC LIMIT $3`,
-		spaceID, after, limit+1)
+FROM changes
+WHERE space_id = $1 AND revision > $2 AND revision <= $3
+ORDER BY revision ASC LIMIT $4`,
+		spaceID, after, page.Revision, limit+1)
 	if err != nil {
 		return ChangePage{}, err
 	}
@@ -352,46 +371,74 @@ FROM changes WHERE space_id = $1 AND revision > $2 ORDER BY revision ASC LIMIT $
 		if err := rows.Scan(&change.Revision, &change.ClientID, &change.ChangeID, &change.Payload, &change.Created); err != nil {
 			return ChangePage{}, err
 		}
-		if len(page.Changes) == limit {
+		if len(page.Changes) == limit ||
+			(page.PayloadBytes > 0 && page.PayloadBytes+int64(len(change.Payload)) > maxPayloadBytes) {
 			page.HasMore = true
 			break
 		}
 		page.Changes = append(page.Changes, change)
-		seenRevision = change.Revision
+		page.NextRevision = change.Revision
+		page.PayloadBytes += int64(len(change.Payload))
 	}
 	if err := rows.Err(); err != nil {
 		return ChangePage{}, err
 	}
-	if clientID != "" {
-		_, err = s.db.ExecContext(ctx, `
+	if err := rows.Close(); err != nil {
+		return ChangePage{}, err
+	}
+	if err := tx.Commit(); err != nil {
+		return ChangePage{}, err
+	}
+	if page.NextRevision < page.Revision {
+		page.HasMore = true
+	}
+	if err := s.acknowledgeClient(ctx, spaceID, clientID, page.NextRevision); err != nil {
+		return ChangePage{}, err
+	}
+	s.requestCleanup(spaceID)
+	return page, nil
+}
+
+func (s *Store) acknowledgeClient(ctx context.Context, spaceID int64, clientID string, revision int64) error {
+	if clientID == "" {
+		return nil
+	}
+	_, err := s.db.ExecContext(ctx, `
 INSERT INTO clients(space_id, client_id, last_seen_revision, updated_at) VALUES($1, $2, $3, $4)
 ON CONFLICT(space_id, client_id) DO UPDATE SET
   last_seen_revision = GREATEST(clients.last_seen_revision, excluded.last_seen_revision),
   updated_at = excluded.updated_at`,
-			spaceID, clientID, seenRevision, time.Now().UnixMilli())
-		if err == nil {
-			err = s.cleanupAcknowledgedChanges(ctx, spaceID)
-		}
-	}
-	return page, err
+		spaceID, clientID, revision, time.Now().UnixMilli())
+	return err
 }
 
-func (s *Store) cleanupAcknowledgedChanges(ctx context.Context, spaceID int64) error {
+func (s *Store) cleanupWaterline(ctx context.Context, spaceID int64) (int64, error) {
 	var waterline sql.NullInt64
 	if err := s.db.QueryRowContext(ctx, `
 SELECT LEAST(sn.revision, COALESCE(MIN(c.last_seen_revision), sn.revision))
 FROM snapshots sn LEFT JOIN clients c ON c.space_id = sn.space_id
 WHERE sn.space_id = $1 GROUP BY sn.revision`, spaceID).Scan(&waterline); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			return nil
+			return 0, nil
 		}
-		return err
+		return 0, err
 	}
 	if !waterline.Valid || waterline.Int64 < 1 {
-		return nil
+		return 0, nil
 	}
-	_, err := s.db.ExecContext(ctx, "DELETE FROM changes WHERE space_id = $1 AND revision <= $2", spaceID, waterline.Int64)
-	return err
+	return waterline.Int64, nil
+}
+
+func (s *Store) GetSnapshot(ctx context.Context, space string) (Snapshot, error) {
+	spaceID, err := s.ensureSpace(ctx, s.db, space)
+	if err != nil {
+		return Snapshot{}, err
+	}
+	var snapshot Snapshot
+	err = s.db.QueryRowContext(ctx,
+		"SELECT revision, payload, created_at FROM snapshots WHERE space_id = $1", spaceID,
+	).Scan(&snapshot.Revision, &snapshot.Payload, &snapshot.Created)
+	return snapshot, err
 }
 
 func (s *Store) PutSnapshot(ctx context.Context, space string, coversRevision int64, payload []byte) (Status, error) {
@@ -409,8 +456,8 @@ func (s *Store) PutSnapshot(ctx context.Context, space string, coversRevision in
 		Scan(&current); err != nil {
 		return Status{}, err
 	}
-	if coversRevision != current {
-		return Status{}, fmt.Errorf("snapshot revision %d does not match server revision %d", coversRevision, current)
+	if coversRevision > current {
+		return Status{}, fmt.Errorf("snapshot revision %d exceeds server revision %d", coversRevision, current)
 	}
 	_ = tx.QueryRowContext(ctx, "SELECT revision FROM snapshots WHERE space_id = $1", spaceID).Scan(&previous)
 	if coversRevision > previous {
@@ -427,5 +474,90 @@ ON CONFLICT(space_id) DO UPDATE SET
 	if err := tx.Commit(); err != nil {
 		return Status{}, err
 	}
+	s.requestCleanup(spaceID)
 	return Status{Revision: current, SnapshotRevision: previous}, nil
+}
+
+func (s *Store) DeleteClient(ctx context.Context, space, clientID string) error {
+	spaceID, err := s.ensureSpace(ctx, s.db, space)
+	if err != nil {
+		return err
+	}
+	if _, err := s.db.ExecContext(ctx,
+		"DELETE FROM clients WHERE space_id = $1 AND client_id = $2", spaceID, clientID,
+	); err != nil {
+		return err
+	}
+	s.requestCleanup(spaceID)
+	return nil
+}
+
+func (s *Store) requestCleanup(spaceID int64) {
+	select {
+	case s.cleanupRequests <- spaceID:
+	default:
+	}
+}
+
+func (s *Store) runCleanup(ctx context.Context) {
+	ticker := time.NewTicker(time.Hour)
+	defer ticker.Stop()
+	s.pruneExpiredClients(ctx)
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case spaceID := <-s.cleanupRequests:
+			s.cleanupSpace(ctx, spaceID)
+		case <-ticker.C:
+			s.pruneExpiredClients(ctx)
+		}
+	}
+}
+
+func (s *Store) pruneExpiredClients(ctx context.Context) {
+	cutoff := time.Now().Add(-clientLeaseDuration).UnixMilli()
+	if _, err := s.db.ExecContext(ctx, "DELETE FROM clients WHERE updated_at < $1", cutoff); err != nil {
+		return
+	}
+	rows, err := s.db.QueryContext(ctx, "SELECT id FROM spaces")
+	if err != nil {
+		return
+	}
+	var spaceIDs []int64
+	for rows.Next() {
+		var spaceID int64
+		if rows.Scan(&spaceID) == nil {
+			spaceIDs = append(spaceIDs, spaceID)
+		}
+	}
+	rows.Close()
+	for _, spaceID := range spaceIDs {
+		if ctx.Err() != nil {
+			return
+		}
+		s.cleanupSpace(ctx, spaceID)
+	}
+}
+
+func (s *Store) cleanupSpace(ctx context.Context, spaceID int64) {
+	waterline, err := s.cleanupWaterline(ctx, spaceID)
+	if err != nil || waterline == 0 {
+		return
+	}
+	for ctx.Err() == nil {
+		result, err := s.db.ExecContext(ctx, `
+DELETE FROM changes WHERE id IN (
+  SELECT id FROM changes
+  WHERE space_id = $1 AND revision <= $2
+  ORDER BY revision ASC LIMIT $3
+)`, spaceID, waterline, cleanupBatchSize)
+		if err != nil {
+			return
+		}
+		deleted, err := result.RowsAffected()
+		if err != nil || deleted < cleanupBatchSize {
+			return
+		}
+	}
 }

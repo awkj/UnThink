@@ -120,6 +120,74 @@ func TestRevisionNotificationsCrossInstancesAndReconnect(t *testing.T) {
 	assertNotification("after-reconnect")
 }
 
+func TestExpiredClientLeaseReleasesChangeCleanupWaterline(t *testing.T) {
+	databaseURL := os.Getenv("TEST_DATABASE_URL")
+	if databaseURL == "" {
+		t.Skip("TEST_DATABASE_URL is not set")
+	}
+	store, err := Open(context.Background(), databaseURL, "test-token")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = store.Close() })
+	ctx := context.Background()
+	space := fmt.Sprintf("lease-cleanup-%d", time.Now().UnixNano())
+	for index := 1; index <= 2; index++ {
+		if _, _, err := store.AppendChange(
+			ctx, space, "writer", fmt.Sprintf("change-%d", index), []byte("payload"),
+		); err != nil {
+			t.Fatal(err)
+		}
+	}
+	spaceID, err := store.ensureSpace(ctx, store.db, space)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := store.acknowledgeClient(ctx, spaceID, "active-client", 2); err != nil {
+		t.Fatal(err)
+	}
+	if err := store.acknowledgeClient(ctx, spaceID, "expired-client", 0); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := store.PutSnapshot(ctx, space, 2, []byte("snapshot")); err != nil {
+		t.Fatal(err)
+	}
+	store.cleanupSpace(ctx, spaceID)
+	assertChangeCount(t, store, spaceID, 2)
+
+	if _, err := store.db.ExecContext(ctx,
+		"UPDATE clients SET updated_at = $1 WHERE space_id = $2 AND client_id = $3",
+		time.Now().Add(-clientLeaseDuration-time.Hour).UnixMilli(), spaceID, "expired-client",
+	); err != nil {
+		t.Fatal(err)
+	}
+	store.pruneExpiredClients(ctx)
+	assertChangeCount(t, store, spaceID, 0)
+
+	var expiredClients int
+	if err := store.db.QueryRowContext(ctx,
+		"SELECT COUNT(*) FROM clients WHERE space_id = $1 AND client_id = $2", spaceID, "expired-client",
+	).Scan(&expiredClients); err != nil {
+		t.Fatal(err)
+	}
+	if expiredClients != 0 {
+		t.Fatalf("expired client count = %d, want 0", expiredClients)
+	}
+}
+
+func assertChangeCount(t *testing.T, store *Store, spaceID int64, want int) {
+	t.Helper()
+	var count int
+	if err := store.db.QueryRowContext(context.Background(),
+		"SELECT COUNT(*) FROM changes WHERE space_id = $1", spaceID,
+	).Scan(&count); err != nil {
+		t.Fatal(err)
+	}
+	if count != want {
+		t.Fatalf("change count = %d, want %d", count, want)
+	}
+}
+
 func TestPublishedMigrationChecksumCannotChange(t *testing.T) {
 	databaseURL := os.Getenv("TEST_DATABASE_URL")
 	if databaseURL == "" {
