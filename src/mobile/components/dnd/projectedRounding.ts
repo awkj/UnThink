@@ -31,9 +31,11 @@ export interface CardRounding {
  */
 export function computeSectionRounding(ids: string[], activeId?: string, overId?: string): CardRounding {
   const order = projectOrder(ids, activeId, overId).filter((id) => id !== activeId)
+  const first = order[0]
+  const last = order.at(-1)
   return {
-    top: new Set<string>(order.length ? [order[0]] : []),
-    bottom: new Set<string>(order.length ? [order[order.length - 1]] : []),
+    top: new Set<string>(first === undefined ? [] : [first]),
+    bottom: new Set<string>(last === undefined ? [] : [last]),
   }
 }
 

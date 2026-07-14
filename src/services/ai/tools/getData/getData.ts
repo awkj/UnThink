@@ -31,8 +31,8 @@ export interface GetDataToolCall {
 export interface InboxTaskItem {
   id: string
   title: string
-  startDate?: number
-  dueDate?: number
+  startDate?: number | undefined
+  dueDate?: number | undefined
   tags: string[]
 }
 
@@ -42,8 +42,8 @@ export interface ProjectOverviewItem {
   status: "created" | "completed" | "canceled"
   taskCount: number
   completedCount: number
-  startDate?: number
-  dueDate?: number
+  startDate?: number | undefined
+  dueDate?: number | undefined
   tags: string[]
 }
 
@@ -57,10 +57,10 @@ export interface AreaOverviewItem {
 export interface UpcomingItem {
   id: string
   title: string
-  projectId?: string
-  projectTitle?: string
-  startDate?: number
-  dueDate?: number
+  projectId?: string | undefined
+  projectTitle?: string | undefined
+  startDate?: number | undefined
+  dueDate?: number | undefined
 }
 
 export interface GetDataResult {

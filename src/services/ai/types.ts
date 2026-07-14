@@ -22,7 +22,7 @@ export interface ConfirmToolCallInfo {
   name: string
   arguments: unknown
   status: "pending" | "confirmed" | "rejected"
-  result?: ToolExecutionResultInfo
+  result?: ToolExecutionResultInfo | undefined
 }
 
 /** Tool call that executes automatically */
@@ -32,7 +32,7 @@ export interface AutoToolCallInfo {
   name: string
   arguments: unknown
   status: "pending" | "executed"
-  result?: ToolExecutionResultInfo
+  result?: ToolExecutionResultInfo | undefined
 }
 
 /** Tool call that is still being streamed */
@@ -56,7 +56,7 @@ export interface TextContentBlock {
 export interface ThinkingContentBlock {
   type: "thinking"
   text: string
-  isStreaming?: boolean
+  isStreaming?: boolean | undefined
 }
 
 /** Tool call content block */
@@ -71,10 +71,10 @@ export interface ChatMessageItem {
   id: string
   role: "user" | "assistant"
   contentBlocks: ContentBlock[]
-  linkedMessageId?: string
-  loading?: boolean
+  linkedMessageId?: string | undefined
+  loading?: boolean | undefined
   timestamp: number
-  aborted?: boolean
+  aborted?: boolean | undefined
 }
 
 export interface ChatSession {

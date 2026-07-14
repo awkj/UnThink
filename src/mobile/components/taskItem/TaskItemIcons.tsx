@@ -3,7 +3,7 @@ import React from "react"
 
 interface TaskItemIconsProps {
   tags?: string[]
-  notes?: string
+  notes?: string | undefined
   subtasks?: unknown[]
   navIcon?: boolean
 }

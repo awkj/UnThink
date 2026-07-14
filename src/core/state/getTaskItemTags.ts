@@ -1,105 +1,105 @@
-import { getParentDisplay } from '@/core/state/getParentDisplay';
-import { ITaskModelData } from '@/core/state/type';
-import { formatCompletionAt } from '@/core/time/formatCompletionAt';
-import { formatDueDateInList } from '@/core/time/formatDueDateInList';
-import { formatStartDateInList } from '@/core/time/formatStartDateInList';
-import { isPastOrToday } from '@/core/time/isPast';
-import { TreeID } from 'loro-crdt';
+import { getParentDisplay } from "@/core/state/getParentDisplay"
+import { ITaskModelData } from "@/core/state/type"
+import { formatCompletionAt } from "@/core/time/formatCompletionAt"
+import { formatDueDateInList } from "@/core/time/formatDueDateInList"
+import { formatStartDateInList } from "@/core/time/formatStartDateInList"
+import { isPastOrToday } from "@/core/time/isPast"
+import { TreeID } from "loro-crdt"
 
 interface ResultItem {
   icon: {
-    type: string;
-    props?: Record<string, unknown>;
-  };
-  label: string;
-  isDanger?: boolean;
+    type: string
+    props?: Record<string, unknown>
+  }
+  label: string
+  isDanger?: boolean
 }
 
 interface TaskItemTagsOptions {
-  taskId: TreeID;
-  hideProjectTitle?: boolean;
-  completionAt?: number;
-  status: string;
-  startDate?: number;
-  dueDate?: number;
-  tags?: string[];
-  attachmentCount?: number;
+  taskId: TreeID
+  hideProjectTitle?: boolean
+  completionAt?: number | undefined
+  status: string
+  startDate?: number | undefined
+  dueDate?: number | undefined
+  tags?: string[]
+  attachmentCount?: number
 }
 
 export function getTaskItemTags(model: ITaskModelData, options: TaskItemTagsOptions): ResultItem[] {
-  const { taskId, hideProjectTitle, completionAt, status, startDate, tags, dueDate, attachmentCount } = options;
-  const res: ResultItem[] = [];
+  const { taskId, hideProjectTitle, completionAt, status, startDate, tags, dueDate, attachmentCount } = options
+  const res: ResultItem[] = []
 
   if (!hideProjectTitle) {
-    const parentDisplayData = getParentDisplay(model, taskId);
+    const parentDisplayData = getParentDisplay(model, taskId)
     if (parentDisplayData) {
       res.push({
         icon:
-          parentDisplayData.icon.type === 'area'
+          parentDisplayData.icon.type === "area"
             ? {
-                type: 'AreaIcon',
+                type: "AreaIcon",
               }
             : {
-                type: 'ProjectStatusBox',
+                type: "ProjectStatusBox",
                 props: {
                   progress: parentDisplayData.icon.progress,
                   status: parentDisplayData.icon.status,
-                  color: 't3',
-                  border: 'border-1',
+                  color: "t3",
+                  border: "border-1",
                 },
               },
         label: parentDisplayData.title,
-      });
+      })
     }
   }
 
   if (dueDate) {
     res.push({
       icon: {
-        type: 'DueIcon',
+        type: "DueIcon",
       },
       label: formatDueDateInList(dueDate),
       isDanger: isPastOrToday(dueDate),
-    });
+    })
   }
 
   if (startDate && !isPastOrToday(startDate)) {
     res.push({
       icon: {
-        type: 'CalendarRangeIcon',
+        type: "CalendarRangeIcon",
       },
       label: formatStartDateInList(startDate),
-    });
+    })
   }
 
-  if (completionAt && status !== 'created') {
+  if (completionAt && status !== "created") {
     res.push({
       icon: {
-        type: 'CalendarIcon',
+        type: "CalendarIcon",
       },
       label: formatCompletionAt(completionAt),
-    });
+    })
   }
 
   if (attachmentCount && attachmentCount > 0) {
     res.push({
       icon: {
-        type: 'AttachmentIcon',
+        type: "AttachmentIcon",
       },
       label: `${attachmentCount}`,
-    });
+    })
   }
 
   if (tags) {
     tags.forEach((tag) => {
       res.push({
         icon: {
-          type: 'TagIcon',
+          type: "TagIcon",
         },
         label: tag,
-      });
-    });
+      })
+    })
   }
 
-  return res;
+  return res
 }

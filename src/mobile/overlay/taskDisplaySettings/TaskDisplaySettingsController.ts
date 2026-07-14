@@ -14,7 +14,7 @@ export interface TaskDisplaySettingsControllerOptions {
   showFutureTasks: boolean
   showCompletedTasks: boolean
   completedTasksRange: TimeAfterEnum
-  hideShowFutureTasks?: boolean
+  hideShowFutureTasks?: boolean | undefined
   onChange: (value: TaskDisplaySettings) => void
 }
 

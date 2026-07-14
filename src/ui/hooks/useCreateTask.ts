@@ -96,7 +96,9 @@ export function useCreateTask(initialPayload: CreateTaskPayload = {}) {
       const index = prevSubtasks.findIndex((subtask) => subtask.id === id)
       if (index >= 0) {
         const newSubtasks = [...prevSubtasks]
-        newSubtasks[index] = { ...newSubtasks[index], title }
+        const existing = newSubtasks[index]
+        if (!existing) return prevSubtasks
+        newSubtasks[index] = { ...existing, title }
         return newSubtasks
       }
       return prevSubtasks
@@ -108,7 +110,9 @@ export function useCreateTask(initialPayload: CreateTaskPayload = {}) {
       const index = prevSubtasks.findIndex((subtask) => subtask.id === id)
       if (index >= 0) {
         const newSubtasks = [...prevSubtasks]
-        newSubtasks[index] = { ...newSubtasks[index], status }
+        const existing = newSubtasks[index]
+        if (!existing) return prevSubtasks
+        newSubtasks[index] = { ...existing, status }
         return newSubtasks
       }
       return prevSubtasks
@@ -120,7 +124,7 @@ export function useCreateTask(initialPayload: CreateTaskPayload = {}) {
       const index = prevSubtasks.findIndex((subtask) => subtask.id === id)
       if (index > 0) {
         const previous = prevSubtasks[index - 1]
-        if (focusSubtaskCallbackRef.current) {
+        if (previous && focusSubtaskCallbackRef.current) {
           focusSubtaskCallbackRef.current(previous.id)
         }
 
@@ -159,7 +163,9 @@ export function useCreateTask(initialPayload: CreateTaskPayload = {}) {
       const index = prevReminders.findIndex((reminder) => reminder.id === id)
       if (index >= 0) {
         const newReminders = [...prevReminders]
-        newReminders[index] = { ...newReminders[index], time }
+        const existing = newReminders[index]
+        if (!existing) return prevReminders
+        newReminders[index] = { ...existing, time }
         return newReminders
       }
       return prevReminders

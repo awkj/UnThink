@@ -233,9 +233,7 @@ export const useEditTaskHooks = (taskInfo: TaskInfo) => {
 
     // Focus the new subtask input after creation
     setTimeout(() => {
-      if (subtaskInputRefs.current[newTaskId]) {
-        subtaskInputRefs.current[newTaskId].focus()
-      }
+      subtaskInputRefs.current[newTaskId]?.focus()
     }, 0)
 
     todoService.editItem(taskInfo.id)
@@ -247,17 +245,15 @@ export const useEditTaskHooks = (taskInfo: TaskInfo) => {
     if (currentIndex === -1) return
     if (currentIndex === 0) {
       if (taskInfo.children.length !== 1) {
-        toFocusId = taskInfo.children[1].id
+        toFocusId = taskInfo.children[1]?.id ?? ""
       }
     } else {
-      toFocusId = taskInfo.children[currentIndex - 1].id
+      toFocusId = taskInfo.children[currentIndex - 1]?.id ?? ""
     }
     flushSync(() => {
       todoService.deleteItem(id)
     })
-    if (subtaskInputRefs.current[toFocusId]) {
-      subtaskInputRefs.current[toFocusId].focus()
-    }
+    subtaskInputRefs.current[toFocusId]?.focus()
   }
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -269,18 +265,19 @@ export const useEditTaskHooks = (taskInfo: TaskInfo) => {
     const oldIndex = taskInfo.children.findIndex((item) => item.id === active.id)
     const newIndex = taskInfo.children.findIndex((item) => item.id === over.id)
 
-    if (oldIndex === newIndex) return
+    if (oldIndex < 0 || newIndex < 0 || oldIndex === newIndex) return
 
     let previousTaskId: TreeID | undefined
     if (newIndex === 0) {
       previousTaskId = undefined
     } else if (newIndex > oldIndex) {
-      previousTaskId = taskInfo.children[newIndex].id
+      previousTaskId = taskInfo.children[newIndex]?.id
     } else {
-      previousTaskId = taskInfo.children[newIndex - 1].id
+      previousTaskId = taskInfo.children[newIndex - 1]?.id
     }
 
-    const taskId = taskInfo.children[oldIndex].id
+    const taskId = taskInfo.children[oldIndex]?.id
+    if (!taskId) return
 
     if (!previousTaskId) {
       todoService.updateTask(taskId, {
@@ -416,7 +413,7 @@ export const useEditTaskHooks = (taskInfo: TaskInfo) => {
         })
       },
       onClear: () => {
-        todoService.updateTask(taskInfo.id, { recurringRule: undefined })
+        todoService.updateTask(taskInfo.id, { recurringRule: null })
       },
     },
     ...reminders,

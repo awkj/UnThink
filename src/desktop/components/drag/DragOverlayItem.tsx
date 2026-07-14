@@ -22,7 +22,7 @@ interface TaskProps {
 }
 
 interface ProjectProps {
-  hideProjectTitle?: boolean
+  hideProjectTitle?: boolean | undefined
 }
 
 export interface DragOverlayItemProps {

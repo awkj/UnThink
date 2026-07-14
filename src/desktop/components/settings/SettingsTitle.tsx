@@ -1,12 +1,12 @@
-import classNames from 'classnames';
-import React from 'react';
-import { desktopStyles } from '@/desktop/theme/main';
+import classNames from "classnames"
+import React from "react"
+import { desktopStyles } from "@/desktop/theme/main"
 
 interface SettingsTitleProps {
-  title: string;
-  description?: string;
-  level?: 1 | 2;
-  action?: React.ReactNode;
+  title: string
+  description?: string | undefined
+  level?: 1 | 2
+  action?: React.ReactNode
 }
 
 export const SettingsTitle: React.FC<SettingsTitleProps> = ({ title, description, level = 1, action }) => {
@@ -25,5 +25,5 @@ export const SettingsTitle: React.FC<SettingsTitleProps> = ({ title, description
       </div>
       {action && <div className={desktopStyles.SettingsTitleActionContainer}>{action}</div>}
     </div>
-  );
-};
+  )
+}

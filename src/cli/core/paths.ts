@@ -53,7 +53,9 @@ export function getDataDirs(): string[] {
 
 /** Primary directory: where new databases and config are written. */
 export function getPrimaryDataDir(): string {
-  return getDataDirs()[0]
+  const primary = getDataDirs()[0]
+  if (!primary) throw new Error("No application data directory is available")
+  return primary
 }
 
 /**

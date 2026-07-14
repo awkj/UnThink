@@ -7,7 +7,8 @@ export function formatTheme(theme: Record<string, string>, extra?: Record<string
   }
 
   Object.keys(clone).forEach((key) => {
-    theme[key] = clone[key]
+    const value = clone[key]
+    if (value !== undefined) theme[key] = value
   })
   Object.freeze(theme)
 }

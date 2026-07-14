@@ -1,25 +1,25 @@
-import classNames from 'classnames';
-import React from 'react';
-import { Link, useLocation } from 'react-router';
-import { desktopStyles } from '../../theme/main';
+import classNames from "classnames"
+import React from "react"
+import { Link, useLocation } from "react-router"
+import { desktopStyles } from "../../theme/main"
 
 export interface MenuItemProps {
-  to: string;
-  text: string;
-  icon: React.ReactNode;
-  className?: string;
-  primaryBadge?: number;
-  secondaryBadge?: number;
+  to: string
+  text: string
+  icon: React.ReactNode
+  className?: string | undefined
+  primaryBadge?: number | undefined
+  secondaryBadge?: number | undefined
 }
 
 export const MenuItem: React.FC<MenuItemProps> = ({ to, text, icon, className, primaryBadge, secondaryBadge }) => {
-  const location = useLocation();
-  const isActive = location.pathname.startsWith(to);
+  const location = useLocation()
+  const isActive = location.pathname.startsWith(to)
   const iconNode = React.isValidElement<{ className?: string }>(icon)
     ? React.cloneElement(icon, {
         className: classNames(desktopStyles.SidebarMenuItemIconSvg, icon.props.className),
       })
-    : icon;
+    : icon
 
   return (
     <li className={className}>
@@ -40,5 +40,5 @@ export const MenuItem: React.FC<MenuItemProps> = ({ to, text, icon, className, p
         )}
       </Link>
     </li>
-  );
-};
+  )
+}

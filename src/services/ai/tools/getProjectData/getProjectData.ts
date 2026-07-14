@@ -29,10 +29,10 @@ export interface TaskItem {
   id: string
   title: string
   status: ItemStatus
-  startDate?: number
-  dueDate?: number
+  startDate?: number | undefined
+  dueDate?: number | undefined
   tags: string[]
-  children?: TaskItem[]
+  children?: TaskItem[] | undefined
 }
 
 export interface HeadingItem {
@@ -46,10 +46,10 @@ export interface ProjectDataResult {
   project: {
     id: string
     title: string
-    notes?: string
+    notes?: string | undefined
     status: ItemStatus
-    startDate?: number
-    dueDate?: number
+    startDate?: number | undefined
+    dueDate?: number | undefined
     tags: string[]
     items: (TaskItem | HeadingItem)[]
   }

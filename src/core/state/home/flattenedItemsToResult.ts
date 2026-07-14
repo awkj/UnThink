@@ -65,7 +65,7 @@ export function flattenedItemsToResult<H = unknown, I = unknown>(
 
   let lastNormalItemIndex = -1
   for (let i = flattenedItems.length - 1; i >= 0; i--) {
-    if (flattenedItems[i].type !== "special") {
+    if (flattenedItems[i]?.type !== "special") {
       lastNormalItemIndex = i
       break
     }
@@ -175,7 +175,7 @@ export function flattenedItemsToResult<H = unknown, I = unknown>(
     flattenedItemMap,
     borderBottom,
     borderTop,
-    rootId,
+    ...(rootId === undefined ? {} : { rootId }),
     isItem,
     isHeader,
     isSpecial,

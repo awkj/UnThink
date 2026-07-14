@@ -33,9 +33,9 @@ interface InternalUpload {
   file: File
   attachmentId: string
   thumbnailBlob: Blob | null
-  upload?: Upload
-  thumbnailUpload?: Upload
-  request?: XMLHttpRequest
+  upload?: Upload | undefined
+  thumbnailUpload?: Upload | undefined
+  request?: XMLHttpRequest | undefined
   aborted: boolean
 }
 
@@ -265,6 +265,7 @@ export class WorkbenchAttachmentUploadService implements IAttachmentUploadServic
     const queued = Array.from(this.uploads.values()).filter((u) => u.item.status === "queued")
     for (let i = 0; i < Math.min(available, queued.length); i++) {
       const next = queued[i]
+      if (!next) continue
       next.item.status = "uploading"
       this._onChange.fire()
       void this.runUpload(next).catch(() => {

@@ -7,7 +7,7 @@ import { UnifiedToolCard } from "./UnifiedToolCard"
 
 interface ChatMessageListProps {
   messages: ChatMessageItem[]
-  isLoading?: boolean
+  isLoading?: boolean | undefined
   onLinkMessage: (messageId: string) => void
   onConfirmToolCall: (messageId: string, toolCallId: string) => void
   onRejectToolCall: (messageId: string, toolCallId: string) => void
@@ -52,7 +52,7 @@ interface ChatMessageItemComponentProps {
   messageIndex: number
   messages: ChatMessageItem[]
   isLastMessage: boolean
-  isLoading?: boolean
+  isLoading?: boolean | undefined
   onLinkMessage: (messageId: string) => void
   onConfirmToolCall: (messageId: string, toolCallId: string) => void
   onRejectToolCall: (messageId: string, toolCallId: string) => void
@@ -177,7 +177,12 @@ const ContentBlockRenderer: React.FC<{
   }
 
   if (block.type === "thinking") {
-    return <ThinkingBlock text={block.text} isStreaming={block.isStreaming} />
+    return (
+      <ThinkingBlock
+        text={block.text}
+        {...(block.isStreaming === undefined ? {} : { isStreaming: block.isStreaming })}
+      />
+    )
   }
 
   if (block.type === "tool_call") {

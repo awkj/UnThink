@@ -1,15 +1,15 @@
-import React from 'react';
-import { desktopStyles } from '@/desktop/theme/main';
+import React from "react"
+import { desktopStyles } from "@/desktop/theme/main"
 
 export interface SwitchProps {
-  checked: boolean;
-  onChange: (checked: boolean) => void;
-  disabled?: boolean;
+  checked: boolean
+  onChange: (checked: boolean) => void
+  disabled?: boolean | undefined
 }
 
 export const Switch: React.FC<SwitchProps> = ({ checked, onChange, disabled = false }) => {
   return (
-    <label className={`${desktopStyles.SwitchLabel} ${disabled ? desktopStyles.SwitchLabelDisabled : ''}`}>
+    <label className={`${desktopStyles.SwitchLabel} ${disabled ? desktopStyles.SwitchLabelDisabled : ""}`}>
       <input
         type="checkbox"
         checked={checked}
@@ -22,8 +22,8 @@ export const Switch: React.FC<SwitchProps> = ({ checked, onChange, disabled = fa
           checked ? desktopStyles.SwitchTrackChecked : desktopStyles.SwitchTrackUnchecked
         }`}
       >
-        <div className={`${desktopStyles.SwitchThumb} ${checked ? desktopStyles.SwitchThumbChecked : ''}`} />
+        <div className={`${desktopStyles.SwitchThumb} ${checked ? desktopStyles.SwitchThumbChecked : ""}`} />
       </div>
     </label>
-  );
-};
+  )
+}

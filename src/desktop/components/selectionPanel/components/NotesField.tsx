@@ -46,7 +46,7 @@ export const NotesField: React.FC<NotesFieldProps> = ({
       position,
       value,
       width: `${containerWidth}px`,
-      className,
+      ...(className === undefined ? {} : { className }),
     })
     flushSync(() => {
       setIsEditing(true)
@@ -79,7 +79,7 @@ export const NotesField: React.FC<NotesFieldProps> = ({
           value={textValue}
           onChange={handleChange}
           onBlur={handleBlur}
-          className={className}
+          className={className ?? ""}
           style={{ width: "100%" }}
           placeholder={placeholder}
           autoSize={{ minRows: 3 }}

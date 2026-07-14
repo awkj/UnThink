@@ -19,7 +19,8 @@ export const useLongPress = (callback: () => void, delay: number = 1000) => {
     isLongPress.current = false
 
     if ("touches" in e && e.touches.length > 0) {
-      startPos.current = { x: e.touches[0].clientX, y: e.touches[0].clientY }
+      const touch = e.touches[0]
+      if (touch) startPos.current = { x: touch.clientX, y: touch.clientY }
     } else if ("clientX" in e) {
       startPos.current = { x: e.clientX, y: e.clientY }
     }
@@ -45,6 +46,7 @@ export const useLongPress = (callback: () => void, delay: number = 1000) => {
   const handleTouchMove = (e: React.TouchEvent) => {
     if (!startPos.current || !longPressTimer.current) return
     const touch = e.touches[0]
+    if (!touch) return
     const dx = touch.clientX - startPos.current.x
     const dy = touch.clientY - startPos.current.y
     if (dx * dx + dy * dy > MOVE_TOLERANCE * MOVE_TOLERANCE) {

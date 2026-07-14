@@ -8,8 +8,8 @@ import { Link } from "react-router"
 interface ChatInputProps {
   onSendMessage: (content: string) => void
   isLoading: boolean
-  linkedMessage?: ChatMessageItem
-  linkedMessageIndex?: number
+  linkedMessage?: ChatMessageItem | undefined
+  linkedMessageIndex?: number | undefined
   onClearLink: () => void
   isConfigured: boolean
   onStop?: () => void

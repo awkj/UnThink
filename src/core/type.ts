@@ -1,132 +1,132 @@
-import { LoroMovableList, TreeID } from 'loro-crdt';
-import { RecurringDateRule } from './time/parseRecurringRule';
+import { LoroMovableList, TreeID } from "loro-crdt"
+import { RecurringDateRule } from "./time/parseRecurringRule"
 
 // eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export type EmptyObject = {};
+export type EmptyObject = {}
 
 export type ToLoro<T, Patch = EmptyObject> = Omit<
   {
-    [K in keyof T]: T[K] extends (infer U)[] ? LoroMovableList<U> : T[K];
+    [K in keyof T]: T[K] extends (infer U)[] ? LoroMovableList<U> : T[K]
   },
   keyof Patch
 > &
-  Patch;
+  Patch
 
 export type AreaSchema = {
-  id: TreeID;
-  uid: string;
-  type: 'area';
-  title: string;
-  createdAt: number;
-  children: TreeID[];
-  tags: string[];
-};
+  id: TreeID
+  uid: string
+  type: "area"
+  title: string
+  createdAt: number
+  children: TreeID[]
+  tags: string[]
+}
 
 export type ItemPosition =
   | {
-      type: 'firstElement';
+      type: "firstElement"
       //如果是 undefined, 则表示是根节点
-      parentId?: TreeID;
+      parentId?: TreeID | undefined
     }
-  | ItemMovePosition;
+  | ItemMovePosition
 
 export type ItemMovePosition =
   | {
-      type: 'afterElement';
-      previousElementId: TreeID;
+      type: "afterElement"
+      previousElementId: TreeID
     }
   | {
-      type: 'beforeElement';
-      nextElementId: TreeID;
-    };
+      type: "beforeElement"
+      nextElementId: TreeID
+    }
 
 export type UpdateAreaSchema = {
-  title?: string;
-  position?: ItemPosition;
-  tags?: string[];
-};
+  title?: string | undefined
+  position?: ItemPosition | undefined
+  tags?: string[] | undefined
+}
 
 export type CreateAreaSchema = {
-  title: string;
-  position?: ItemPosition;
-};
+  title: string
+  position?: ItemPosition
+}
 
 export type ProjectSchema = {
-  id: TreeID;
-  uid: string;
-  type: 'project';
-  title: string;
-  notes?: string;
+  id: TreeID
+  uid: string
+  type: "project"
+  title: string
+  notes?: string | undefined
   /**
    * 1. 如果 parentId 为空，则表示项目是根项目
    * 2. 如果 parentId 不为空，则表示项目是 area 的子项目
    */
-  parentId?: TreeID;
-  startDate?: number;
-  dueDate?: number;
-  createdAt: number;
-  status: ItemStatus;
-  completionAt?: number;
-  tags: string[];
-  children: TreeID[];
-};
+  parentId?: TreeID | undefined
+  startDate?: number | undefined
+  dueDate?: number | undefined
+  createdAt: number
+  status: ItemStatus
+  completionAt?: number | undefined
+  tags: string[]
+  children: TreeID[]
+}
 export type ProjectLoroSchemaPatch = {
-  status: never;
+  status: never
   /**
    * 是 json 字符串
    * { type: 'completed', timestamp: 1717977600000 }
    * { type: 'canceled', timestamp: 1717977600000 }
    */
-  completion?: string;
-};
+  completion?: string
+}
 
-export type ProjectLoroSchema = ToLoro<ProjectSchema, ProjectLoroSchemaPatch>;
+export type ProjectLoroSchema = ToLoro<ProjectSchema, ProjectLoroSchemaPatch>
 
 export type CreateProjectSchema = {
-  title: string;
-  position?: ItemPosition;
-};
+  title: string
+  position?: ItemPosition | undefined
+}
 
 export interface UpdateProjectSchema {
-  tags?: string[];
-  title?: string;
-  dueDate?: number | null;
-  startDate?: number | null;
-  notes?: string;
-  position?: ItemPosition;
+  tags?: string[] | undefined
+  title?: string | undefined
+  dueDate?: number | null | undefined
+  startDate?: number | null | undefined
+  notes?: string | undefined
+  position?: ItemPosition | undefined
 }
 
 export type ProjectHeadingSchema = {
-  id: TreeID;
-  uid: string;
-  type: 'projectHeading';
-  title: string;
-  parentId: TreeID;
-  children: TreeID[];
-  isArchived: boolean;
-  archivedDate?: number | null;
-};
+  id: TreeID
+  uid: string
+  type: "projectHeading"
+  title: string
+  parentId: TreeID
+  children: TreeID[]
+  isArchived: boolean
+  archivedDate?: number | null | undefined
+}
 
 export type CreateProjectHeadingSchema = {
-  title: string;
-  position: ItemPosition;
-};
+  title: string
+  position: ItemPosition
+}
 
 export type UpdateProjectHeadingSchema = {
-  title?: string;
-  position?: ItemPosition;
-  archivedDate?: number | null;
-};
+  title?: string | undefined
+  position?: ItemPosition | undefined
+  archivedDate?: number | null | undefined
+}
 
-export type ItemStatus = 'created' | 'completed' | 'canceled';
+export type ItemStatus = "created" | "completed" | "canceled"
 
 export type TaskSchema = {
-  id: TreeID;
-  uid: string;
-  type: 'task';
-  title: string;
-  notes?: string;
-  status: ItemStatus;
+  id: TreeID
+  uid: string
+  type: "task"
+  title: string
+  notes?: string | undefined
+  status: ItemStatus
   /**
    * 1. 如果 parentId 为空，则表示该任务是 inbox 下的任务
    * 2. 如果 parentId 不为空
@@ -135,157 +135,158 @@ export type TaskSchema = {
    *    2.3 如果 parentId 是 area 的 id，则表示该任务是 area 的子任务
    *    2.4 如果 parentId 是 task 的 id，则表示该任务是 task 的字任务
    */
-  parentId?: string;
-  children: string[];
-  tags: string[];
+  parentId?: string | undefined
+  children: string[]
+  tags: string[]
 
-  completionAt?: number;
+  completionAt?: number | undefined
 
-  createdAt: number;
+  createdAt: number
   /**
    * 格式为日期, 一律为 0 时区的 YYYY-MM-DD
    */
-  startDate?: number;
+  startDate?: number | undefined
   /**
    * 格式为日期, 一律为 0 时区的 YYYY-MM-DD
    */
-  dueDate?: number;
+  dueDate?: number | undefined
 
-  recurringRule?: RecurringRule;
-};
+  recurringRule?: RecurringRule | undefined
+}
 
 export type TaskLoroSchemaPatch = {
-  status: never;
+  status: never
   /**
    * 是 json 字符串
    * { type: 'completed', timestamp: 1717977600000 }
    * { type: 'canceled', timestamp: 1717977600000 }
    */
-  completion?: string;
-  recurringRule?: string;
-};
+  completion?: string
+  recurringRule?: string
+}
 
-export type TaskLoroSchema = ToLoro<TaskSchema, TaskLoroSchemaPatch>;
+export type TaskLoroSchema = ToLoro<TaskSchema, TaskLoroSchemaPatch>
 
 export type CreateTaskSchema = {
-  title: string;
-  notes?: string;
-  startDate?: number | null;
-  dueDate?: number | null;
-  tags?: string[];
-  position?: ItemPosition;
-  recurringRule?: RecurringRule;
-};
+  title: string
+  notes?: string | undefined
+  startDate?: number | null | undefined
+  dueDate?: number | null | undefined
+  tags?: string[] | undefined
+  position?: ItemPosition | undefined
+  recurringRule?: RecurringRule | undefined
+}
 
 export interface RecurringRule {
-  startDate?: RecurringDateRule | null;
-  dueDate?: RecurringDateRule | null;
+  startDate?: RecurringDateRule | null
+  dueDate?: RecurringDateRule | null
 }
 
 export type UpdateTaskSchema = {
-  status?: ItemStatus;
-  title?: string;
-  notes?: string;
-  startDate?: number | null;
-  dueDate?: number | null;
-  tags?: string[];
-  parentId?: TreeID;
-  previousTaskId?: TreeID | null;
-  position?: ItemPosition;
-  completionAt?: number;
-  recurringRule?: RecurringRule;
-};
+  status?: ItemStatus | undefined
+  title?: string | undefined
+  notes?: string | undefined
+  startDate?: number | null | undefined
+  dueDate?: number | null | undefined
+  tags?: string[] | undefined
+  parentId?: TreeID | undefined
+  previousTaskId?: TreeID | null | undefined
+  position?: ItemPosition | undefined
+  completionAt?: number | undefined
+  /** null explicitly clears the rule; omission leaves it unchanged. */
+  recurringRule?: RecurringRule | null
+}
 
-export type TaskObjectSchema = AreaSchema | ProjectSchema | ProjectHeadingSchema | TaskSchema;
+export type TaskObjectSchema = AreaSchema | ProjectSchema | ProjectHeadingSchema | TaskSchema
 
 export type TaskViewSchema = {
-  uid: string;
-  type: 'tasks';
-  name: string;
-  desc: string;
-  rule: string;
+  uid: string
+  type: "tasks"
+  name: string
+  desc: string
+  rule: string
   /** Version of the view-schema engine that wrote this view. */
-  schemaVersion: number;
-};
+  schemaVersion: number
+}
 
 export type CreateTaskViewSchema = {
-  name: string;
-  desc?: string;
-  rule: string;
-  schemaVersion: number;
+  name: string
+  desc?: string
+  rule: string
+  schemaVersion: number
   /**
    * Override the auto-generated uid. Production code never sets this — it's
    * an escape hatch for test fixtures that need a deterministic URL.
    */
-  uid?: string;
-};
+  uid?: string
+}
 
 export type UpdateTaskViewSchema = {
-  name?: string;
-  desc?: string;
-  rule?: string;
+  name?: string
+  desc?: string
+  rule?: string
   /** Caller must pass this whenever `rule` changes. */
-  schemaVersion?: number;
-};
+  schemaVersion?: number
+}
 
-export type TaskObjectType = TaskObjectSchema['type'];
+export type TaskObjectType = TaskObjectSchema["type"]
 
 export interface ITaskModelData {
-  version: Record<string, number>;
-  taskList: TaskObjectSchema[];
-  taskObjectMap: Map<string, TaskObjectSchema>;
-  taskObjectUidMap: Map<string, TaskObjectSchema>;
-  rootObjectIdList: TreeID[];
-  dateAssignedList: TreeID[];
-  remindersMap: Map<TreeID, ReminderWithId[]>;
-  views: TaskViewSchema[];
+  version: Record<string, number>
+  taskList: TaskObjectSchema[]
+  taskObjectMap: Map<string, TaskObjectSchema>
+  taskObjectUidMap: Map<string, TaskObjectSchema>
+  rootObjectIdList: TreeID[]
+  dateAssignedList: TreeID[]
+  remindersMap: Map<TreeID, ReminderWithId[]>
+  views: TaskViewSchema[]
 }
 
 export interface ProjectStatusTransition {
-  projectId: TreeID;
-  projectStatus: ItemStatus;
-  taskStatus?: ItemStatus;
-  completionAt?: number;
+  projectId: TreeID
+  projectStatus: ItemStatus
+  taskStatus?: ItemStatus
+  completionAt?: number
 }
 
 export type ReminderSchema = {
-  itemId: TreeID;
-  time: number;
-};
+  itemId: TreeID
+  time: number
+}
 
 export type CreateReminderSchema = {
-  itemId: TreeID;
-  time: number;
-};
+  itemId: TreeID
+  time: number
+}
 
 export type UpdateReminderSchema = {
-  time: number;
-};
+  time: number
+}
 
 export type ReminderWithId = {
-  reminderId: string;
-  itemId: TreeID;
-  time: number;
-};
+  reminderId: string
+  itemId: TreeID
+  time: number
+}
 
 export type AttachmentSchema = {
-  id: string;
-  parentUid: string;
-  filename: string;
-  size: number;
-  mimetype: string;
-  hasThumbnail: boolean;
-  s3Key: string;
-  createdAt: number;
-  deletedAt?: number;
-};
+  id: string
+  parentUid: string
+  filename: string
+  size: number
+  mimetype: string
+  hasThumbnail: boolean
+  s3Key: string
+  createdAt: number
+  deletedAt?: number
+}
 
 export type CreateAttachmentSchema = {
-  id: string;
-  parentUid: string;
-  filename: string;
-  size: number;
-  mimetype: string;
-  hasThumbnail: boolean;
-  s3Key: string;
-};
+  id: string
+  parentUid: string
+  filename: string
+  size: number
+  mimetype: string
+  hasThumbnail: boolean
+  s3Key: string
+}

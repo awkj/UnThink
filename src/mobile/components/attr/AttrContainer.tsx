@@ -18,10 +18,10 @@ const defaultAttrStyles: AttrStyles = {
 interface AttrContainerProps {
   icon: React.ReactNode
   children: React.ReactNode
-  onClick?: () => void
-  onClear?: () => void
-  testId?: string
-  attrStyles?: AttrStyles
+  onClick?: (() => void) | undefined
+  onClear?: (() => void) | undefined
+  testId?: string | undefined
+  attrStyles?: AttrStyles | undefined
 }
 
 export const AttrContainer: React.FC<AttrContainerProps> = ({

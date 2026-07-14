@@ -19,7 +19,7 @@ import { ProjectIcon } from "./ProjectIcon"
 interface DesktopProjectListItemProps {
   project: ProjectInfoState
   disableDrag?: boolean
-  hideProjectTitle?: boolean
+  hideProjectTitle?: boolean | undefined
 }
 
 export const DesktopProjectListItem: React.FC<DesktopProjectListItemProps> = ({
@@ -31,7 +31,7 @@ export const DesktopProjectListItem: React.FC<DesktopProjectListItemProps> = ({
 
   const { attributes, listeners, setNodeRef, transform, isDragging } = useSortable({
     id: project.id,
-    disabled: disableDrag,
+    disabled: disableDrag ?? false,
   })
 
   const style = {

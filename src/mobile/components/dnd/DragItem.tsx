@@ -1,13 +1,13 @@
-import { styles } from '@/mobile/theme';
-import { DraggableAttributes } from '@dnd-kit/core';
-import type { SyntheticListenerMap } from '@dnd-kit/core/dist/hooks/utilities';
-import classNames from 'classnames';
-import React from 'react';
+import { styles } from "@/mobile/theme"
+import { DraggableAttributes } from "@dnd-kit/core"
+import type { SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities"
+import classNames from "classnames"
+import React from "react"
 
 interface DragItemProps {
-  attributes: DraggableAttributes;
-  listeners?: SyntheticListenerMap;
-  style?: React.CSSProperties;
+  attributes: DraggableAttributes
+  listeners?: SyntheticListenerMap | undefined
+  style?: React.CSSProperties
 }
 
 export const DragItem = React.forwardRef<HTMLDivElement, DragItemProps>((props, ref) => {
@@ -18,12 +18,12 @@ export const DragItem = React.forwardRef<HTMLDivElement, DragItemProps>((props, 
       {...props.listeners}
       style={props.style}
       className={classNames(
-        'w-full',
+        "w-full",
         styles.listItemRound,
         styles.taskItemHeight,
         styles.listItemDraggedBackground,
-        styles.taskItemDraggingRound
+        styles.taskItemDraggingRound,
       )}
     ></div>
-  );
-});
+  )
+})

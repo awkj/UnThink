@@ -206,7 +206,11 @@ export class DesktopMenuController implements IDisposable {
       ? this.activeMenu.submenu.reduce((acc, group) => acc + group.length, 0) * menuItemHeight
       : 0
 
-    const menuStyle = this.getMenuStyle({ menuItemHeight, menuWidth, menuHeight })
+    const menuStyle = this.getMenuStyle({
+      menuItemHeight,
+      menuWidth,
+      ...(menuHeight === undefined ? {} : { menuHeight }),
+    })
     const menuLeft = menuStyle.left as number
     const menuTop = menuStyle.top as number
     const submenuTop = menuTop + menuContentPadding + (this.activeIndex ?? 0) * menuItemHeight
@@ -428,13 +432,14 @@ export class DesktopMenuController implements IDisposable {
       for (const group of this.activeMenu.submenu) {
         if (this._activeSubmenuIndex < currentIndex + group.length) {
           const subItem = group[this._activeSubmenuIndex - currentIndex]
-          this.handleItemClick(subItem)
+          if (subItem) this.handleItemClick(subItem)
           return
         }
         currentIndex += group.length
       }
     } else if (this._activeIndex !== null) {
       const menu = this.menuConfig[this._activeIndex]
+      if (!menu) return
       if (menu.submenu && menu.submenu.length > 0) {
         this.openSubmenu(true)
       } else {

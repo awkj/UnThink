@@ -6,7 +6,7 @@ import { AttrContainer } from "./AttrContainer"
 
 export interface AttrLabelListItem {
   title: string
-  subtitle?: string
+  subtitle?: string | undefined
   titleType?: "danger"
 }
 

@@ -1,33 +1,33 @@
-import type { TreeID } from 'loro-crdt';
-import { ItemMovePosition } from '@/core/type';
-import { GroupedTodayItems, TodayGroup, TodayGroupItem } from './groupTodayItems';
+import type { TreeID } from "loro-crdt"
+import { ItemMovePosition } from "@/core/type"
+import { GroupedTodayItems, TodayGroup, TodayGroupItem } from "./groupTodayItems"
 
 export type TodayGroupDragAction =
-  | { kind: 'reorder'; position: ItemMovePosition }
-  | { kind: 'moveTask'; parentId: TreeID | null; position: ItemMovePosition }
-  | { kind: 'moveProject'; areaId: TreeID | null; position: ItemMovePosition };
+  | { kind: "reorder"; position: ItemMovePosition }
+  | { kind: "moveTask"; parentId: TreeID | null; position: ItemMovePosition }
+  | { kind: "moveProject"; areaId: TreeID | null; position: ItemMovePosition }
 
 function itemId(item: TodayGroupItem): string {
-  return item.type === 'task' ? item.task.id : item.project.id;
+  return item.type === "task" ? item.task.id : item.project.id
 }
 
 function findContainingGroup(grouped: GroupedTodayItems, id: string): TodayGroup | undefined {
-  return grouped.groups.find((group) => group.items.some((item) => itemId(item) === id));
+  return grouped.groups.find((group) => group.items.some((item) => itemId(item) === id))
 }
 
 function findGroupByHeading(grouped: GroupedTodayItems, id: string): TodayGroup | undefined {
-  return grouped.groups.find((group) => group.headingId === id);
+  return grouped.groups.find((group) => group.headingId === id)
 }
 
 function isProject(grouped: GroupedTodayItems, id: string): boolean {
   for (const group of grouped.groups) {
     for (const item of group.items) {
       if (itemId(item) === id) {
-        return item.type === 'project';
+        return item.type === "project"
       }
     }
   }
-  return false;
+  return false
 }
 
 /**
@@ -47,23 +47,28 @@ function isProject(grouped: GroupedTodayItems, id: string): boolean {
 function resolveHeadingDrop(
   grouped: GroupedTodayItems,
   headingGroup: TodayGroup,
-  position: ItemMovePosition
+  position: ItemMovePosition,
 ): { targetGroup: TodayGroup; position: ItemMovePosition } {
-  if (position.type === 'beforeElement') {
-    const headingIndex = grouped.groups.indexOf(headingGroup);
+  if (position.type === "beforeElement") {
+    const headingIndex = grouped.groups.indexOf(headingGroup)
     for (let i = headingIndex - 1; i >= 0; i--) {
-      const prev = grouped.groups[i];
+      const prev = grouped.groups[i]
+      if (!prev) continue
       if (prev.items.length > 0) {
-        const lastId = itemId(prev.items[prev.items.length - 1]) as TreeID;
-        return { targetGroup: prev, position: { type: 'afterElement', previousElementId: lastId } };
+        const lastItem = prev.items.at(-1)
+        if (!lastItem) continue
+        const lastId = itemId(lastItem) as TreeID
+        return { targetGroup: prev, position: { type: "afterElement", previousElementId: lastId } }
       }
     }
   }
   if (headingGroup.items.length > 0) {
-    const firstId = itemId(headingGroup.items[0]) as TreeID;
-    return { targetGroup: headingGroup, position: { type: 'beforeElement', nextElementId: firstId } };
+    const firstItem = headingGroup.items[0]
+    if (!firstItem) return { targetGroup: headingGroup, position }
+    const firstId = itemId(firstItem) as TreeID
+    return { targetGroup: headingGroup, position: { type: "beforeElement", nextElementId: firstId } }
   }
-  return { targetGroup: headingGroup, position };
+  return { targetGroup: headingGroup, position }
 }
 
 /**
@@ -87,45 +92,45 @@ export function getTodayGroupDragAction(
   activeId: string,
   overId: string,
   grouped: GroupedTodayItems,
-  position: ItemMovePosition
+  position: ItemMovePosition,
 ): TodayGroupDragAction | null {
   if (!activeId || !overId || activeId === overId) {
-    return null;
+    return null
   }
 
-  const activeGroup = findContainingGroup(grouped, activeId);
+  const activeGroup = findContainingGroup(grouped, activeId)
   if (!activeGroup) {
-    return null;
+    return null
   }
 
-  const headingGroup = findGroupByHeading(grouped, overId);
-  let targetGroup: TodayGroup | undefined;
-  let resolvedPosition: ItemMovePosition = position;
+  const headingGroup = findGroupByHeading(grouped, overId)
+  let targetGroup: TodayGroup | undefined
+  let resolvedPosition: ItemMovePosition = position
   if (headingGroup) {
-    const resolved = resolveHeadingDrop(grouped, headingGroup, position);
-    targetGroup = resolved.targetGroup;
-    resolvedPosition = resolved.position;
+    const resolved = resolveHeadingDrop(grouped, headingGroup, position)
+    targetGroup = resolved.targetGroup
+    resolvedPosition = resolved.position
   } else {
-    targetGroup = findContainingGroup(grouped, overId);
+    targetGroup = findContainingGroup(grouped, overId)
   }
   if (!targetGroup) {
-    return null;
+    return null
   }
 
-  const activeIsProject = isProject(grouped, activeId);
+  const activeIsProject = isProject(grouped, activeId)
 
   if (activeIsProject) {
-    if (targetGroup.kind === 'project') {
-      return null;
+    if (targetGroup.kind === "project") {
+      return null
     }
     if (activeGroup.id === targetGroup.id) {
-      return { kind: 'reorder', position: resolvedPosition };
+      return { kind: "reorder", position: resolvedPosition }
     }
-    return { kind: 'moveProject', areaId: targetGroup.parentId, position: resolvedPosition };
+    return { kind: "moveProject", areaId: targetGroup.parentId, position: resolvedPosition }
   }
 
   if (activeGroup.id === targetGroup.id) {
-    return { kind: 'reorder', position: resolvedPosition };
+    return { kind: "reorder", position: resolvedPosition }
   }
-  return { kind: 'moveTask', parentId: targetGroup.parentId, position: resolvedPosition };
+  return { kind: "moveTask", parentId: targetGroup.parentId, position: resolvedPosition }
 }

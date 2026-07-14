@@ -93,7 +93,8 @@ export const TagEditorActionSheet: React.FC = () => {
       controller.addTag(controller.searchText)
     }
     if (e.key === "Backspace" && controller.searchText === "") {
-      controller.removeTag(controller.selectedTags[controller.selectedTags.length - 1])
+      const lastTag = controller.selectedTags.at(-1)
+      if (lastTag !== undefined) controller.removeTag(lastTag)
     }
   }
 

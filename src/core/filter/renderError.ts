@@ -1,4 +1,4 @@
-import type { ParseError } from './ruleFactory';
+import type { ParseError } from "./ruleFactory"
 
 /**
  * Visualizes a parser error under the source string with a caret pointing at
@@ -11,33 +11,33 @@ import type { ParseError } from './ruleFactory';
  *   SYNTAX_ERROR: Unexpected token
  */
 export function renderRuleError(source: string, error: ParseError): string {
-  const { start, end } = error.location;
-  const safeStart = Math.max(0, Math.min(start, source.length));
-  const safeEnd = Math.max(safeStart, Math.min(end, source.length));
-  const display = source === '' ? '<empty>' : source;
-  const lines = display.split('\n');
+  const { start, end } = error.location
+  const safeStart = Math.max(0, Math.min(start, source.length))
+  const safeEnd = Math.max(safeStart, Math.min(end, source.length))
+  const display = source === "" ? "<empty>" : source
+  const lines = display.split("\n")
 
-  let lineStart = 0;
-  let errorLine = 0;
-  let col = 0;
-  let lineLen = lines[0].length;
+  let lineStart = 0
+  let errorLine = 0
+  let col = 0
+  let lineLen = lines[0]?.length ?? 0
   for (let i = 0; i < lines.length; i++) {
-    lineLen = lines[i].length;
+    lineLen = lines[i]?.length ?? 0
     if (safeStart <= lineStart + lineLen) {
-      errorLine = i;
-      col = safeStart - lineStart;
-      break;
+      errorLine = i
+      col = safeStart - lineStart
+      break
     }
-    lineStart += lineLen + 1;
+    lineStart += lineLen + 1
   }
-  const remaining = Math.max(1, lineLen - col);
-  const caretWidth = Math.max(1, Math.min(safeEnd - safeStart, remaining));
-  const caret = ' '.repeat(col) + '^'.repeat(caretWidth);
+  const remaining = Math.max(1, lineLen - col)
+  const caretWidth = Math.max(1, Math.min(safeEnd - safeStart, remaining))
+  const caret = " ".repeat(col) + "^".repeat(caretWidth)
 
   return [
     ...lines.slice(0, errorLine + 1),
     caret,
     ...lines.slice(errorLine + 1),
     `${error.code}: ${error.message}`,
-  ].join('\n');
+  ].join("\n")
 }

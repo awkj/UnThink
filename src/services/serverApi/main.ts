@@ -8,7 +8,7 @@ export class LocalServerSDK {
       const response = await fetch(url, {
         method: options.method,
         headers: options.headers,
-        body: options.body,
+        ...(options.body === undefined ? {} : { body: options.body }),
       })
       const status = response.status
       const body = await response.text()

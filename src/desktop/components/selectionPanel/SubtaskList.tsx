@@ -77,18 +77,19 @@ export const SubtaskList: React.FC<SubtaskListProps> = ({ task }) => {
       const oldIndex = task.children.findIndex((item) => item.id === active.id)
       const newIndex = task.children.findIndex((item) => item.id === over.id)
 
-      if (oldIndex === newIndex) return
+      if (oldIndex < 0 || newIndex < 0 || oldIndex === newIndex) return
 
       let previousTaskId: TreeID | undefined
       if (newIndex === 0) {
         previousTaskId = undefined
       } else if (newIndex > oldIndex) {
-        previousTaskId = task.children[newIndex].id
+        previousTaskId = task.children[newIndex]?.id
       } else {
-        previousTaskId = task.children[newIndex - 1].id
+        previousTaskId = task.children[newIndex - 1]?.id
       }
 
-      const taskId = task.children[oldIndex].id
+      const taskId = task.children[oldIndex]?.id
+      if (!taskId) return
 
       if (!previousTaskId) {
         todoService.updateTask(taskId, {

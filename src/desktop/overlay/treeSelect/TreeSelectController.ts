@@ -9,7 +9,7 @@ interface ITreeSelectOptions {
   x: number
   y: number
   onConfirm: (id: TreeID | null) => void
-  currentItemId?: TreeID
+  currentItemId?: TreeID | undefined
 }
 
 export class TreeSelectController implements IDisposable {

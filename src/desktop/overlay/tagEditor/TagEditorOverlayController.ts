@@ -138,6 +138,7 @@ export class TagEditorOverlayController extends Disposable {
   toggleFocusedTag() {
     if (this._focusedIndex >= 0 && this._focusedIndex < this.displayTags.length) {
       const tag = this.displayTags[this._focusedIndex]
+      if (tag === undefined) return
       const currentFocusedIndex = this._focusedIndex
       if (this._selectedTags.includes(tag)) {
         this.removeTag(tag)

@@ -102,7 +102,7 @@ export class StandaloneKeybindingService extends AbstractKeybindingService {
         {
           keybinding,
           command,
-          when,
+          when: when ?? null,
         },
       ]),
     )

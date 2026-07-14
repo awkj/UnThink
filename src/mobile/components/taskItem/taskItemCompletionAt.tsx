@@ -5,7 +5,7 @@ import { ItemStatus } from "@/core/type"
 import React from "react"
 
 interface TaskItemCompletionAtProps {
-  completionAt?: number
+  completionAt?: number | undefined
   status: ItemStatus
 }
 

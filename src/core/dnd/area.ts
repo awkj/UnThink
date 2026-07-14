@@ -33,11 +33,13 @@ export function getAreaDragEndPositionAction(
       }
     } else {
       if (areaDetail.taskList.length > 0) {
+        const lastTask = areaDetail.taskList.at(-1)
+        if (!lastTask) return null
         return {
           type: "createTask",
           position: {
             type: "afterElement",
-            previousElementId: areaDetail.taskList[areaDetail.taskList.length - 1].id,
+            previousElementId: lastTask.id,
           },
         }
       } else {

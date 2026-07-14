@@ -48,7 +48,7 @@ export class WebLoggerIndexedDBStorage {
 
   private getTodayDateString(): string {
     const now = new Date()
-    return now.toISOString().split("T")[0]
+    return now.toISOString().slice(0, 10)
   }
 
   private async openDB(date: string): Promise<IDBDatabase> {
@@ -208,7 +208,7 @@ export class WebLoggerIndexedDBStorage {
     for (let i = 0; i < 8; i++) {
       const date = new Date()
       date.setDate(date.getDate() - i)
-      const dateString = date.toISOString().split("T")[0]
+      const dateString = date.toISOString().slice(0, 10)
 
       dbPromises.push(this.getLogsForDate(dateString))
     }

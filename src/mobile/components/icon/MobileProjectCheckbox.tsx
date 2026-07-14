@@ -7,8 +7,8 @@ type CheckboxSize = "medium" | "large"
 
 interface ProjectCheckboxProps {
   size?: CheckboxSize
-  status?: ItemStatus
-  progress?: number
+  status?: ItemStatus | undefined
+  progress?: number | undefined
   onClick?: () => void
   onLongPress?: () => void
   className?: string

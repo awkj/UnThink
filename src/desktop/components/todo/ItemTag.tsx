@@ -16,13 +16,15 @@ import React from "react"
 import { ProjectIcon } from "./ProjectIcon"
 
 export interface ItemTagProps {
-  icon?: {
-    type: string
-    props?: Record<string, unknown>
-  }
+  icon?:
+    | {
+        type: string
+        props?: Record<string, unknown>
+      }
+    | undefined
   label: string
-  isSelected?: boolean
-  isDanger?: boolean
+  isSelected?: boolean | undefined
+  isDanger?: boolean | undefined
 }
 
 export const ItemTag: React.FC<ItemTagProps> = ({ icon, label, isSelected, isDanger }) => {

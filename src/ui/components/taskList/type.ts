@@ -8,13 +8,13 @@ export interface ISelectionOption {
 
   fireEditEvent?: boolean
 
-  selectAll?: boolean
+  selectAll?: boolean | undefined
 }
 
 export interface IEditItemState {
   id: TreeID
   offset: number
-  selectAll?: boolean
+  selectAll?: boolean | undefined
 }
 
 export type ListOperation = {

@@ -58,7 +58,7 @@ export class LocalServerClient {
         "Content-Type": "application/json",
         authorization: `Bearer ${this.options.authToken}`,
       },
-      body: data !== undefined ? JSON.stringify(data) : undefined,
+      ...(data === undefined ? {} : { body: JSON.stringify(data) }),
     })
 
     if (response.status !== 200) {

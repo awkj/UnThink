@@ -56,7 +56,7 @@ interface EditTaskItemProps {
 
 function formatDateISO(timestamp?: number): string {
   if (!timestamp) return ""
-  return new Date(timestamp).toISOString().split("T")[0]
+  return new Date(timestamp).toISOString().slice(0, 10)
 }
 
 export const EditTaskItem: React.FC<EditTaskItemProps> = ({ taskInfo: taskInfoProp }) => {

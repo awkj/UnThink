@@ -54,7 +54,9 @@ export const CreateTaskActionSheet: React.FC = () => {
 
   function arrayMove<T>(array: T[], from: number, to: number): T[] {
     const newArray = array.slice()
-    newArray.splice(to < 0 ? newArray.length + to : to, 0, newArray.splice(from, 1)[0])
+    const moved = newArray.splice(from, 1)[0]
+    if (moved === undefined) return array
+    newArray.splice(to < 0 ? newArray.length + to : to, 0, moved)
     return newArray
   }
 

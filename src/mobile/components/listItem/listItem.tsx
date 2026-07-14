@@ -9,14 +9,14 @@ export interface ListItemOption {
   icon?: React.ReactNode
   hidden?: boolean
   title: string
-  description?: string
-  danger?: boolean
+  description?: string | undefined
+  danger?: boolean | undefined
   mode:
     | {
         // 右边是一个箭头
         type: "navigation"
         // 箭头左边的文字
-        label?: string
+        label?: string | undefined
       }
     | {
         type: "label"
@@ -39,7 +39,7 @@ export interface ListItemOption {
     | {
         type: "plain"
       }
-  onClick?: () => void
+  onClick?: (() => void) | undefined
 }
 
 interface ListItemProps extends ListItemOption {

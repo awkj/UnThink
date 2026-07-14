@@ -38,7 +38,8 @@ export function resolveDatabase(
   if (exact) return exact
 
   const prefixMatches = dbs.filter((d) => d.id.startsWith(input))
-  if (prefixMatches.length === 1) return prefixMatches[0]
+  const singlePrefixMatch = prefixMatches.length === 1 ? prefixMatches[0] : undefined
+  if (singlePrefixMatch) return singlePrefixMatch
   if (prefixMatches.length > 1) {
     return { error: `"${input}" matches ${prefixMatches.length} databases`, candidates: prefixMatches }
   }

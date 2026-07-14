@@ -1,14 +1,14 @@
-import React from 'react';
-import { styles } from '../../theme';
-import { AttrContainer, AttrStyles } from './AttrContainer';
+import React from "react"
+import { styles } from "../../theme"
+import { AttrContainer, AttrStyles } from "./AttrContainer"
 
 interface AttrTagsProps {
-  icon: React.ReactNode;
-  placeholder: string;
-  tags: string[];
-  onClick?: () => void;
-  testId?: string;
-  attrStyles?: AttrStyles;
+  icon: React.ReactNode
+  placeholder: string
+  tags: string[]
+  onClick?: (() => void) | undefined
+  testId?: string | undefined
+  attrStyles?: AttrStyles | undefined
 }
 
 export const AttrTags: React.FC<AttrTagsProps> = ({ icon, placeholder, tags, onClick, testId, attrStyles }) => {
@@ -26,5 +26,5 @@ export const AttrTags: React.FC<AttrTagsProps> = ({ icon, placeholder, tags, onC
         <span className={styles.createTaskAttrPlaceholder}>{placeholder}</span>
       )}
     </AttrContainer>
-  );
-};
+  )
+}

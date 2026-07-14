@@ -1,75 +1,75 @@
-import React from 'react';
-import { AttrLabel, AttrLabelValue } from './AttrLabel';
-import { AttrLabelListItem, AttrLabelListProps } from './AttrLabelList';
-import { AttrLabelList } from './AttrLabelList';
-import { AttrTags } from './AttrTags';
-import { AttrTasks } from './AttrTasks';
-import { AttrTextArea } from './AttrTextArea';
+import React from "react"
+import { AttrLabel, AttrLabelValue } from "./AttrLabel"
+import { AttrLabelListItem, AttrLabelListProps } from "./AttrLabelList"
+import { AttrLabelList } from "./AttrLabelList"
+import { AttrTags } from "./AttrTags"
+import { AttrTasks } from "./AttrTasks"
+import { AttrTextArea } from "./AttrTextArea"
 
 type AttrRowTextArea = {
-  type: 'textArea';
-  key: string;
-  icon: React.ReactNode;
-  content: string;
-  onChange: (v: string) => void;
-  placeholder: string;
-  testId?: string;
-};
+  type: "textArea"
+  key: string
+  icon: React.ReactNode
+  content: string
+  onChange: (v: string) => void
+  placeholder: string
+  testId?: string
+}
 
 type AttrRowLabel = {
-  type: 'label';
-  key: string;
-  icon: React.ReactNode;
-  placeholder: string;
-  value?: AttrLabelValue;
-  onClick?: () => void;
-  onClear?: () => void;
-  testId?: string;
-  labelTitleColor?: string;
-};
+  type: "label"
+  key: string
+  icon: React.ReactNode
+  placeholder: string
+  value?: AttrLabelValue | undefined
+  onClick?: (() => void) | undefined
+  onClear?: (() => void) | undefined
+  testId?: string | undefined
+  labelTitleColor?: string | undefined
+}
 
 type AttrRowLabelListInteractive = {
-  hidden?: boolean;
-  type: 'interactive';
-  key: string;
-  icon: React.ReactNode;
-  placeholder: string;
-  items: AttrLabelListItem[];
-  onLabelClick?: (index: number) => void;
-  onRemove?: (index: number) => void;
-  addButtonLabel?: string;
-  onAdd: () => void;
-  testId?: string;
-};
+  hidden?: boolean | undefined
+  type: "interactive"
+  key: string
+  icon: React.ReactNode
+  placeholder: string
+  items: AttrLabelListItem[]
+  onLabelClick?: ((index: number) => void) | undefined
+  onRemove?: ((index: number) => void) | undefined
+  addButtonLabel?: string | undefined
+  onAdd: () => void
+  testId?: string | undefined
+}
 
 type AttrRowTags = {
-  type: 'tags';
-  key: string;
-  icon: React.ReactNode;
-  placeholder: string;
-  tags: string[];
-  onClick?: () => void;
-  testId?: string;
-};
+  type: "tags"
+  key: string
+  icon: React.ReactNode
+  placeholder: string
+  tags: string[]
+  onClick?: (() => void) | undefined
+  testId?: string | undefined
+}
 
 type AttrRowTasks = {
-  type: 'tasks';
-  key: string;
-  icon: React.ReactNode;
-  children: React.ReactNode;
-  totalCount?: number;
-  completedCount?: number;
-  addButtonLabel?: string;
-  onAdd?: () => void;
-  testId?: string;
-  addButtonTestId?: string;
-};
+  type: "tasks"
+  key: string
+  icon: React.ReactNode
+  children: React.ReactNode
+  totalCount?: number | undefined
+  completedCount?: number | undefined
+  addButtonLabel?: string | undefined
+  onAdd?: (() => void) | undefined
+  testId?: string | undefined
+  addButtonTestId?: string | undefined
+}
 
-export type AttrRowItem = AttrRowTextArea | AttrRowLabel | AttrRowLabelListInteractive | AttrRowTags | AttrRowTasks;
+export type AttrRowItem = AttrRowTextArea | AttrRowLabel | AttrRowLabelListInteractive | AttrRowTags | AttrRowTasks
 
 function renderAttrRow(item: AttrRowItem): React.ReactNode {
   switch (item.type) {
-    case 'textArea':
+    case "textArea":
       return (
         <AttrTextArea
           key={item.key}
@@ -78,8 +78,8 @@ function renderAttrRow(item: AttrRowItem): React.ReactNode {
           onChange={item.onChange}
           placeholder={item.placeholder}
         />
-      );
-    case 'label':
+      )
+    case "label":
       return (
         <AttrLabel
           key={item.key}
@@ -91,15 +91,15 @@ function renderAttrRow(item: AttrRowItem): React.ReactNode {
           testId={item.testId}
           labelTitleColor={item.labelTitleColor}
         />
-      );
-    case 'interactive': {
+      )
+    case "interactive": {
       if (item.hidden) {
-        return null;
+        return null
       }
-      const { key, ...labelListProps } = item;
-      return <AttrLabelList key={key} {...(labelListProps as AttrLabelListProps)} />;
+      const { key, ...labelListProps } = item
+      return <AttrLabelList key={key} {...(labelListProps as AttrLabelListProps)} />
     }
-    case 'tags':
+    case "tags":
       return (
         <AttrTags
           key={item.key}
@@ -109,8 +109,8 @@ function renderAttrRow(item: AttrRowItem): React.ReactNode {
           onClick={item.onClick}
           testId={item.testId}
         />
-      );
-    case 'tasks':
+      )
+    case "tasks":
       return (
         <AttrTasks
           key={item.key}
@@ -124,14 +124,14 @@ function renderAttrRow(item: AttrRowItem): React.ReactNode {
         >
           {item.children}
         </AttrTasks>
-      );
+      )
   }
 }
 
 interface AttrListProps {
-  items: AttrRowItem[];
+  items: AttrRowItem[]
 }
 
 export const AttrList: React.FC<AttrListProps> = ({ items }) => {
-  return <>{items.map(renderAttrRow)}</>;
-};
+  return <>{items.map(renderAttrRow)}</>
+}

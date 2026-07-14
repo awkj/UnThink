@@ -170,9 +170,9 @@ export class AIChatController implements IAIChatController {
       let messages: ChatMessage[] = [...context, { role: "user", content: content.trim() }]
 
       const processStream = async (): Promise<{
-        toolCalls?: ToolCallInfo[]
+        toolCalls?: ToolCallInfo[] | undefined
         content: string
-        reasoningContent?: string
+        reasoningContent?: string | undefined
       }> => {
         return new Promise((resolve, reject) => {
           let finalContent = ""
@@ -223,7 +223,7 @@ export class AIChatController implements IAIChatController {
               case "content_delta": {
                 currentContentText += event.content
                 const textBlockIndex = contentBlocks.length - 1
-                if (textBlockIndex >= 0 && contentBlocks[textBlockIndex].type === "text") {
+                if (textBlockIndex >= 0 && contentBlocks[textBlockIndex]?.type === "text") {
                   contentBlocks[textBlockIndex] = {
                     type: "text",
                     text: currentContentText,
@@ -463,6 +463,7 @@ export class AIChatController implements IAIChatController {
       const messageIndex = this._session.messages.findIndex((m) => m.id === currentId)
       if (messageIndex > 0) {
         const prevMessage = this._session.messages[messageIndex - 1]
+        if (!prevMessage) break
         // If current is assistant and prev is user, include the user message
         if (message.role === "assistant" && prevMessage.role === "user") {
           messageChain.unshift(prevMessage)
@@ -546,8 +547,10 @@ export class AIChatController implements IAIChatController {
     const existingIndex = this._session.messages.findIndex((m) => m.id === assistantMessageId)
     if (existingIndex >= 0) {
       const newMessages = [...this._session.messages]
+      const existingMessage = newMessages[existingIndex]
+      if (!existingMessage) return
       newMessages[existingIndex] = {
-        ...newMessages[existingIndex],
+        ...existingMessage,
         contentBlocks: [...contentBlocks],
       }
       this._session = { ...this._session, messages: newMessages }

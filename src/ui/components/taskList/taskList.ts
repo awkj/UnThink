@@ -132,7 +132,7 @@ export class TaskList implements ITaskList {
       return
     }
     const newItem = this._items[lastSelectedIndex]
-    this._onCreateNewOne.fire({ afterId: newItem })
+    this._onCreateNewOne.fire({ afterId: newItem ?? null })
   }
 
   selectPrevious(): void {
@@ -192,10 +192,10 @@ export class TaskList implements ITaskList {
     let previousItem: TreeID | null = null
 
     if (index > 0) {
-      previousItem = this._items[index - 1]
+      previousItem = this._items[index - 1] ?? null
     } else {
       if (this._items.length > 1) {
-        previousItem = this._items[0]
+        previousItem = this._items[0] ?? null
       }
     }
 

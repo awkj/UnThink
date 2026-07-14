@@ -1,16 +1,16 @@
-import React from 'react';
-import { desktopStyles } from '@/desktop/theme/main';
+import React from "react"
+import { desktopStyles } from "@/desktop/theme/main"
 
 interface InputFieldProps {
-  type?: 'text' | 'password' | 'url';
-  placeholder?: string;
-  value: string;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  className?: string;
+  type?: "text" | "password" | "url" | undefined
+  placeholder?: string | undefined
+  value: string
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void
+  className?: string
 }
 
-export const InputField: React.FC<InputFieldProps> = ({ type = 'text', placeholder, value, onChange, className }) => {
-  const baseClassName = desktopStyles.DefaultInputField;
+export const InputField: React.FC<InputFieldProps> = ({ type = "text", placeholder, value, onChange, className }) => {
+  const baseClassName = desktopStyles.DefaultInputField
 
   return (
     <input
@@ -20,5 +20,5 @@ export const InputField: React.FC<InputFieldProps> = ({ type = 'text', placehold
       value={value}
       onChange={onChange}
     />
-  );
-};
+  )
+}

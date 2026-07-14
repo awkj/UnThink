@@ -57,6 +57,7 @@ export const SelectionPanel: React.FC = () => {
   }
 
   const selectedItemId = selectedItems[0]
+  if (!selectedItemId) return null
   const taskObject = todoService.modelState.taskObjectMap.get(selectedItemId)
 
   if (!taskObject) {

@@ -29,7 +29,7 @@ export interface TaskListItemProps {
   task: TaskInfo
   willDisappear: boolean
   taskList: ITaskList
-  hideProjectTitle?: boolean
+  hideProjectTitle?: boolean | undefined
   disableDrag?: boolean
   followParentArchiveState?: boolean
 }
@@ -48,7 +48,7 @@ export const TaskListItem: React.FC<TaskListItemProps> = ({
 
   const { attributes, listeners, setNodeRef, transform, isDragging } = useSortable({
     id: task.id,
-    disabled: disableDrag,
+    disabled: disableDrag ?? false,
   })
 
   const dragListeners = {

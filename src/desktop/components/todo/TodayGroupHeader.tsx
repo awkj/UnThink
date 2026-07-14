@@ -17,8 +17,8 @@ interface TodayGroupHeaderProps {
   id: string
   title: string
   variant: "area" | "project"
-  projectStatus?: ItemStatus
-  projectProgress?: number
+  projectStatus?: ItemStatus | undefined
+  projectProgress?: number | undefined
 }
 
 export const TodayGroupHeader: React.FC<TodayGroupHeaderProps> = ({

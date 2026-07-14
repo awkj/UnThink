@@ -1,19 +1,19 @@
-import { formatDate } from '@/core/time/formatDate';
-import { formatRemainingDays } from '@/core/time/formatRemainingDays';
-import { isPastOrToday } from '@/core/time/isPast';
-import { desktopStyles } from '@/desktop/theme/main';
-import classNames from 'classnames';
-import React from 'react';
-import { TaskDetailAttributeRow } from './TaskDetailAttributeRow';
+import { formatDate } from "@/core/time/formatDate"
+import { formatRemainingDays } from "@/core/time/formatRemainingDays"
+import { isPastOrToday } from "@/core/time/isPast"
+import { desktopStyles } from "@/desktop/theme/main"
+import classNames from "classnames"
+import React from "react"
+import { TaskDetailAttributeRow } from "./TaskDetailAttributeRow"
 
 interface TaskDateFieldProps {
-  label: string;
-  placeholder: string;
-  icon: React.ReactNode;
-  date?: number;
-  onDateClick: (e: React.MouseEvent<HTMLElement>) => void;
-  isDue?: boolean;
-  testId?: string;
+  label: string
+  placeholder: string
+  icon: React.ReactNode
+  date?: number | undefined
+  onDateClick: (e: React.MouseEvent<HTMLElement>) => void
+  isDue?: boolean
+  testId?: string
 }
 
 export const TaskDateField: React.FC<TaskDateFieldProps> = ({
@@ -35,7 +35,7 @@ export const TaskDateField: React.FC<TaskDateFieldProps> = ({
         placeholder={true}
         onClick={onDateClick}
       />
-    );
+    )
   }
 
   return (
@@ -59,5 +59,5 @@ export const TaskDateField: React.FC<TaskDateFieldProps> = ({
         </div>
       }
     />
-  );
-};
+  )
+}

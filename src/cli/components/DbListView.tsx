@@ -13,7 +13,7 @@ export function DbListView({ rows }: { rows: DbLsRow[] }) {
     {
       header: "ID",
       value: (r) => r.id,
-      render: (r) => <Text color={r.isCurrent ? "green" : undefined}>{r.id}</Text>,
+      render: (r) => (r.isCurrent ? <Text color="green">{r.id}</Text> : <Text>{r.id}</Text>),
     },
     {
       header: "NAME",

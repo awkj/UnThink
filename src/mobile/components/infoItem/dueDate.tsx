@@ -8,7 +8,7 @@ import classNames from "classnames"
 import React from "react"
 
 interface DueDateInfoItemProps {
-  dueDate?: number
+  dueDate?: number | undefined
 }
 
 export const DueDateInfoItem: React.FC<DueDateInfoItemProps> = ({ dueDate }) => {

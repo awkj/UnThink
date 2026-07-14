@@ -22,12 +22,12 @@
 
 - [x] 使用 TypeScript 7 作为唯一类型检查编译器，删除 TS6 兼容编译流程。
 - [x] 保留 TS6 JavaScript Compiler API，仅供 ESLint 和 Vite AST 插件解析源码。
-- [-] 主工程已启用 `strict`；更严格的数组索引和可选字段语义仍待完成。
-- [ ] 分模块启用 `noUncheckedIndexedAccess`，优先处理 core model、拖拽计算、批量编辑和同步代码。
-- [ ] 修复数组索引、Map 查询和解析结果中的真实空值分支，不使用批量非空断言掩盖问题。
-- [ ] 重构可选字段模型，统一“字段缺失”“显式 `undefined`”和 `null` 的语义。
-- [ ] 完成模型重构后全局启用 `exactOptionalPropertyTypes`。
-- [ ] 为新的严格类型基线增加 CI gate。
+- [x] 主工程已启用 `strict`、`noUncheckedIndexedAccess` 和 `exactOptionalPropertyTypes`。
+- [x] 全局启用 `noUncheckedIndexedAccess`，覆盖 core model、拖拽计算、批量编辑和同步代码。
+- [x] 修复数组索引、Map 查询和解析结果中的真实空值分支，未使用批量非空断言掩盖问题。
+- [x] 重构可选字段模型，统一“字段缺失”“显式 `undefined`”和 `null` 的语义；重复规则使用 `null` 明确清除。
+- [x] 全局启用 `exactOptionalPropertyTypes`。
+- [x] 为新的严格类型基线增加 CI gate。
 
 完成标准：主 `tsconfig` 直接启用两项检查，`pnpm check` 无错误，不存在单独的宽松配置。
 

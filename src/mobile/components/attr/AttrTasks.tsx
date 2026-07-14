@@ -1,16 +1,16 @@
-import React from 'react';
-import { styles } from '../../theme';
-import { AttrContainer } from './AttrContainer';
+import React from "react"
+import { styles } from "../../theme"
+import { AttrContainer } from "./AttrContainer"
 
 interface AttrTasksProps {
-  icon: React.ReactNode;
-  children: React.ReactNode;
-  totalCount?: number;
-  completedCount?: number;
-  addButtonLabel?: string;
-  onAdd?: () => void;
-  testId?: string;
-  addButtonTestId?: string;
+  icon: React.ReactNode
+  children: React.ReactNode
+  totalCount?: number | undefined
+  completedCount?: number | undefined
+  addButtonLabel?: string | undefined
+  onAdd?: (() => void) | undefined
+  testId?: string | undefined
+  addButtonTestId?: string | undefined
 }
 
 export const AttrTasks: React.FC<AttrTasksProps> = ({
@@ -23,7 +23,7 @@ export const AttrTasks: React.FC<AttrTasksProps> = ({
   testId,
   addButtonTestId,
 }) => {
-  const progress = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
+  const progress = totalCount > 0 ? (completedCount / totalCount) * 100 : 0
 
   return (
     <AttrContainer icon={icon} testId={testId}>
@@ -46,5 +46,5 @@ export const AttrTasks: React.FC<AttrTasksProps> = ({
         )}
       </div>
     </AttrContainer>
-  );
-};
+  )
+}

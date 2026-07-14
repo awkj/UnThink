@@ -76,7 +76,7 @@ export const useCancelEdit = (elementRef: RefObject<HTMLElement | null>, itemId:
   return {
     isEditing,
     itemClassName: {
-      [styles["task-item-container"]]: isEditing,
+      [styles["task-item-container"] ?? "task-item-container"]: isEditing,
     },
     shouldIgnoreClick,
     isOutside,

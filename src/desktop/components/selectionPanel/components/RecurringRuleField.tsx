@@ -16,9 +16,9 @@ import { TaskDetailAttributeRow } from "./TaskDetailAttributeRow"
 
 interface RecurringRuleFieldProps {
   taskId: TreeID
-  recurringRule?: RecurringRule
-  taskStartDate?: number
-  taskDueDate?: number
+  recurringRule?: RecurringRule | undefined
+  taskStartDate?: number | undefined
+  taskDueDate?: number | undefined
   testId?: string
 }
 

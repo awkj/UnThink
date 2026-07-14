@@ -37,9 +37,9 @@ const ContentNavigation = () => {
     const navigationSubscription = navigationService.onNavigate((e) => {
       if (e.path === "/create_task") {
         hiddenInputRef.current?.focus()
-        navigate(e.path, { replace: e.replace })
+        navigate(e.path, e.replace === undefined ? {} : { replace: e.replace })
       } else {
-        navigate(e.path, { replace: e.replace })
+        navigate(e.path, e.replace === undefined ? {} : { replace: e.replace })
       }
     })
     return () => {

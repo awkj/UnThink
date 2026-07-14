@@ -11,8 +11,8 @@ export interface UserMessage {
 export interface AssistantMessage {
   role: "assistant"
   content: string
-  toolCalls?: UIToolCallInfo[]
-  reasoningContent?: string
+  toolCalls?: UIToolCallInfo[] | undefined
+  reasoningContent?: string | undefined
 }
 
 export interface SystemMessage {
@@ -77,8 +77,8 @@ export type AIStreamEvent =
   | {
       type: "done"
       content: string
-      toolCalls?: UIToolCallInfo[]
-      reasoningContent?: string
+      toolCalls?: UIToolCallInfo[] | undefined
+      reasoningContent?: string | undefined
     }
   | {
       type: "error"

@@ -29,6 +29,7 @@ function getItemPosition(overId: string, flattenedItemsResult: FlattenedResult):
       }
     } else {
       const last = flattenedItems[lastNormalItemIndex]
+      if (!last) return undefined
       if (last.type === "item") {
         return {
           type: "afterElement",
@@ -42,7 +43,8 @@ function getItemPosition(overId: string, flattenedItemsResult: FlattenedResult):
       }
     }
   } else {
-    const item = flattenedItemMap.get(overId as TreeID)!
+    const item = flattenedItemMap.get(overId as TreeID)
+    if (!item) return undefined
     const itemIndex = item.index
     if (item.type === "item") {
       return {
@@ -57,6 +59,7 @@ function getItemPosition(overId: string, flattenedItemsResult: FlattenedResult):
         }
       } else {
         const previous = flattenedItems[itemIndex - 1]
+        if (!previous) return undefined
         if (previous.type === "item") {
           return {
             type: "afterElement",
@@ -78,10 +81,14 @@ function getItemMovePositionForHeader(
   overId: TreeID,
   flattenedItemsResult: FlattenedResult,
 ): ItemPosition {
-  const overIndex = flattenedItemsResult.flattenedItemMap.get(overId)!.index
-  const activeIndex = flattenedItemsResult.flattenedItemMap.get(activeId)!.index
-  const overItem = flattenedItemsResult.flattenedItemMap.get(overId)!
-  const overHeaderId = overItem.type === "item" ? overItem.headerId! : (overItem.id as TreeID)
+  const overItem = flattenedItemsResult.flattenedItemMap.get(overId)
+  const activeItem = flattenedItemsResult.flattenedItemMap.get(activeId)
+  if (!overItem || !activeItem) throw new Error("drag item is missing from flattened result")
+  const overIndex = overItem.index
+  const activeIndex = activeItem.index
+  const overHeaderId =
+    overItem.type === "item" ? overItem.headerId : overItem.type === "header" ? overItem.id : undefined
+  if (!overHeaderId) throw new Error("drag target does not belong to a header")
   if (overIndex > activeIndex) {
     return {
       type: "afterElement",
@@ -97,33 +104,43 @@ function getItemMovePositionForHeader(
 
 function getItemMovePosition(activeId: TreeID, overId: TreeID, flattenedItemsResult: FlattenedResult): ItemPosition {
   if (overId === DragDropElements.futureProjects) {
-    const index = flattenedItemsResult.flattenedItemMap.get(overId)!.index
+    const futureProjectsItem = flattenedItemsResult.flattenedItemMap.get(overId)
+    if (!futureProjectsItem) throw new Error("future projects marker is missing")
+    const index = futureProjectsItem.index
     if (index === 0) {
       return {
         type: "firstElement",
         parentId: flattenedItemsResult.rootId,
       }
     }
-    const previousHeaderId = flattenedItemsResult.flattenedItems[index - 1].id as TreeID
+    const previous = flattenedItemsResult.flattenedItems[index - 1]
+    if (!previous || previous.type === "special") {
+      return { type: "firstElement", parentId: flattenedItemsResult.rootId }
+    }
+    const previousHeaderId = previous.id
     return {
       type: "afterElement",
       previousElementId: previousHeaderId,
     }
   }
-  const overIndex = flattenedItemsResult.flattenedItemMap.get(overId)!.index
-  const activeIndex = flattenedItemsResult.flattenedItemMap.get(activeId)!.index
-  const overItem = flattenedItemsResult.flattenedItemMap.get(overId)!
+  const overItem = flattenedItemsResult.flattenedItemMap.get(overId)
+  const activeItem = flattenedItemsResult.flattenedItemMap.get(activeId)
+  if (!overItem || !activeItem) throw new Error("drag item is missing from flattened result")
+  const overIndex = overItem.index
+  const activeIndex = activeItem.index
   if (overIndex > activeIndex) {
     if (overItem.type === "item") {
       return {
         type: "afterElement",
         previousElementId: overId,
       }
-    } else {
+    } else if (overItem.type === "header") {
       return {
         type: "firstElement",
-        parentId: overId,
+        parentId: overItem.id,
       }
+    } else {
+      throw new Error("special marker cannot be used as an item move target")
     }
   } else {
     if (overItem.type === "item") {

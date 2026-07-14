@@ -1,21 +1,21 @@
-import { desktopStyles } from '@/desktop/theme/main';
-import classNames from 'classnames';
-import React from 'react';
+import { desktopStyles } from "@/desktop/theme/main"
+import classNames from "classnames"
+import React from "react"
 
 interface TaskDetailAttributeRowProps {
-  icon: React.ReactNode;
-  label: string;
-  content: React.ReactNode;
-  onClick?: React.MouseEventHandler<HTMLElement>;
-  dataTestId?: string;
-  placeholder?: boolean;
-  danger?: boolean;
-  contentClassName?: string;
-  className?: string;
+  icon: React.ReactNode
+  label: string
+  content: React.ReactNode
+  onClick?: React.MouseEventHandler<HTMLElement>
+  dataTestId?: string | undefined
+  placeholder?: boolean
+  danger?: boolean
+  contentClassName?: string
+  className?: string
   overrideClassName?: {
-    label?: string;
-    icon?: string;
-  };
+    label?: string
+    icon?: string
+  }
 }
 
 export const TaskDetailAttributeRow: React.FC<TaskDetailAttributeRowProps> = ({
@@ -34,15 +34,15 @@ export const TaskDetailAttributeRow: React.FC<TaskDetailAttributeRowProps> = ({
     ? React.cloneElement(icon, {
         className: classNames(desktopStyles.TaskDetailAttributeIcon, icon.props.className),
       })
-    : icon;
+    : icon
 
   const contentWrapperClassName = classNames(
     desktopStyles.TaskDetailAttributeContent,
     {
       [desktopStyles.TaskDetailAttributeContentPlaceholder]: placeholder,
     },
-    contentClassName
-  );
+    contentClassName,
+  )
 
   const contentNode = (
     <>
@@ -58,7 +58,7 @@ export const TaskDetailAttributeRow: React.FC<TaskDetailAttributeRowProps> = ({
       <span className={classNames(desktopStyles.TaskDetailAttributeLabel, overrideClassName.label)}>{label}</span>
       <div className={contentWrapperClassName}>{content}</div>
     </>
-  );
+  )
 
   if (onClick) {
     return (
@@ -70,12 +70,12 @@ export const TaskDetailAttributeRow: React.FC<TaskDetailAttributeRowProps> = ({
       >
         {contentNode}
       </div>
-    );
+    )
   }
 
   return (
     <div className={classNames(desktopStyles.TaskDetailAttributeRow, className)} data-test-id={dataTestId}>
       {contentNode}
     </div>
-  );
-};
+  )
+}

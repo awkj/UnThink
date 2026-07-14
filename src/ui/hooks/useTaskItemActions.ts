@@ -70,7 +70,7 @@ export const useTaskItemActions = (taskInfo: TaskInfo | null) => {
     if (!taskInfo) {
       return
     }
-    todoService.updateTask(taskInfo.id, { recurringRule })
+    todoService.updateTask(taskInfo.id, { recurringRule: recurringRule ?? null })
   }
 
   return {

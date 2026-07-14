@@ -29,7 +29,7 @@ export function isSelfhostedAttachmentConfig(
 
 export interface TestConnectionResult {
   ok: boolean
-  error?: string
+  error?: string | undefined
 }
 
 export type UploadStatus = "queued" | "uploading" | "failed"
@@ -42,7 +42,7 @@ export interface UploadItem {
   mimetype: string
   progress: number
   status: UploadStatus
-  error?: string
+  error?: string | undefined
 }
 
 export interface IAttachmentUploadService {

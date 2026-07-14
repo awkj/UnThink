@@ -61,7 +61,8 @@ const TimeWheel: React.FC<TimeWheelProps> = ({
         const itemHeight = 32
         const scrollTop = scrollRef.current.scrollTop
         const selectedIndex = Math.round(scrollTop / itemHeight) - 2
-        onChange(options[selectedIndex])
+        const selected = options[selectedIndex]
+        if (selected !== undefined) onChange(selected)
       }
     }, 250)
   }

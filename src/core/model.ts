@@ -111,7 +111,8 @@ export class TaskModel {
       }
     })
     for (let i = items.length - 1; i >= 0; i--) {
-      if (itemIndexMap.get(items[i]) !== i) {
+      const item = items[i]
+      if (item !== undefined && itemIndexMap.get(item) !== i) {
         list.delete(i, 1)
       }
     }
@@ -122,10 +123,7 @@ export class TaskModel {
   }
 
   addArea(area: CreateAreaSchema) {
-    const node = this.createNodeInPosition(
-      ModelTypes.area,
-      area.position ?? { type: "firstElement", parentId: undefined },
-    )
+    const node = this.createNodeInPosition(ModelTypes.area, area.position ?? { type: "firstElement" })
     const map = node.data
     map.set(ModelKeys.title, area.title)
     map.set(ModelKeys.createdAt, Date.now())
@@ -150,7 +148,7 @@ export class TaskModel {
   addProject(project: CreateProjectSchema) {
     const noode: LoroTreeNode = this.createNodeInPosition(
       ModelTypes.project,
-      project.position ?? { type: "firstElement", parentId: undefined },
+      project.position ?? { type: "firstElement" },
     )
     const map = noode.data
     map.set(ModelKeys.title, project.title)
@@ -198,10 +196,7 @@ export class TaskModel {
   }
 
   addTask(task: CreateTaskSchema) {
-    const noode: LoroTreeNode = this.createNodeInPosition(
-      "task",
-      task.position ?? { type: "firstElement", parentId: undefined },
-    )
+    const noode: LoroTreeNode = this.createNodeInPosition("task", task.position ?? { type: "firstElement" })
     const map = noode.data
     map.set(ModelKeys.title, task.title)
     if (task.notes) {
@@ -250,7 +245,9 @@ export class TaskModel {
       "dueDate",
       "startDate",
     ])
-    if (newTask.recurringRule) {
+    if (newTask.recurringRule === null) {
+      map.delete(ModelKeys.recurringRule)
+    } else if (newTask.recurringRule) {
       map.set(ModelKeys.recurringRule, JSON.stringify(newTask.recurringRule))
     }
     this.handleUpdateTask(newTask, taskId)
@@ -504,6 +501,9 @@ export class TaskModel {
 
   private checkParentType(type: string, parentId?: TreeID) {
     const allowedParentsTypes = ParentRules[type]
+    if (!allowedParentsTypes) {
+      throw new Error(`unknown model type: ${type}`)
+    }
     let parentType: string | undefined = ModelTypes.root
     if (parentId) {
       const parentNode = this.getTree().getNodeByID(parentId)
@@ -853,6 +853,7 @@ export class TaskModel {
     const items = list.toArray() as LoroMap[]
     for (let i = 0; i < items.length; i++) {
       const map = items[i]
+      if (!map) continue
       if (map.get("uid") === uid) {
         if (payload.name !== undefined) map.set("name", payload.name)
         if (payload.desc !== undefined) map.set("desc", payload.desc)
@@ -869,7 +870,8 @@ export class TaskModel {
     const list = this.getViewsList()
     const items = list.toArray() as LoroMap[]
     for (let i = 0; i < items.length; i++) {
-      if (items[i].get("uid") === uid) {
+      const item = items[i]
+      if (item?.get("uid") === uid) {
         list.delete(i, 1)
         this.doc.commit()
         return
@@ -882,7 +884,8 @@ export class TaskModel {
     const list = this.getViewsList()
     const items = list.toArray() as LoroMap[]
     for (let i = 0; i < items.length; i++) {
-      if (items[i].get("uid") === uid) {
+      const item = items[i]
+      if (item?.get("uid") === uid) {
         const clamped = Math.max(0, Math.min(toIndex, items.length - 1))
         if (clamped !== i) {
           list.move(i, clamped)

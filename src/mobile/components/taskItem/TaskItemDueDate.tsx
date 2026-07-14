@@ -6,7 +6,7 @@ import classNames from "classnames"
 import React from "react"
 
 interface TaskItemDueDateProps {
-  dueDate?: number
+  dueDate?: number | undefined
 }
 
 export const TaskItemDueDate: React.FC<TaskItemDueDateProps> = ({ dueDate }) => {

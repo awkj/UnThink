@@ -12,8 +12,8 @@ export interface ActionSheetProps {
   bottomComponent?: React.ReactNode
   onClose?: () => void
   children: React.ReactNode
-  className?: string
-  contentClassName?: string
+  className?: string | undefined
+  contentClassName?: string | undefined
 }
 
 const restrictToDownwardMovement = (transform: Transform | null): Transform | null => {
@@ -30,8 +30,8 @@ interface ActionSheetContentProps {
   containerRef: React.RefObject<HTMLDivElement | null>
   isVisible: boolean
   onAnimationEnd?: () => void
-  className?: string
-  contentClassName?: string
+  className?: string | undefined
+  contentClassName?: string | undefined
 }
 
 const ActionSheetContent: React.FC<ActionSheetContentProps> = ({

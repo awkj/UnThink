@@ -15,7 +15,7 @@ interface DesktopProjectListProps {
   projects: ProjectInfoState[]
   emptyStateLabel: string
   useDateAssignedMove?: boolean
-  hideProjectTitle?: boolean
+  hideProjectTitle?: boolean | undefined
 }
 
 export const DesktopProjectList: React.FC<DesktopProjectListProps> = ({

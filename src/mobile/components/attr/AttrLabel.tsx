@@ -1,23 +1,23 @@
-import classNames from 'classnames';
-import React from 'react';
-import { styles } from '../../theme';
-import { AttrContainer, AttrStyles } from './AttrContainer';
+import classNames from "classnames"
+import React from "react"
+import { styles } from "../../theme"
+import { AttrContainer, AttrStyles } from "./AttrContainer"
 
 export interface AttrLabelValue {
-  title: string;
-  subtitle?: string;
-  titleType?: 'danger';
+  title: string
+  subtitle?: string | undefined
+  titleType?: "danger" | undefined
 }
 
 interface AttrLabelProps {
-  icon: React.ReactNode;
-  placeholder: string;
-  value?: AttrLabelValue;
-  onClick?: () => void;
-  onClear?: () => void;
-  testId?: string;
-  attrStyles?: AttrStyles;
-  labelTitleColor?: string;
+  icon: React.ReactNode
+  placeholder: string
+  value?: AttrLabelValue | undefined
+  onClick?: (() => void) | undefined
+  onClear?: (() => void) | undefined
+  testId?: string | undefined
+  attrStyles?: AttrStyles | undefined
+  labelTitleColor?: string | undefined
 }
 
 export const AttrLabel: React.FC<AttrLabelProps> = ({
@@ -43,7 +43,7 @@ export const AttrLabel: React.FC<AttrLabelProps> = ({
           <span
             className={classNames(
               styles.attrLabelTitle,
-              value.titleType === 'danger' ? 'text-accent-danger' : (labelTitleColor ?? attrStyles?.labelTitleColor)
+              value.titleType === "danger" ? "text-accent-danger" : (labelTitleColor ?? attrStyles?.labelTitleColor),
             )}
           >
             {value.title}
@@ -54,5 +54,5 @@ export const AttrLabel: React.FC<AttrLabelProps> = ({
         <span className={styles.createTaskAttrPlaceholder}>{placeholder}</span>
       )}
     </AttrContainer>
-  );
-};
+  )
+}

@@ -14,14 +14,14 @@ export interface HeaderAction {
 }
 
 export interface PageHeaderProps {
-  title?: string
-  headerPlaceholder?: string
-  id?: string
-  icon?: React.ReactNode
-  renderIcon?: (className: string) => React.ReactNode
-  actions?: HeaderAction[]
-  showBack?: boolean
-  onSave?: (title: string) => void
+  title?: string | undefined
+  headerPlaceholder?: string | undefined
+  id?: string | undefined
+  icon?: React.ReactNode | undefined
+  renderIcon?: ((className: string) => React.ReactNode) | undefined
+  actions?: HeaderAction[] | undefined
+  showBack?: boolean | undefined
+  onSave?: ((title: string) => void) | undefined
 }
 
 export const PageHeader: React.FC<PageHeaderProps> = ({ title, id, actions, showBack }) => {

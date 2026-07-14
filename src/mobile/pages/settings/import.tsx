@@ -28,6 +28,10 @@ export const ImportPage = () => {
         const target = e.target as HTMLInputElement
         if (target.files && target.files.length > 0) {
           const file = target.files[0]
+          if (!file) {
+            setImporting(false)
+            return
+          }
           const reader = new FileReader()
           reader.onload = async (event) => {
             try {
