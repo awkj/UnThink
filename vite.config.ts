@@ -3,7 +3,8 @@ import react, { reactCompilerPreset } from "@vitejs/plugin-react"
 import babel from "@rolldown/plugin-babel"
 import path from "node:path"
 import wasm from "vite-plugin-wasm"
-import { defineConfig } from "vite"
+import { nodePolyfills } from "vite-plugin-node-polyfills"
+import { defineConfig, type Plugin } from "vite"
 import { execSync } from "node:child_process"
 import IstanbulPlugin from "./tooling/vite-plugin-istanbul/index"
 import { commonFilesPlugin } from "./tooling/vite-plugin-common-files"
@@ -22,6 +23,26 @@ const tauriDevHost = process.env.TAURI_DEV_HOST
 const tauriDevPort = Number(process.env.TAURI_DEV_PORT ?? 4000)
 const coverageEnabled = process.env.VITE_COVERAGE === "true"
 const sourceMapEnabled = coverageEnabled || process.env.VITE_SOURCEMAP === "true"
+const tauriPlatform = process.env.TAURI_ENV_PLATFORM
+const tauriBuildFamily = tauriPlatform
+  ? ["android", "androideabi", "ios"].includes(tauriPlatform)
+    ? "mobile"
+    : "desktop"
+  : "web"
+
+function tauriPlatformEntryPlugin(): Plugin | false {
+  if (tauriBuildFamily === "web") return false
+
+  return {
+    name: "tauri-platform-entry",
+    transformIndexHtml: {
+      order: "pre",
+      handler(html) {
+        return html.replace("/src/main.tsx", `/src/main.${tauriBuildFamily}.tsx`)
+      },
+    },
+  }
+}
 
 export default defineConfig({
   base,
@@ -114,10 +135,16 @@ export default defineConfig({
   },
 
   plugins: [
+    tauriPlatformEntryPlugin(),
+    nodePolyfills({
+      include: ["process", "util"],
+      globals: { process: true },
+    }),
     tailwindcss(),
     react(),
     process.env.REACT_COMPILER !== "false" &&
       babel({
+        sourceMap: sourceMapEnabled,
         presets: [reactCompilerPreset()],
         plugins: [["@babel/plugin-syntax-decorators", { legacy: true }]],
       }),
@@ -129,8 +156,11 @@ export default defineConfig({
         include: ["**/*.ts", "**/*.tsx"],
       }),
     process.env.CHECK_UNUSED !== "false" &&
+      tauriBuildFamily === "web" &&
       unusedFilesPlugin({
         exclude: [
+          "src/main.desktop.tsx",
+          "src/main.mobile.tsx",
           "src/cli/**",
           "src/core/time/getTimeStampFromDateStr.ts",
           "src/core/time/isStartOfDay.ts",

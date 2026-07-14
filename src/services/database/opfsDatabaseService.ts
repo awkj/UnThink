@@ -1,7 +1,6 @@
 import { IDatabaseMeta, IDatabaseService, IDatabaseStorage, LocalDatabaseMeta } from "./database"
 import { ManifestStorage, StorageFileAdapter } from "./manifestStorage"
-
-const ROOT_DIRECTORY = "unthink-v2"
+import { DATA_DIRECTORY, DATA_VERSION_DIRECTORY } from "./storagePath"
 
 async function readTextFile(directory: FileSystemDirectoryHandle, name: string): Promise<string> {
   return (await (await directory.getFileHandle(name)).getFile()).text()
@@ -69,8 +68,15 @@ export class OpfsDatabaseService implements IDatabaseService {
   readonly _serviceBrand: undefined
 
   private async root(): Promise<FileSystemDirectoryHandle> {
-    const opfs = await navigator.storage.getDirectory()
-    return opfs.getDirectoryHandle(ROOT_DIRECTORY, { create: true })
+    const getDirectory = navigator.storage?.getDirectory
+    if (typeof getDirectory !== "function") {
+      throw new Error(
+        `OPFS is unavailable (origin: ${location.origin}, secure context: ${window.isSecureContext}). Use a browser with OPFS support and HTTPS for non-loopback addresses.`,
+      )
+    }
+    const opfs = await getDirectory.call(navigator.storage)
+    const data = await opfs.getDirectoryHandle(DATA_DIRECTORY, { create: true })
+    return data.getDirectoryHandle(DATA_VERSION_DIRECTORY, { create: true })
   }
 
   private async directory(databaseId: string, create = false): Promise<FileSystemDirectoryHandle> {

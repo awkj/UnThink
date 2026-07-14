@@ -9,8 +9,9 @@ test("OPFS database adapter creates a valid manifest-backed local database", asy
   await expect(page.locator("#root")).not.toBeEmpty({ timeout: 15_000 })
   const storageState = await page.evaluate(async () => {
     const root = await navigator.storage.getDirectory()
-    const app = await root.getDirectoryHandle("unthink-v2")
-    const database = await app.getDirectoryHandle("db-local")
+    const data = await root.getDirectoryHandle("data")
+    const version = await data.getDirectoryHandle("v1")
+    const database = await version.getDirectoryHandle("db-local")
     const manifestFile = await (await database.getFileHandle("manifest.json")).getFile()
     const manifest = JSON.parse(await manifestFile.text()) as {
       formatVersion: number

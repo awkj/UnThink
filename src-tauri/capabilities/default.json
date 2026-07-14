@@ -17,15 +17,16 @@
     "fs:allow-read-file",
     "fs:allow-write-text-file",
     "fs:allow-write-file",
+    "fs:allow-rename",
     "fs:allow-remove",
     {
       "identifier": "fs:scope",
       "allow": [
         {
-          "path": "$APPDATA/unthink-v2"
+          "path": "$APPDATA/data/v1"
         },
         {
-          "path": "$APPDATA/unthink-v2/**"
+          "path": "$APPDATA/data/v1/**"
         }
       ]
     }

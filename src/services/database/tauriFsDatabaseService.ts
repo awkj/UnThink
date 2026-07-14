@@ -1,11 +1,12 @@
 import { BaseDirectory } from "@tauri-apps/api/path"
 import { exists, mkdir, readDir, readTextFile, remove, writeTextFile } from "@tauri-apps/plugin-fs"
 import { IDatabaseMeta, IDatabaseService, IDatabaseStorage, LocalDatabaseMeta } from "./database"
+import { DATA_PATH } from "./storagePath"
 import { TauriFileStorage } from "./tauriFileStorage"
 
 export class TauriFsDatabaseService implements IDatabaseService {
   readonly _serviceBrand: undefined
-  private readonly basePath = "unthink-v2"
+  private readonly basePath = DATA_PATH
 
   async listDatabases(): Promise<IDatabaseMeta[]> {
     await this.ensureRoot()

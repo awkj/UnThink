@@ -20,7 +20,7 @@ export const SidebarLayout: React.FC<SidebarLayoutOptions> = ({ setting }) => {
   return (
     <div className={desktopStyles.SidebarLayoutContainer}>
       <Allotment
-        defaultSizes={mainSidebarConfig.value}
+        {...(mainSidebarConfig.value.length === 2 ? { defaultSizes: mainSidebarConfig.value } : {})}
         onChange={mainSidebarConfig.saveIfValid}
         proportionalLayout={false}
       >

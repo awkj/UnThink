@@ -3,7 +3,6 @@ import { generateUuid } from "@hamsterbase/foundation/uuid"
 import { nanoid } from "nanoid"
 import { LogEntry, LogLevel } from "./webloggerService"
 
-const ROOT_DIRECTORY = "unthink-v2"
 const LOG_DIRECTORY = "logs"
 const TAB_ID_KEY = "weblogger_tab_id"
 const BATCH_SIZE = 100
@@ -103,7 +102,7 @@ export class WebLoggerOpfsStorage {
   }
 
   private async directory(): Promise<FileSystemDirectoryHandle> {
-    const root = await (await navigator.storage.getDirectory()).getDirectoryHandle(ROOT_DIRECTORY, { create: true })
+    const root = await navigator.storage.getDirectory()
     return root.getDirectoryHandle(LOG_DIRECTORY, { create: true })
   }
 

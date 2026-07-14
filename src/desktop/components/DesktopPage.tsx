@@ -30,7 +30,7 @@ export const DesktopPage: React.FC<DesktopPageProps> = ({ header, children, show
     <div className={desktopStyles.DesktopPageContainer}>
       <div className={desktopStyles.DesktopPageContentPane}>
         <Allotment
-          defaultSizes={detailPanelConfig.value}
+          {...(detailPanelConfig.value.length === 2 ? { defaultSizes: detailPanelConfig.value } : {})}
           onChange={detailPanelConfig.saveIfValid}
           proportionalLayout={false}
         >
