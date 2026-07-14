@@ -7,7 +7,6 @@ import wasm from "vite-plugin-wasm"
 import { nodePolyfills } from "vite-plugin-node-polyfills"
 import { defineConfig, type Plugin } from "vite"
 import { execSync } from "node:child_process"
-import IstanbulPlugin from "./tooling/vite-plugin-istanbul/index"
 import { commonFilesPlugin } from "./tooling/vite-plugin-common-files"
 import { unusedFilesPlugin } from "./tooling/vite-plugin-detect-unused-files/detect-unused-files"
 
@@ -22,8 +21,7 @@ function getGitCommitHash() {
 const base = process.env.USE_RELATIVE_BASE === "true" ? "./" : "/"
 const tauriDevHost = process.env.TAURI_DEV_HOST
 const tauriDevPort = Number(process.env.TAURI_DEV_PORT ?? 4000)
-const coverageEnabled = process.env.VITE_COVERAGE === "true"
-const sourceMapEnabled = coverageEnabled || process.env.VITE_SOURCEMAP === "true"
+const sourceMapEnabled = process.env.VITE_SOURCEMAP === "true"
 const tauriPlatform = process.env.TAURI_ENV_PLATFORM
 const tauriBuildFamily = tauriPlatform
   ? ["android", "androideabi", "ios"].includes(tauriPlatform)
@@ -166,12 +164,6 @@ export default defineConfig({
         plugins: [["@babel/plugin-syntax-decorators", { legacy: true }]],
       }),
     wasm(),
-    coverageEnabled &&
-      IstanbulPlugin({
-        enabled: true,
-        exclude: ["**/node_modules/**"],
-        include: ["**/*.ts", "**/*.tsx"],
-      }),
     process.env.CHECK_UNUSED !== "false" &&
       tauriBuildFamily === "web" &&
       unusedFilesPlugin({

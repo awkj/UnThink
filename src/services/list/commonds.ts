@@ -56,7 +56,7 @@ KeybindingsRegistry.registerCommandAndKeybindingRule({
 KeybindingsRegistry.registerCommandAndKeybindingRule({
   id: "MainListSelectCreateNewOne",
   weight: KeybindingWeight.WorkbenchContrib + 5,
-  when: ContextKeyExpr.and(MainListFocus),
+  when: ContextKeyExpr.and(MainListFocus, ContextKeyExpr.not(InputFocusedContext.key)),
   primary: KeyCode.Enter,
   handler: (acc) => {
     const currentList = acc.get(IListService).mainList
@@ -114,7 +114,7 @@ KeybindingsRegistry.registerCommandAndKeybindingRule({
 KeybindingsRegistry.registerCommandAndKeybindingRule({
   id: "SubListSelectCreateNewOne",
   weight: KeybindingWeight.WorkbenchContrib + 5,
-  when: ContextKeyExpr.and(SubListFocus),
+  when: ContextKeyExpr.and(SubListFocus, ContextKeyExpr.not(InputFocusedContext.key)),
   primary: KeyCode.Enter,
   handler: (acc) => {
     console.log("SubListSelectCreateNewOne")

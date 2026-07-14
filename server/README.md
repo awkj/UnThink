@@ -32,6 +32,18 @@ while RustFS stores attachment objects through its S3-compatible API.
 
 Create `.env` in the repository root:
 
+```bash
+pnpm env:generate
+```
+
+This generates all required credentials locally using cryptographically secure
+random values. It refuses to overwrite an existing `.env`; use
+`pnpm env:generate --force` only when you intentionally want to rotate every
+credential. To inspect a fresh file without writing it, use
+`pnpm env:generate --stdout`.
+
+Alternatively, create the file manually:
+
 ```dotenv
 AUTH_TOKEN=replace-with-a-long-random-token
 POSTGRES_PASSWORD=replace-with-a-database-password
@@ -47,29 +59,36 @@ From the repository root, start the web app, API, PostgreSQL, and RustFS:
 docker compose up --build
 ```
 
-For local development, start only PostgreSQL with Docker and run the Go API
-directly from this directory:
+For local development, start PostgreSQL and RustFS with Docker and run the Go
+API directly on the host:
 
 ```bash
-# server/
-POSTGRES_PASSWORD=dev-password docker compose up -d postgres
+# repository root: start PostgreSQL, RustFS, and initialize the attachment bucket
+docker compose up -d postgres rustfs rustfs-init
 
-# server/
+# repository root: run the API on the host
 AUTH_TOKEN=dev-token \
-DATABASE_URL='postgres://tasks:dev-password@127.0.0.1:5432/tasks?sslmode=disable' \
+DATABASE_URL='postgres://tasks:dev-password@127.0.0.1:8432/tasks?sslmode=disable' \
 CORS_ORIGIN='http://localhost:4000' \
+ATTACHMENTS_ENDPOINT='http://127.0.0.1:8401' \
+ATTACHMENTS_BUCKET='tasks-attachments' \
+ATTACHMENTS_REGION='us-east-1' \
+ATTACHMENTS_ACCESS_KEY='replace-with-the-RUSTFS_SERVER_ACCESS_KEY' \
+ATTACHMENTS_SECRET_KEY='replace-with-the-RUSTFS_SERVER_SECRET_KEY' \
 go run ./cmd/tasks-server
 ```
 
-PostgreSQL is exposed on `127.0.0.1:5432` by default for local debugging:
+PostgreSQL is exposed on `127.0.0.1:8432` by default for local debugging:
 
 ```bash
-psql 'postgres://tasks:replace-with-a-database-password@127.0.0.1:5432/tasks'
+psql 'postgres://tasks:replace-with-a-database-password@127.0.0.1:8432/tasks'
 ```
 
 To connect from another machine, explicitly set `POSTGRES_BIND=0.0.0.0` and
-protect port 5432 with a firewall or private network. Do not expose PostgreSQL
-directly to the public internet.
+`RUSTFS_BIND=0.0.0.0` on the Docker host, and protect ports `8432`, `8401`, and
+`8402` with a firewall or private network. Do not expose these services directly
+to the public internet. The host-side ports can be overridden with
+`POSTGRES_PORT`, `RUSTFS_API_PORT`, and `RUSTFS_CONSOLE_PORT`.
 
 Useful tables:
 
@@ -80,10 +99,9 @@ Useful tables:
 
 ## Attachment storage
 
-The Compose stack starts RustFS on its internal port `9000` and creates the
-`tasks-attachments` bucket automatically. The S3 port is not published to the
-host. Its management console listens on the host loopback interface on port
-`9001` by default.
+The Compose stack starts RustFS on its internal ports `9000`/`9001` and creates
+the `tasks-attachments` bucket automatically. On the host, the S3 API listens on
+`127.0.0.1:8401` and the management console on `127.0.0.1:8402` by default.
 
 When a Tasks client connects to the self-hosted sync server, it automatically
 detects attachment support through the authenticated

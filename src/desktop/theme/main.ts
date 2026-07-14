@@ -127,7 +127,9 @@ export const desktopStyles = {
   InboxTaskInputWrapper: /*tw*/ "",
   InboxTaskInputContainer:
     /*tw*/ "group flex w-full flex-row items-center gap-2 px-2 py-2 rounded-md transition-colors hover:bg-bg2 focus-within:bg-bg2",
-  InboxTaskInputIcon: /*tw*/ "flex-none size-4 text-t3 group-focus-within:text-t2",
+  InboxTaskInputButton:
+    /*tw*/ "flex-none text-t3 transition-colors hover:text-t1 focus-visible:outline-none focus-visible:text-t1 disabled:cursor-default disabled:opacity-50",
+  InboxTaskInputIcon: /*tw*/ "size-4 group-focus-within:text-t2",
   InboxTaskInputField:
     /*tw*/ "flex-1 bg-transparent text-sm leading-5 text-t1 placeholder:text-t3 focus:outline-none font-normal",
 

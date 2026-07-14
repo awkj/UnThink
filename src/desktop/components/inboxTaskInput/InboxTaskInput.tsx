@@ -4,7 +4,6 @@ import { useWorkbenchInstance } from "@/ui/hooks/use-service"
 import { useWatchEvent } from "@/ui/hooks/use-watch-event"
 import { localize } from "@/nls"
 import React, { useCallback } from "react"
-import "./commands"
 import { INBOX_TASK_INPUT_CONTROLLER_KEY, InboxTaskInputController } from "./InboxTaskInputController"
 
 export const InboxTaskInput: React.FC = () => {
@@ -22,24 +21,39 @@ export const InboxTaskInput: React.FC = () => {
     [controller],
   )
 
-  const handleFocus = useCallback(() => {
-    controller?.setFocus(true)
+  const handleCreateTask = useCallback(() => {
+    controller.createTask()
   }, [controller])
 
-  const handleBlur = useCallback(() => {
-    controller?.setFocus(false)
-  }, [controller])
+  const handleKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLInputElement>) => {
+      if (event.key !== "Enter" || event.nativeEvent.isComposing) {
+        return
+      }
+
+      event.preventDefault()
+      event.stopPropagation()
+      handleCreateTask()
+    },
+    [handleCreateTask],
+  )
 
   return (
     <div className={desktopStyles.InboxTaskInputWrapper}>
       <div className={desktopStyles.InboxTaskInputContainer}>
-        <PlusIcon className={desktopStyles.InboxTaskInputIcon} />
+        <button
+          type="button"
+          onClick={handleCreateTask}
+          aria-label={localize("addTask", "Add Task")}
+          className={desktopStyles.InboxTaskInputButton}
+        >
+          <PlusIcon className={desktopStyles.InboxTaskInputIcon} />
+        </button>
         <input
           type="text"
           value={controller.inputValue}
           onChange={handleInputChange}
-          onFocus={handleFocus}
-          onBlur={handleBlur}
+          onKeyDown={handleKeyDown}
           placeholder={localize("addTask", "Add Task")}
           className={desktopStyles.InboxTaskInputField}
         />

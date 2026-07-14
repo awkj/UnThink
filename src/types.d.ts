@@ -1,41 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-declare module "istanbul-lib-instrument" {
-  interface ExistingRawSourceMap {
-    file?: string
-    mappings: string
-    names: string[]
-    sourceRoot?: string
-    sources: string[]
-    sourcesContent?: string[]
-    version: number
-    x_google_ignoreList?: number[]
-  }
-
-  import { GeneratorOptions } from "babel__generator"
-
-  interface Instrumenter {
-    instrumentSync(code: string, filename: string, inputSourceMap?: ExistingRawSourceMap): string
-    lastSourceMap(): ExistingRawSourceMap
-  }
-
-  export function createInstrumenter(opts: {
-    coverageVariable?: string
-    reportLogic?: boolean
-    preserveComments?: boolean
-    compact?: boolean
-    esModules?: boolean
-    autoWrap?: boolean
-    produceSourceMap?: boolean
-    ignoreClassMethods?: string[]
-    sourceMapUrlCallback?(filename: string, sourceMapUrl: string): void
-    debug?: boolean
-    parserPlugins?: any[]
-    coverageGlobalScope?: string
-    coverageGlobalScopeFunc?: boolean
-    generatorOpts?: GeneratorOptions
-  }): Instrumenter
-}
-
 declare module "espree" {
   // https://github.com/eslint/espree#options
   export interface Options {

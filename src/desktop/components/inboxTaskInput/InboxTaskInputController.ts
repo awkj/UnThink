@@ -1,7 +1,5 @@
 import { IWorkbenchInstance } from "@/services/instance/instanceService"
 import { Emitter, Event } from "@hamsterbase/foundation/event"
-import { IContextKey, IContextKeyService } from "@hamsterbase/foundation/contextkey"
-import { InboxTaskInputFocus } from "./contextKey"
 import { ITodoService } from "@/services/todo/todoService"
 
 export const INBOX_TASK_INPUT_CONTROLLER_KEY = "inbox-task-input-controller"
@@ -25,15 +23,9 @@ export class InboxTaskInputController implements IWorkbenchInstance {
   }
 
   private _inputValue: string = ""
-  private _contextKey: IContextKey<boolean>
   private _dispose = false
 
-  constructor(
-    @IContextKeyService contextKeyService: IContextKeyService,
-    @ITodoService private todoService: ITodoService,
-  ) {
-    this._contextKey = InboxTaskInputFocus.bindTo(contextKeyService)
-  }
+  constructor(@ITodoService private todoService: ITodoService) {}
 
   get inputValue(): string {
     return this._inputValue
@@ -44,10 +36,6 @@ export class InboxTaskInputController implements IWorkbenchInstance {
       this._inputValue = value
       this._onInputValueChange.fire(value)
     }
-  }
-
-  setFocus(focused: boolean): void {
-    this._contextKey.set(focused)
   }
 
   createTask(): void {
@@ -62,7 +50,5 @@ export class InboxTaskInputController implements IWorkbenchInstance {
   }
 
   mount(): void {}
-  unmount(): void {
-    this._contextKey.reset()
-  }
+  unmount(): void {}
 }

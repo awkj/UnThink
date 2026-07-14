@@ -1,7 +1,7 @@
 import assert from "node:assert/strict"
 import { readFile } from "node:fs/promises"
 
-const read = (file) => readFile(file, "utf8")
+const read = (file: string) => readFile(file, "utf8")
 const [gradle, manifest, rust, config, navigation, project, intents, widget] = await Promise.all([
   read("src-tauri/gen/android/app/build.gradle.kts"),
   read("src-tauri/gen/android/app/src/main/AndroidManifest.xml"),
