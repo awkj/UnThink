@@ -50,16 +50,6 @@
     "tauri:android:build:universal": "ANDROID_HOME=/opt/homebrew/share/android-commandlinetools ANDROID_NDK_HOME=/opt/homebrew/share/android-commandlinetools/ndk/28.2.13676358 NDK_HOME=/opt/homebrew/share/android-commandlinetools/ndk/28.2.13676358 JAVA_HOME=\"$HOME/.local/share/mise/installs/java/temurin-17\" PATH=\"$HOME/.cargo/bin:/opt/homebrew/share/android-commandlinetools/cmdline-tools/latest/bin:/opt/homebrew/share/android-commandlinetools/platform-tools:$PATH\" tauri android build",
     "cli": "tsx --tsconfig tsconfig.app.json src/cli/index.tsx"
   },
-  "simple-git-hooks": {
-    "pre-commit": "npx lint-staged",
-    "pre-push": "npm run check"
-  },
-  "lint-staged": {
-    "*.{ts,tsx}": [
-      "eslint --fix",
-      "prettier --write"
-    ]
-  },
   "license": "AGPL-3.0-only",
   "devDependencies": {
     "@aws-sdk/client-s3": "^3.1085.0",
@@ -103,7 +93,6 @@
     "globals": "^17.7.0",
     "ink": "^7.1.0",
     "large-small-dynamic-viewport-units-polyfill": "^0.1.1",
-    "lint-staged": "^17.0.8",
     "loro-crdt": "^1.13.6",
     "lucide-react": "1.24.0",
     "minimatch": "^10.2.5",
@@ -118,7 +107,6 @@
     "react-window": "^2.2.7",
     "rollup": "^4.62.2",
     "rollup-plugin-esbuild": "^6.2.1",
-    "simple-git-hooks": "^2.13.1",
     "string-width": "^8.2.2",
     "swr": "^2.4.2",
     "tailwindcss": "^4.3.2",

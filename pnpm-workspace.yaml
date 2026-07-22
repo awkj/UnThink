@@ -5,13 +5,11 @@ allowBuilds:
   '@swc/core': true
   cbor-extract: false
   esbuild: true
-  simple-git-hooks: true
 
 ignoredBuiltDependencies:
   - '@swc/core'
   - '@tailwindcss/oxide'
   - sharp
-  - simple-git-hooks
 
 minimumReleaseAgeExclude:
   - nanoid@6.0.0
