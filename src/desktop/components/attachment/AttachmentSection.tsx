@@ -17,7 +17,7 @@ import { localize } from "@/nls"
 import { IAttachmentUploadService, UploadItem } from "@/services/attachment/attachmentUploadService"
 import classNames from "classnames"
 import React, { useEffect, useRef, useState } from "react"
-import { Link } from "react-router"
+import { Link, useLocation } from "react-router"
 
 interface AttachmentSectionProps {
   parentUid: string
@@ -196,6 +196,7 @@ const UploadRow: React.FC<{
 }
 
 export const AttachmentSection: React.FC<AttachmentSectionProps> = ({ parentUid }) => {
+  const location = useLocation()
   const attachmentService = useService(IAttachmentUploadService)
   useWatchEvent(attachmentService.onChange)
   const dialog = useDesktopDialog()
@@ -250,7 +251,11 @@ export const AttachmentSection: React.FC<AttachmentSectionProps> = ({ parentUid 
           <span className={desktopStyles.AttachmentSectionWarningText}>
             {localize("attachments.notConfiguredWarning")}
           </span>
-          <Link to="/settings/selfhosted-sync" className={desktopStyles.AttachmentSectionWarningLink}>
+          <Link
+            to="/settings/selfhosted-sync"
+            state={{ settingsBackgroundLocation: `${location.pathname}${location.search}${location.hash}` }}
+            className={desktopStyles.AttachmentSectionWarningLink}
+          >
             <span>{localize("attachments.configureAction")}</span>
             <RightArrowIcon className={desktopStyles.AttachmentSectionWarningLinkArrow} strokeWidth={1.75} />
           </Link>

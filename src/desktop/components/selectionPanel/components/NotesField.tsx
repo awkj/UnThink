@@ -7,7 +7,8 @@ import TextArea, { TextAreaRef } from "rc-textarea"
 import React, { useRef, useState } from "react"
 import { useSyncedState } from "@/ui/hooks/useSyncedState"
 import { flushSync } from "react-dom"
-import ReactMarkdown from "react-markdown"
+
+const ReactMarkdown = React.lazy(() => import("react-markdown"))
 
 interface NotesFieldProps {
   value: string
@@ -83,36 +84,38 @@ export const NotesField: React.FC<NotesFieldProps> = ({
         />
       ) : (
         <div className={className} onClick={handleMarkdownClick}>
-          <ReactMarkdown
-            components={{
-              h1: ({ children }) => <h1 className={desktopStyles.NotesMarkdownH1}>{children}</h1>,
-              h2: ({ children }) => <h2 className={desktopStyles.NotesMarkdownH2}>{children}</h2>,
-              h3: ({ children }) => <h3 className={desktopStyles.NotesMarkdownH3}>{children}</h3>,
-              h4: ({ children }) => <h4 className={desktopStyles.NotesMarkdownH4}>{children}</h4>,
-              p: ({ children }) => <p className={desktopStyles.NotesMarkdownP}>{children}</p>,
-              ol: ({ children }) => <ol className={desktopStyles.NotesMarkdownOl}>{children}</ol>,
-              ul: ({ children }) => <ul className={desktopStyles.NotesMarkdownUl}>{children}</ul>,
-              li: ({ children }) => <li className={desktopStyles.NotesMarkdownLi}>{children}</li>,
-              a: ({ children, href }) => (
-                <a
-                  href={href}
-                  className={desktopStyles.NotesMarkdownLink}
-                  target="_blank"
-                  rel="noreferrer"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  {children}
-                </a>
-              ),
-              blockquote: ({ children }) => (
-                <blockquote className={desktopStyles.NotesMarkdownBlockquote}>{children}</blockquote>
-              ),
-              code: ({ children }) => <code className={desktopStyles.NotesMarkdownCode}>{children}</code>,
-              pre: ({ children }) => <pre className={desktopStyles.NotesMarkdownPre}>{children}</pre>,
-            }}
-          >
-            {value}
-          </ReactMarkdown>
+          <React.Suspense fallback={<p className={desktopStyles.NotesMarkdownP}>{value}</p>}>
+            <ReactMarkdown
+              components={{
+                h1: ({ children }) => <h1 className={desktopStyles.NotesMarkdownH1}>{children}</h1>,
+                h2: ({ children }) => <h2 className={desktopStyles.NotesMarkdownH2}>{children}</h2>,
+                h3: ({ children }) => <h3 className={desktopStyles.NotesMarkdownH3}>{children}</h3>,
+                h4: ({ children }) => <h4 className={desktopStyles.NotesMarkdownH4}>{children}</h4>,
+                p: ({ children }) => <p className={desktopStyles.NotesMarkdownP}>{children}</p>,
+                ol: ({ children }) => <ol className={desktopStyles.NotesMarkdownOl}>{children}</ol>,
+                ul: ({ children }) => <ul className={desktopStyles.NotesMarkdownUl}>{children}</ul>,
+                li: ({ children }) => <li className={desktopStyles.NotesMarkdownLi}>{children}</li>,
+                a: ({ children, href }) => (
+                  <a
+                    href={href}
+                    className={desktopStyles.NotesMarkdownLink}
+                    target="_blank"
+                    rel="noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {children}
+                  </a>
+                ),
+                blockquote: ({ children }) => (
+                  <blockquote className={desktopStyles.NotesMarkdownBlockquote}>{children}</blockquote>
+                ),
+                code: ({ children }) => <code className={desktopStyles.NotesMarkdownCode}>{children}</code>,
+                pre: ({ children }) => <pre className={desktopStyles.NotesMarkdownPre}>{children}</pre>,
+              }}
+            >
+              {value}
+            </ReactMarkdown>
+          </React.Suspense>
         </div>
       )}
     </div>

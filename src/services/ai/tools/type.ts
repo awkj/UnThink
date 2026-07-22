@@ -1,4 +1,4 @@
-import OpenAI from "openai"
+import type OpenAI from "openai"
 import { IInstantiationService } from "@hamsterbase/foundation/instantiation"
 
 import { ToolExecutionResultInfo } from "../types"

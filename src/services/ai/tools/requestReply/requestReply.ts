@@ -1,5 +1,5 @@
 import { z } from "zod"
-import OpenAI from "openai"
+import type OpenAI from "openai"
 import { localize } from "@/nls"
 import { toolMetaSchema } from "../toolMeta"
 import { ToolConfig } from "../type"

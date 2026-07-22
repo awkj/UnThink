@@ -19,7 +19,7 @@ export const ThingsScheduleIcon: React.FC<ThingsIconProps> = (props) => (
 )
 
 export const ThingsAnytimeIcon: React.FC<ThingsIconProps> = (props) => (
-  <Layers {...props} color="#36B8AD" strokeWidth={STROKE_WIDTH} absoluteStrokeWidth />
+  <Layers {...props} color="#A98224" strokeWidth={STROKE_WIDTH} absoluteStrokeWidth />
 )
 
 export const ThingsSomedayIcon: React.FC<ThingsIconProps> = (props) => (

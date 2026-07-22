@@ -1,23 +1,24 @@
 @theme {
   --color-bg1: #ffffff;
-  --color-bg2: #f6f7f8;
-  --color-bg3: #f1f2f3;
-  --color-bg4: #ecedef;
-  --color-sidebar-active: #dde0e5;
+  --color-bg2: #f8f8f8;
+  --color-bg3: #efefef;
+  --color-bg4: #e8e8e8;
+  --color-settings-card: #fbfbfb;
+  --color-sidebar-active: #efefef;
 
-  --color-t1: #18191c;
-  --color-t2: #61666d;
-  --color-t3: #9499a0;
-  --color-t4: #c9ccd0;
+  --color-t1: #191919;
+  --color-t2: #555555;
+  --color-t3: #a8a8a8;
+  --color-t4: #cfcfcf;
   --color-text-white: #ffffff;
-  --color-text-link: #57d9d4;
+  --color-text-link: #29386e;
 
-  --color-line-light: #f1f2f3;
-  --color-line-regular: #e3e5e7;
-  --color-line-bold: #c9ccd0;
+  --color-line-light: #eeeeee;
+  --color-line-regular: #dfdfe0;
+  --color-line-bold: #cfcfcf;
 
-  --color-brand: #30cccc;
-  --color-brand-light: #e6fffb;
+  --color-brand: #29386e;
+  --color-brand-light: #e9ebf2;
 
   --color-accent-danger: #f85a54;
   --color-accent-success: #2ac864;

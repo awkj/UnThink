@@ -3,6 +3,7 @@
   --color-bg1: #17171a;
   --color-bg2: #0d0d0e;
   --color-bg3: #000000;
+  --color-settings-card: #1d1d20;
   --color-sidebar-active: #2a2b2f;
 
   /* Text colors */
@@ -10,7 +11,12 @@
   --color-t2: #a2a7ae;
   --color-t3: #757a81;
   --color-text-white: #ffffff;
-  --color-text-link: #1fa1a6;
+  --color-text-link: #9aa5cc;
+
+  /* The light theme uses the product navy directly. This lighter companion
+     preserves the same hue while keeping controls legible on dark surfaces. */
+  --color-brand: #7d8ab8;
+  --color-brand-light: #242b45;
 
   /* Line colors */
   --color-line-light: #232527;

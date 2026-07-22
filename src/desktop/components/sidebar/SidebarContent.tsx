@@ -23,7 +23,7 @@ import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import classNames from "classnames"
 import React from "react"
 import { flushSync } from "react-dom"
-import { Link, useNavigate } from "react-router"
+import { Link, useLocation, useNavigate } from "react-router"
 import { IInstantiationService } from "@hamsterbase/foundation/instantiation"
 import { desktopStyles } from "../../theme/main"
 import { DragOverlayItem } from "../drag/DragOverlayItem"
@@ -83,6 +83,7 @@ export const SidebarContent: React.FC = () => {
   const instantiationService = useService(IInstantiationService)
   const selfhostedSyncService = useService(ISelfhostedSyncService)
   const navigate = useNavigate()
+  const location = useLocation()
   useWatchEvent(todoService.onStateChange)
   useWatchEvent(selfhostedSyncService.onStateChange)
   const { value: config, setValue } = useConfig(toggleAreaConfigKey())
@@ -284,6 +285,7 @@ export const SidebarContent: React.FC = () => {
           </button>
           <Link
             to="/settings"
+            state={{ settingsBackgroundLocation: `${location.pathname}${location.search}${location.hash}` }}
             className={desktopStyles.SidebarBottomIconButton}
             aria-label={localize("settings.title")}
           >

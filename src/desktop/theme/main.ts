@@ -177,16 +177,33 @@ export const desktopStyles = {
   SelectTriggerLabel: /*tw*/ "flex-1 truncate text-left",
   SelectTriggerIcon: /*tw*/ "size-3.5 flex-shrink-0 text-t3 transition-transform",
 
-  SettingsSidebarFooter: /*tw*/ "flex h-11 flex-shrink-0 items-center gap-1 border-t border-line-light px-3.5",
-  SettingsSidebarBackLink:
-    /*tw*/ "flex h-7 cursor-pointer items-center gap-1.5 rounded-full border border-transparent px-2 text-sm text-t2 transition-colors hover:border-line-regular",
-  SettingsSidebarBackIconContainer: /*tw*/ "flex size-3.5 items-center justify-center",
-  SettingsSidebarBackIcon: /*tw*/ "size-3.5",
-  SettingsSidebarBackLabel: /*tw*/ "font-medium",
-  SettingsSidebarGuideLink: /*tw*/ "ml-auto",
-  SettingsSidebarGroupList: /*tw*/ "flex flex-1 flex-col gap-0.5 overflow-y-auto px-2 pb-2",
-  SettingsSidebarGroup: /*tw*/ "flex flex-col gap-0.5",
-  SettingsSidebarGroupHeading: /*tw*/ "px-2 pb-1.5 pt-3 text-xs font-semibold text-t3",
+  SettingsModalRoot: /*tw*/ "fixed inset-0 z-[55] flex items-center justify-center p-4 max-sm:p-0",
+  SettingsModalBackdrop: /*tw*/ "absolute inset-0 h-full w-full cursor-default border-0 bg-black/15",
+  SettingsModalSurface:
+    /*tw*/ "relative flex h-[min(40rem,calc(100dvh-2rem))] w-[min(55rem,calc(100vw-2rem))] flex-col overflow-hidden rounded-2xl border border-line-regular bg-bg1 shadow-[0_20px_56px_rgba(0,0,0,0.14),0_3px_10px_rgba(0,0,0,0.06)] outline-none max-sm:h-[100dvh] max-sm:w-screen max-sm:rounded-none max-sm:border-0",
+  SettingsModalDragRegion: /*tw*/ "absolute inset-x-0 top-0 z-[1] h-8",
+  SettingsModalCloseButton:
+    /*tw*/ "absolute right-3 top-3 z-10 flex size-7 items-center justify-center rounded-md text-t3 outline-none transition-colors hover:bg-bg3 hover:text-t1 focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-inset",
+  SettingsModalCloseIcon: /*tw*/ "size-4",
+  SettingsModalBody: /*tw*/ "flex min-h-0 flex-1 max-sm:flex-col",
+  SettingsModalContent: /*tw*/ "min-w-0 flex-1 bg-bg1",
+  SettingsNavigation:
+    /*tw*/ "flex w-52 flex-shrink-0 flex-col border-r border-line-light bg-bg2 px-1 pb-3 pt-5 max-sm:w-full max-sm:flex-row max-sm:items-center max-sm:overflow-x-auto max-sm:border-r-0 max-sm:border-b max-sm:px-2 max-sm:py-2",
+  SettingsNavigationTitle:
+    /*tw*/ "mb-5 px-4 text-xl font-semibold leading-7 tracking-[-0.01em] text-t1 max-sm:mb-0 max-sm:mr-2 max-sm:px-2 max-sm:text-base",
+  SettingsNavigationGroups: /*tw*/ "flex flex-1 flex-col gap-4 max-sm:flex-row max-sm:gap-1",
+  SettingsNavigationGroup: /*tw*/ "flex flex-col gap-1 max-sm:block",
+  SettingsNavigationGroupLabel: /*tw*/ "px-4 text-[0.6875rem] font-semibold leading-5 text-t3 max-sm:hidden",
+  SettingsNavigationGroupItems: /*tw*/ "flex flex-col gap-0.5 max-sm:flex-row",
+  SettingsNavigationItem:
+    /*tw*/ "flex h-9 items-center gap-2 rounded-lg px-4 text-sm outline-none transition-colors focus-visible:ring-2 focus-visible:ring-brand/50 focus-visible:ring-inset max-sm:flex-shrink-0 max-sm:px-2",
+  SettingsNavigationItemActive: /*tw*/ "bg-sidebar-active font-medium text-t2",
+  SettingsNavigationItemInactive: /*tw*/ "text-t2 hover:bg-bg3 hover:text-t1",
+  SettingsNavigationIconContainer: /*tw*/ "flex size-5 flex-shrink-0 items-center justify-center",
+  SettingsNavigationIcon: /*tw*/ "size-4",
+  SettingsNavigationLabel: /*tw*/ "truncate",
+  SettingsNavigationFooter:
+    /*tw*/ "border-t border-line-light pt-2 max-sm:ml-1 max-sm:border-l max-sm:border-t-0 max-sm:pl-2 max-sm:pt-0",
   MacTopBarContainer: /*tw*/ "relative z-[60] flex h-8 flex-shrink-0 items-center px-2",
   MacTopBarDragRegion: /*tw*/ "h-full flex-1",
   MacTopBarControlRegion: /*tw*/ "flex items-center gap-0.5",
@@ -282,7 +299,7 @@ export const desktopStyles = {
   SwitchThumb: /*tw*/ "absolute left-0.5 top-0.5 size-4 rounded-full bg-bg1 transition-transform",
   SwitchThumbChecked: /*tw*/ "translate-x-4",
 
-  SettingsItemContainer: /*tw*/ "flex items-center justify-between gap-4 px-4 py-3",
+  SettingsItemContainer: /*tw*/ "flex min-h-14 items-center justify-between gap-4 px-4 py-2.5",
   SettingsItemContentWrapper: /*tw*/ "flex min-w-0 flex-1 flex-col gap-0.5",
   SettingsItemTitle: /*tw*/ "text-sm font-medium leading-5 text-t1",
   SettingsItemDescription: /*tw*/ "text-xs leading-4 text-t3",
@@ -290,7 +307,7 @@ export const desktopStyles = {
   SettingsItemInput:
     /*tw*/ "w-45 rounded-md border border-line-regular bg-transparent px-2 py-1 text-xs leading-4 text-t1 placeholder:text-t3 outline-none transition-colors hover:border-line-bold focus:border-brand",
 
-  SettingsItemGroupContainer: "overflow-hidden rounded-lg border border-line-light bg-bg1 divide-y divide-line-light",
+  SettingsItemGroupContainer: "overflow-hidden rounded-xl bg-settings-card divide-y divide-line-light",
 
   SettingButtonBase:
     /*tw*/ "focus:outline-none flex flex-row justify-center items-center whitespace-nowrap cursor-pointer",
@@ -415,10 +432,10 @@ export const desktopStyles = {
   CheckboxIcon: /*tw*/ "size-4",
   CheckboxLabel: /*tw*/ "text-xs text-t3 leading-4",
 
-  SettingsTitleContainer: /*tw*/ "mb-3 flex items-start justify-between gap-4 px-4",
+  SettingsTitleContainer: /*tw*/ "mb-2 flex items-start justify-between gap-4 px-1",
   SettingsTitleContent: /*tw*/ "flex min-w-0 flex-1 flex-col gap-1",
   SettingsTitleHeading: /*tw*/ "font-semibold text-t1",
-  SettingsTitleHeadingLevel1: /*tw*/ "text-base leading-6",
+  SettingsTitleHeadingLevel1: /*tw*/ "text-sm leading-5 text-t2",
   SettingsTitleHeadingLevel2: /*tw*/ "text-sm leading-5 text-t2",
   SettingsTitleDescription: /*tw*/ "text-xs leading-4 text-t3",
   SettingsTitleActionContainer: /*tw*/ "flex flex-shrink-0 items-center",
@@ -482,10 +499,10 @@ export const desktopStyles = {
 
   SettingsContentContainer: /*tw*/ "h-full w-full overflow-y-auto",
   SettingsContentBackButton: /*tw*/ "p-3",
-  SettingsContentInner: /*tw*/ "mx-auto flex w-full max-w-3xl flex-col gap-12 px-4 pb-32",
-  SettingsContentInnerWithBack: /*tw*/ "pt-6",
-  SettingsContentInnerWithoutBack: /*tw*/ "pt-6",
-  SettingsContentPageTitle: /*tw*/ "px-4 text-3xl font-semibold leading-9 text-t1",
+  SettingsContentInner: /*tw*/ "mx-auto flex w-full max-w-2xl flex-col gap-7 px-8 pb-10 max-sm:px-3",
+  SettingsContentInnerWithBack: /*tw*/ "pt-5",
+  SettingsContentInnerWithoutBack: /*tw*/ "pt-5",
+  SettingsContentPageTitle: /*tw*/ "px-1 text-xl font-semibold leading-7 tracking-[-0.01em] text-t1",
 
   EntityPageNotFoundContainer: /*tw*/ "h-full w-full bg-bg1 flex items-center justify-center",
   EntityPageNotFoundText: /*tw*/ "text-t3 text-lg",

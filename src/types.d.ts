@@ -1,4 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+declare module "@babel/plugin-syntax-decorators" {
+  import type { PluginItem } from "@babel/core"
+
+  const syntaxDecorators: PluginItem
+  export default syntaxDecorators
+}
+
 declare module "espree" {
   // https://github.com/eslint/espree#options
   export interface Options {

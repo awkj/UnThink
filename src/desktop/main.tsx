@@ -44,8 +44,30 @@ import { InstantiationService, ServiceCollection, SyncDescriptor } from "@hamste
 import { IKeybindingService } from "@hamsterbase/foundation/keybinding"
 import { App } from "./app"
 
+const startupStartedAt = performance.now()
+
+async function runStartupStep<T>(name: string, task: () => T | Promise<T>): Promise<T> {
+  const startedAt = performance.now()
+  try {
+    return await task()
+  } finally {
+    console.info(
+      `[startup] ${name}: ${(performance.now() - startedAt).toFixed(1)}ms (${(performance.now() - startupStartedAt).toFixed(1)}ms total)`,
+    )
+  }
+}
+
+function afterFirstPaint(task: () => void): void {
+  requestAnimationFrame(() => {
+    requestAnimationFrame(task)
+  })
+}
+
 export async function startDesktop() {
-  await Promise.all([import("allotment/dist/style.css"), import("./styles/main.css")])
+  console.info("[startup] desktop bootstrap started")
+  await runStartupStep("load desktop styles", () =>
+    Promise.all([import("allotment/dist/style.css"), import("./styles/main.css")]),
+  )
 
   initializeTheme()
   watchThemeChange()
@@ -78,27 +100,24 @@ export async function startDesktop() {
   serviceCollection.set(IAttachmentUploadService, new SyncDescriptor(WorkbenchAttachmentUploadService))
   const instantiationService = new InstantiationService(serviceCollection, true)
 
-  await instantiationService.invokeFunction(async (dss) => {
-    await dss.get(ISwitchService).init()
-  })
-  await instantiationService.invokeFunction(async (dss) => {
-    await dss.get(IConfigService).init()
-  })
-  await instantiationService.invokeFunction(async (dss) => {
-    const databaseService = dss.get(IDatabaseService)
-    const todoService = dss.get(ITodoService)
-    await databaseService.ensureDatabase(LocalDatabaseMeta)
-    await todoService.initStorage(await databaseService.getDatabaseStorage("local"), true)
-  })
-  await instantiationService.invokeFunction(async (dss) => {
-    await dss.get(ISelfhostedSyncService).init()
-  })
-  await instantiationService.invokeFunction(async (dss) => {
-    await dss.get(IReminderService).start()
-  })
-  await instantiationService.invokeFunction(async (dss) => {
-    await dss.get(IDockBadgeService).start()
-  })
+  await runStartupStep("initialize switches", () =>
+    instantiationService.invokeFunction(async (dss) => {
+      await dss.get(ISwitchService).init()
+    }),
+  )
+  await runStartupStep("initialize config", () =>
+    instantiationService.invokeFunction(async (dss) => {
+      await dss.get(IConfigService).init()
+    }),
+  )
+  await runStartupStep("initialize local database and todo model", () =>
+    instantiationService.invokeFunction(async (dss) => {
+      const databaseService = dss.get(IDatabaseService)
+      const todoService = dss.get(ITodoService)
+      await databaseService.ensureDatabase(LocalDatabaseMeta)
+      await todoService.initStorage(await databaseService.getDatabaseStorage("local"), true)
+    }),
+  )
 
   instantiationService.invokeFunction(async (dss) => {
     const keybindings = dss.get(IKeybindingService).getKeybindings()
@@ -120,4 +139,33 @@ export async function startDesktop() {
       </GlobalContext.Provider>
     </StrictMode>,
   )
+  console.info(`[startup] React render scheduled (${(performance.now() - startupStartedAt).toFixed(1)}ms total)`)
+
+  // These integrations are not needed to render the application shell. Start
+  // them after the first frame so native IPC or network setup cannot hold the
+  // loading screen in front of the user.
+  afterFirstPaint(() => {
+    console.info(`[startup] first React frame painted (${(performance.now() - startupStartedAt).toFixed(1)}ms total)`)
+    void runStartupStep("initialize self-hosted sync", () =>
+      instantiationService.invokeFunction(async (dss) => {
+        await dss.get(ISelfhostedSyncService).init()
+      }),
+    ).catch((error: unknown) => {
+      console.error("Error starting self-hosted sync:", error)
+    })
+    void runStartupStep("initialize reminders", () =>
+      instantiationService.invokeFunction(async (dss) => {
+        await dss.get(IReminderService).start()
+      }),
+    ).catch((error: unknown) => {
+      console.error("Error starting desktop reminders:", error)
+    })
+    void runStartupStep("initialize dock badge", () =>
+      instantiationService.invokeFunction(async (dss) => {
+        await dss.get(IDockBadgeService).start()
+      }),
+    ).catch((error: unknown) => {
+      console.error("Error starting dock badge:", error)
+    })
+  })
 }

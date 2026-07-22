@@ -3,7 +3,7 @@ import { desktopStyles } from "@/desktop/theme/main"
 import { localize } from "@/nls"
 import type { ChatMessageItem, TextContentBlock } from "@/services/ai/types"
 import React, { useCallback, useRef, useState } from "react"
-import { Link } from "react-router"
+import { Link, useLocation } from "react-router"
 
 interface ChatInputProps {
   onSendMessage: (content: string) => void
@@ -24,6 +24,7 @@ export const ChatInput: React.FC<ChatInputProps> = ({
   isConfigured,
   onStop,
 }) => {
+  const location = useLocation()
   const [input, setInput] = useState("")
   const textAreaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -63,7 +64,11 @@ export const ChatInput: React.FC<ChatInputProps> = ({
       <div className={desktopStyles.AIChatInputOuter}>
         <div className={`${desktopStyles.AIChatContentWidth} ${desktopStyles.AIChatInputNotice}`}>
           {localize("ai_chat.not_configured")}
-          <Link to="/settings/ai" className={desktopStyles.AIChatInputNoticeLink}>
+          <Link
+            to="/settings/ai"
+            state={{ settingsBackgroundLocation: `${location.pathname}${location.search}${location.hash}` }}
+            className={desktopStyles.AIChatInputNoticeLink}
+          >
             {localize("ai_chat.go_to_settings")}
           </Link>
         </div>

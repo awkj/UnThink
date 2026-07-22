@@ -137,6 +137,12 @@ export const TestIds = {
     /** Create menu button in the desktop sidebar header */
     CreateMenuButton: "sidebar-create-menu-button",
   },
+  Settings: {
+    /** Settings modal container */
+    Modal: "settings-modal",
+    /** Button that closes the settings modal */
+    CloseButton: "settings-modal-close-button",
+  },
   RecurringTaskSettings: {
     /** Desktop recurring task settings overlay container */
     Overlay: "recurring-task-settings-overlay",

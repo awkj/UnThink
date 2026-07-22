@@ -1,5 +1,6 @@
 import { checkPlatform } from "@/ui/browser/checkPlatform"
 import { SidebarLayout } from "@/desktop/components/SidebarLayout/SidebarLayout.tsx"
+import { SettingsModal } from "@/desktop/components/SettingsModal/SettingsModal"
 import { desktopStyles } from "@/desktop/theme/main"
 import { ImagePreviewOverlay } from "@/desktop/overlay/imagePreview/ImagePreviewOverlay"
 import { DatePickerOverlay } from "@/desktop/overlay/datePicker/DatePickerOverlay"
@@ -96,104 +97,114 @@ export const App = () => {
 
   useSafeArea()
 
-  const element = useRoutes([
+  const settingsBackgroundLocation = (location.state as { settingsBackgroundLocation?: string } | null)
+    ?.settingsBackgroundLocation
+  const isSettingsOpen = location.pathname.startsWith("/settings")
+  const contentLocation = isSettingsOpen ? (settingsBackgroundLocation ?? "/inbox") : location
+
+  const element = useRoutes(
+    [
+      {
+        path: "/",
+        children: [
+          {
+            path: "",
+            element: <SidebarLayout />,
+            children: [
+              {
+                index: true,
+                element: <Navigate to="inbox" replace />,
+              },
+              {
+                path: "ai-chat",
+                element: <AIChat />,
+              },
+              {
+                path: "inbox",
+                element: <Inbox />,
+              },
+              {
+                path: "today",
+                element: <Today />,
+              },
+              {
+                path: "scheduled",
+                element: <Schedule />,
+              },
+              {
+                path: "pending",
+                element: <Pending />,
+              },
+              {
+                path: "completed",
+                element: <Completed />,
+              },
+              {
+                path: "deleted",
+                element: <Deleted />,
+              },
+              {
+                path: "future_projects",
+                element: <FutureProjects />,
+              },
+              {
+                path: "area/:areaUid",
+                element: <AreaPage />,
+              },
+              {
+                path: "project/:projectUid",
+                element: <ProjectPage />,
+              },
+              {
+                path: "views/:viewUid",
+                element: <ViewDetailPage />,
+              },
+            ],
+          },
+        ],
+      },
+      {
+        path: "*",
+        element: <Navigate to="/inbox" replace />,
+      },
+    ],
+    contentLocation,
+  )
+
+  const settingsElement = useRoutes([
     {
-      path: "/",
+      path: "/settings",
+      element: <SettingsModal />,
       children: [
         {
-          path: "",
-          element: <SidebarLayout setting={false} />,
-          children: [
-            {
-              index: true,
-              element: <Navigate to="inbox" replace />,
-            },
-            {
-              path: "ai-chat",
-              element: <AIChat />,
-            },
-            {
-              path: "inbox",
-              element: <Inbox />,
-            },
-            {
-              path: "today",
-              element: <Today />,
-            },
-            {
-              path: "scheduled",
-              element: <Schedule />,
-            },
-            {
-              path: "pending",
-              element: <Pending />,
-            },
-            {
-              path: "completed",
-              element: <Completed />,
-            },
-            {
-              path: "deleted",
-              element: <Deleted />,
-            },
-            {
-              path: "future_projects",
-              element: <FutureProjects />,
-            },
-            {
-              path: "area/:areaUid",
-              element: <AreaPage />,
-            },
-            {
-              path: "project/:projectUid",
-              element: <ProjectPage />,
-            },
-            {
-              path: "views/:viewUid",
-              element: <ViewDetailPage />,
-            },
-          ],
+          index: true,
+          element: <Navigate to="appearance" replace state={location.state} />,
         },
         {
-          path: "settings",
-          element: <SidebarLayout setting={true} />,
-          children: [
-            {
-              path: "",
-              children: [
-                {
-                  index: true,
-                  element: <Navigate to="appearance" replace />,
-                },
-                {
-                  path: "appearance",
-                  element: <AppearanceSettings />,
-                },
-                {
-                  path: "selfhosted-sync",
-                  element: <SelfHostedSyncSettings />,
-                },
-                {
-                  path: "import-export",
-                  element: <ImportExportSettings />,
-                },
-                {
-                  path: "ai",
-                  element: <AISettings />,
-                },
-                {
-                  path: "guide",
-                  element: <Guide />,
-                },
-              ],
-            },
-          ],
+          path: "appearance",
+          element: <AppearanceSettings />,
+        },
+        {
+          path: "selfhosted-sync",
+          element: <SelfHostedSyncSettings />,
+        },
+        {
+          path: "import-export",
+          element: <ImportExportSettings />,
+        },
+        {
+          path: "ai",
+          element: <AISettings />,
+        },
+        {
+          path: "guide",
+          element: <Guide />,
         },
       ],
     },
     {
       path: "*",
-      element: <Navigate to="/inbox" replace />,
+      element: null,
     },
   ])
 
@@ -207,7 +218,10 @@ export const App = () => {
         />
       )}
       <DesktopNavigationBridge />
-      <Suspense fallback={null}>{element}</Suspense>
+      <div inert={isSettingsOpen} aria-hidden={isSettingsOpen}>
+        <Suspense fallback={null}>{element}</Suspense>
+      </div>
+      <Suspense fallback={null}>{settingsElement}</Suspense>
       <DesktopMenu />
       <DatePickerOverlay />
       <TimePickerOverlay />

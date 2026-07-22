@@ -1,5 +1,5 @@
 import { z } from "zod"
-import OpenAI from "openai"
+import type OpenAI from "openai"
 import { IInstantiationService } from "@hamsterbase/foundation/instantiation"
 import { ITodoService } from "@/services/todo/todoService"
 import { localize } from "@/nls"

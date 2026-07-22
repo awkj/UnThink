@@ -6,14 +6,9 @@ import { Allotment, LayoutPriority } from "allotment"
 import classNames from "classnames"
 import React from "react"
 import { Outlet } from "react-router"
-import { SettingsSidebarContent } from "../SettingsSidebarContent/SettingsSidebarContent"
 import { calculateElementWidth } from "../../overlay/datePicker/constant"
 
-interface SidebarLayoutOptions {
-  setting: boolean
-}
-
-export const SidebarLayout: React.FC<SidebarLayoutOptions> = ({ setting }) => {
+export const SidebarLayout: React.FC = () => {
   const mainSidebarConfig = useConfig(mainSidebarWidthConfigKey())
   const isSidebarCollapsed = mainSidebarConfig.value[0] === 0
 
@@ -30,7 +25,7 @@ export const SidebarLayout: React.FC<SidebarLayoutOptions> = ({ setting }) => {
           snap
           preferredSize={calculateElementWidth(desktopStyles.SidebarPreferredWidth)}
         >
-          {setting ? <SettingsSidebarContent /> : <SidebarContent />}
+          <SidebarContent />
         </Allotment.Pane>
         <Allotment.Pane
           priority={LayoutPriority.High}

@@ -1,4 +1,4 @@
-import OpenAI from "openai"
+import type OpenAI from "openai"
 
 import { requestReplyToolConfig } from "./requestReply/requestReply"
 import { createProjectToolConfig } from "./createProject/createProject"

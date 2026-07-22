@@ -1,5 +1,5 @@
-import { S3Client, HeadBucketCommand, GetObjectCommand } from "@aws-sdk/client-s3"
-import { Upload } from "@aws-sdk/lib-storage"
+import type { S3Client } from "@aws-sdk/client-s3"
+import type { Upload } from "@aws-sdk/lib-storage"
 import { nanoid } from "nanoid"
 import { Emitter, Event } from "@hamsterbase/foundation/event"
 import { AttachmentSchema } from "@/core/type"
@@ -19,6 +19,11 @@ const MAX_CONCURRENT_UPLOADS = 3
 const THUMBNAIL_MAX_DIMENSION = 256
 const THUMBNAIL_QUALITY = 0.8
 const THUMBNAIL_SUFFIX = ".thumb.jpg"
+
+async function loadAwsSdk() {
+  const [s3, storage] = await Promise.all([import("@aws-sdk/client-s3"), import("@aws-sdk/lib-storage")])
+  return { ...s3, ...storage }
+}
 
 function s3ConfigKey(databaseId: string): ConfigKey<AttachmentStorageConfig | null> {
   return {
@@ -187,11 +192,12 @@ export class WorkbenchAttachmentUploadService implements IAttachmentUploadServic
     }
   }
 
-  private buildClient(config: S3Config): S3Client {
+  private async buildClient(config: S3Config): Promise<S3Client> {
     const signature = JSON.stringify(config)
     if (this.cachedClient && this.cachedConfigSignature === signature) {
       return this.cachedClient
     }
+    const { S3Client } = await loadAwsSdk()
     const client = new S3Client({
       region: config.region,
       endpoint: config.endpoint,
@@ -208,6 +214,7 @@ export class WorkbenchAttachmentUploadService implements IAttachmentUploadServic
 
   async testConnection(config: S3Config): Promise<TestConnectionResult> {
     try {
+      const { S3Client, HeadBucketCommand } = await loadAwsSdk()
       const client = new S3Client({
         region: config.region,
         endpoint: config.endpoint,
@@ -290,7 +297,8 @@ export class WorkbenchAttachmentUploadService implements IAttachmentUploadServic
       if (isSelfhostedAttachmentConfig(config)) {
         await this.uploadToSelfhostedServer(internal, config, s3Key, internal.file, internal.item.mimetype, true)
       } else {
-        const client = this.buildClient(config)
+        const { Upload } = await loadAwsSdk()
+        const client = await this.buildClient(config)
         const upload = new Upload({
           client,
           params: {
@@ -319,8 +327,9 @@ export class WorkbenchAttachmentUploadService implements IAttachmentUploadServic
           if (isSelfhostedAttachmentConfig(config)) {
             await this.uploadToSelfhostedServer(internal, config, thumbnailKey, thumbnailBlob, "image/jpeg", false)
           } else {
+            const { Upload } = await loadAwsSdk()
             const thumbnailUpload = new Upload({
-              client: this.buildClient(config),
+              client: await this.buildClient(config),
               params: {
                 Bucket: config.bucket,
                 Key: thumbnailKey,
@@ -468,7 +477,8 @@ export class WorkbenchAttachmentUploadService implements IAttachmentUploadServic
         const blob = await this.getFromSelfhostedServer(config, `${s3Key}${THUMBNAIL_SUFFIX}`)
         return URL.createObjectURL(blob)
       }
-      const client = this.buildClient(config)
+      const { GetObjectCommand } = await loadAwsSdk()
+      const client = await this.buildClient(config)
       const response = await client.send(
         new GetObjectCommand({
           Bucket: config.bucket,
@@ -492,7 +502,8 @@ export class WorkbenchAttachmentUploadService implements IAttachmentUploadServic
         const blob = await this.getFromSelfhostedServer(config, s3Key)
         return URL.createObjectURL(blob)
       }
-      const client = this.buildClient(config)
+      const { GetObjectCommand } = await loadAwsSdk()
+      const client = await this.buildClient(config)
       const response = await client.send(
         new GetObjectCommand({
           Bucket: config.bucket,
@@ -515,7 +526,8 @@ export class WorkbenchAttachmentUploadService implements IAttachmentUploadServic
     if (isSelfhostedAttachmentConfig(config)) {
       blob = await this.getFromSelfhostedServer(config, s3Key)
     } else {
-      const client = this.buildClient(config)
+      const { GetObjectCommand } = await loadAwsSdk()
+      const client = await this.buildClient(config)
       const response = await client.send(
         new GetObjectCommand({
           Bucket: config.bucket,

@@ -1,4 +1,4 @@
-import OpenAI from "openai"
+import type OpenAI from "openai"
 import { aiApiTokenConfigKey, aiApiUrlConfigKey, aiModelNameConfigKey } from "@/services/config/config"
 import { IConfigService } from "@/services/config/configService"
 import { AIStreamEvent, ChatMessage, hasAIConfiguration, IAIService } from "./aiService"
@@ -113,7 +113,10 @@ export class WorkbenchAIService implements IAIService {
       return
     }
 
-    const client = new OpenAI(this.createOpenAIClientOptions(apiUrl, apiToken))
+    // OpenAI's browser SDK is large and is only needed after the user sends an AI message.
+    // Keeping it out of the startup graph materially improves Vite's cold start and HMR.
+    const { default: OpenAIClient } = await import("openai")
+    const client = new OpenAIClient(this.createOpenAIClientOptions(apiUrl, apiToken))
 
     const openaiMessages = this.convertToOpenAIMessages(messages)
 
